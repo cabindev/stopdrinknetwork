@@ -1,0 +1,268 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                  Int       @id @default(autoincrement())
+  firstName           String
+  lastName            String
+  email               String    @unique
+  password            String?
+  image               String?
+  role                Role      @default(member)
+  phone               String? // เบอร์ติดต่อ (ให้เพื่อนร่วมพื้นที่ติดต่อได้)
+  organization        String? // หน่วยงาน/ประชาคมที่สังกัด
+  position            String? // ตำแหน่ง/บทบาทในเครือข่าย
+  emailVerified       DateTime?
+  resetToken          String?   @unique
+  resetTokenCreatedAt DateTime?
+  resetTokenExpiresAt DateTime?
+  lastPasswordReset   DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  activities Activity[]
+  auditLogs  AuditLog[]
+  teamWorks  ActivityMember[] // งานที่ร่วมเป็นทีม (ไม่ใช่เจ้าของ)
+}
+
+enum Role {
+  member // เจ้าหน้าที่
+  admin
+  superadmin
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+}
+
+// บันทึกการเปลี่ยนแปลงข้อมูล — ใช้อ้างอิงความน่าเชื่อถือของข้อมูล (เช่น ตอนทำงบประมาณ)
+model AuditLog {
+  id         Int         @id @default(autoincrement())
+  action     AuditAction
+  entityType String // "Activity" (เผื่อขยายไปโมดูลอื่น)
+  entityId   Int
+  entityName String // snapshot ชื่องาน ณ ตอนนั้น — ยังอ่านได้แม้ record ถูกลบไปแล้ว
+  changes    String?     @db.Text // JSON: [{ field, label, from, to }]
+  userId     Int // ผู้กระทำ
+  user       User        @relation(fields: [userId], references: [id])
+  createdAt  DateTime    @default(now())
+
+  @@index([entityType, entityId])
+  @@index([userId])
+  @@index([createdAt])
+}
+
+// ประเด็นงาน (Civic Space, งานสื่อสาร, ชุมชนหัวใจเพชร ฯลฯ) — แอดมินจัดการได้
+model WorkCategory {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  description String?
+  logo        String? // path ใต้ uploads/ เช่น "category-logos/1-1727.webp" → แสดงผ่าน /api/files/ (แทนหมุดสีบนแผนที่)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  activities    Activity[]
+  subCategories WorkSubCategory[]
+}
+
+// ประเด็นย่อยภายใต้ประเด็นงาน เช่น งานบุญประเพณี › งานศพปลอดเหล้า (แอดมินเพิ่ม/แก้เอง, ไม่มี delete — ปิด isActive แทน)
+// เป็นรายการให้เลือก ไม่ใช่ tag พิมพ์อิสระ เพื่อให้สะกดตรงกันทั้งระบบ (บทเรียนจาก Google Sheet เดิม)
+model WorkSubCategory {
+  id         Int          @id @default(autoincrement())
+  categoryId Int
+  category   WorkCategory @relation(fields: [categoryId], references: [id])
+  name       String
+  logo       String? // โลโก้เฉพาะประเด็นย่อย (เช่น งานศพปลอดเหล้า) — แผนที่ใช้ก่อนโลโก้ของประเด็นหลัก
+  sortOrder  Int          @default(0)
+  isActive   Boolean      @default(true)
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  activities Activity[]
+
+  @@unique([categoryId, name])
+}
+
+// ระดับนโยบาย/ข้อตกลงที่เกิดจากงาน (ติ๊กได้หลายระดับ)
+enum PolicyLevel {
+  VILLAGE // หมู่บ้าน/ชุมชน
+  SUBDISTRICT // ตำบล
+  DISTRICT // อำเภอ
+  PROVINCE // จังหวัด
+  NATIONAL // ประเทศ
+}
+
+// ความละเอียดของวันเริ่ม — ข้อมูลเก่า/สำรวจมักรู้แค่ปี ("เริ่มปี 2562") เก็บเป็น 1 ม.ค. ของปีนั้น + YEAR
+enum DatePrecision {
+  DAY
+  YEAR
+}
+
+// ขอบเขตพื้นที่ของงาน — ตำบลที่เลือกยังบังคับ (ใช้เป็นจุดอ้างอิง/ภาค) แต่งานอาจครอบคลุมทั้งอำเภอ/จังหวัด
+enum AreaScope {
+  VILLAGE // หมู่บ้าน/ชุมชน (ชื่ออยู่ใน areaName)
+  SUBDISTRICT // ตำบล (ค่าเริ่มต้น)
+  DISTRICT // ทั้งอำเภอ
+  PROVINCE // ทั้งจังหวัด
+}
+
+enum ActivityStatus {
+  PLANNING // วางแผน
+  ACTIVE // กำลังดำเนินการ (กิจกรรมต่อเนื่อง)
+  COMPLETED // เสร็จสิ้น
+}
+
+enum LocationSource {
+  TAMBON // server คำนวณจากตำบล (ค่าเริ่มต้น)
+  PIN // ผู้ใช้ลาก/คลิกหมุดบนแผนที่
+  GPS // ตำแหน่งปัจจุบันจากอุปกรณ์
+  LINK // วางลิงก์ Google Maps หรือพิกัด
+  PLACE // เลือกจากผลค้นหาสถานที่ (GISTDA Sphere)
+}
+
+// การดำเนินงาน 1 รายการ = ใคร + ประเด็นอะไร + พื้นที่ไหน + สถานะ
+model Activity {
+  id          Int    @id @default(autoincrement())
+  title       String
+  description String @db.Text
+
+  categoryId Int
+  category   WorkCategory @relation(fields: [categoryId], references: [id])
+  // ประเด็นย่อย (ไม่บังคับ) — ต้องเป็นของ categoryId เดียวกัน (server ตรวจ)
+  subCategoryId Int?
+  subCategory   WorkSubCategory? @relation(fields: [subCategoryId], references: [id])
+  userId     Int
+  user       User         @relation(fields: [userId], references: [id])
+
+  // พื้นที่ — auto-fill จาก TambonSearch (ข้อมูลอ้างอิง app/data/regions.ts)
+  areaName  String? // ชื่อชุมชน/หมู่บ้าน/โรงเรียน
+  district  String // ตำบล
+  amphoe    String // อำเภอ
+  province  String // จังหวัด
+  areaScope AreaScope @default(SUBDISTRICT) // งานครอบคลุมแค่ไหน (หมุดของอำเภอ/จังหวัด = จุดกลางอำเภอ/จังหวัด)
+  region    String // โซนพื้นที่ (HealthZone slug เช่น "north-upper" — server คำนวณจากจังหวัด, ดู app/utils/healthZones.ts)
+  zipcode   String?
+  latitude  Float?
+  longitude Float?
+  // ที่มาของพิกัด — TAMBON = จุดกลางตำบล (โดยประมาณ), อื่น ๆ = ผู้ใช้ปักหมุดตำแหน่งจริง
+  locationSource LocationSource @default(TAMBON)
+
+  // ผลลัพธ์/ภาคี (ไม่บังคับ)
+  participantCount Int? // จำนวนผู้เข้าร่วม/ผู้ได้รับประโยชน์
+  partners         Json? // string[] จากรายการ PARTNER_OPTIONS (lib/activityMeta.ts)
+  // นโยบาย/ข้อตกลงรายระดับ → ตาราง ActivityPolicy (เดิมเป็น JSON policyLevels/policyDetails — ย้าย ก.ย. 2026)
+  policies         ActivityPolicy[]
+  // ความครอบคลุมของพื้นที่ (ไม่บังคับ) — ต่างจาก participantCount ที่นับคนเข้าร่วมกิจกรรม
+  coverageVillages   Int?
+  coverageHouseholds Int?
+  coveragePopulation Int?
+
+  // ผู้ประสานงานในพื้นที่ (คนนอกระบบ) — เบอร์/LINE เห็นเฉพาะแอดมิน + เจ้าของงาน, ห้ามขึ้นหน้าสาธารณะ (PDPA)
+  coordinatorName    String?
+  coordinatorRole    String? // เช่น ผู้ใหญ่บ้าน, เจ้าอาวาส, ผอ.รพ.สต.
+  coordinatorPhone   String?
+  coordinatorLine    String?
+  coordinatorConsent Boolean @default(false) // ยินยอมให้บันทึกช่องทางติดต่อ — บังคับเมื่อกรอกเบอร์/LINE
+
+  // เผยแพร่เป็นกรณีศึกษาสาธารณะ (/stories/[id], ไม่ต้อง login) — แอดมินกดเผยแพร่ได้เลย (ผู้ใช้ตัดสินใจ ก.ย. 2026)
+  isPublished   Boolean   @default(false)
+  publishedAt   DateTime?
+  publishedById Int? // แอดมินที่กดเผยแพร่ (ไม่ทำ relation — ดูชื่อจาก audit log)
+  storyLead     String?   @db.Text // บริบท/ปัญหา (ว่าง = ใช้ description)
+  storyProcess  String?   @db.Text // กระบวนการทีละขั้น
+  storyLessons  String?   @db.Text // ปัจจัยสำเร็จ / ข้อควรระวัง
+
+  status    ActivityStatus @default(ACTIVE)
+  startDate DateTime?
+  startDatePrecision DatePrecision @default(DAY)
+  endDate   DateTime? // null = ยังดำเนินการต่อเนื่อง
+
+  attachments ActivityAttachment[]
+  // ทีมงานร่วม (งานเป็นงานทีม — ผู้ใช้ตัดสินใจ ก.ย. 2026) — userId ด้านบน = ผู้เขียน/หัวหน้างาน
+  members     ActivityMember[]
+
+  // ถังขยะ (soft delete) — ลบแล้วซ่อนทุกหน้า กู้คืนได้ 30 วัน จากนั้นลบถาวรพร้อมไฟล์
+  // query ทั่วไปกรอง deletedAt: null ให้อัตโนมัติใน app/lib/db.ts
+  deletedAt   DateTime?
+  deletedById Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([categoryId])
+  @@index([subCategoryId])
+  @@index([isPublished])
+  @@index([province])
+  @@index([province, amphoe, district])
+  @@index([region])
+  @@index([status])
+  @@index([createdAt])
+  @@index([deletedAt])
+}
+
+// ทีมงานร่วมของงาน — เห็นใน "งานของฉัน" และแก้ไขงานได้เหมือนผู้เขียน (เปลี่ยนผู้เขียนยังเป็นสิทธิ์ superadmin)
+model ActivityMember {
+  activityId Int
+  activity   Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  userId     Int
+  user       User     @relation(fields: [userId], references: [id])
+  addedAt    DateTime @default(now())
+
+  @@id([activityId, userId])
+  @@index([userId])
+}
+
+// นโยบาย/ข้อตกลงที่เกิดจากงาน — 1 แถวต่อ 1 ระดับ (ติ๊กระดับในฟอร์ม = มีแถว, ชื่อ/ประเภท/ปีไม่บังคับ)
+// แยกตารางเพื่อให้นับ/กรองได้ด้วย SQL เช่น "กี่ตำบลมีธรรมนูญงานศพ ประกาศปีไหน"
+// ไฟล์ของนโยบาย = ActivityAttachment ที่ policyLevel ตรงกับ level ของงานเดียวกัน
+model ActivityPolicy {
+  id         Int         @id @default(autoincrement())
+  activityId Int
+  activity   Activity    @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  level      PolicyLevel
+  name       String?     @db.VarChar(300) // ชื่อนโยบาย เช่น "บุญเมืองยศ งานศพปลอดเหล้า"
+  type       String?     @db.VarChar(100) // จาก POLICY_TYPES (lib/activityMeta.ts)
+  year       Int? // ปีที่เริ่มประกาศ (พ.ศ.)
+  createdAt  DateTime    @default(now())
+
+  @@unique([activityId, level])
+  @@index([level])
+  @@index([type])
+  @@index([year])
+}
+
+enum AttachmentKind {
+  DOCUMENT // ไฟล์นโยบาย/เอกสาร
+  IMAGE // รูปภาพกิจกรรม
+}
+
+model ActivityAttachment {
+  id         Int            @id @default(autoincrement())
+  activityId Int
+  activity   Activity       @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  kind       AttachmentKind
+  filePath   String // path ภายใต้ uploads/ (serve ผ่าน /api/files)
+  fileName   String // ชื่อไฟล์เดิมที่ผู้ใช้อัปโหลด
+  mimeType   String
+  size       Int
+  caption    String? // คำบรรยายใต้รูป (IMAGE)
+  isCover    Boolean        @default(false) // รูปปกของงาน (IMAGE ได้แค่ 1 รูปต่องาน)
+  // ไฟล์นโยบาย/ข้อตกลงระดับนี้ (PDF/Word/รูปถ่ายเอกสาร) — null = ไฟล์แนบทั่วไป
+  // ไม่นับรวมเพดานรูป 5 รูป และไม่ขึ้นในแกลเลอรีรูปกิจกรรม
+  policyLevel PolicyLevel?
+  // เปิดให้หน้าสาธารณะใช้ได้ (แอดมินติ๊กเองทีละไฟล์ — รูปคน/เด็กต้องได้รับอนุญาตก่อน) ผ่าน /api/public-files/[id]
+  isPublic    Boolean        @default(false)
+  createdAt  DateTime       @default(now())
+
+  @@index([activityId])
+}

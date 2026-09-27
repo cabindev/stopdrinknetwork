@@ -1,0 +1,100 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #f8fafa;
+  --foreground: #1f2937;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  /* ฟอนต์สไตล์ Microsoft — Segoe UI/Leelawadee UI บน Windows, Tahoma (มีอักษรไทย) บนเครื่องอื่น */
+  font-family: "Segoe UI", "Leelawadee UI", Tahoma, "Noto Sans Thai", sans-serif;
+}
+
+/* Popup ของหมุดงาน — ให้เข้าธีมส้ม/ขาวของแอป */
+.leaflet-popup-content-wrapper {
+  border-radius: 12px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.15);
+  border: 1px solid #ffedd5;
+}
+.leaflet-popup-content {
+  margin: 12px 14px;
+  font-family: inherit;
+}
+.leaflet-popup-tip {
+  border-top-color: #ffedd5;
+}
+
+/* Leaflet: ซ่อนกรอบ focus สี่เหลี่ยมน้ำเงินที่ขึ้นตอนคลิก polygon/หมุด
+   (ไฮไลต์จังหวัดที่เลือกใช้สีขอบส้มของเราเองอยู่แล้ว) */
+.leaflet-container path:focus,
+.leaflet-interactive:focus,
+.leaflet-container:focus {
+  outline: none;
+}
+
+/* หน้า auth (แนวเดียวกับ activerun) — เนื้อหาค่อย ๆ ลอยขึ้นตอนเปิดหน้า */
+@keyframes rise {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
+.animate-rise { animation: rise .28s cubic-bezier(.2,.7,.3,1) both; }
+
+/* autofill ของ Chrome ไม่ให้ทาพื้นเหลืองทับช่องแบบเส้นใต้ */
+input:-webkit-autofill {
+  -webkit-text-fill-color: #111827;
+  -webkit-box-shadow: 0 0 0 1000px #fff inset;
+}
+
+/* ── แผนที่: วงกระเพื่อมรอบหมุดงานใหม่ (app/map/components/MapView.tsx) */
+.sdn-pulse {
+  display: block;
+  width: 34px;
+  height: 34px;
+  border-radius: 9999px;
+  border: 2.5px solid #ea580c;
+  animation: sdn-pulse 1.8s ease-out infinite;
+  pointer-events: none;
+}
+@keyframes sdn-pulse {
+  0% { transform: scale(0.45); opacity: 0.95; }
+  100% { transform: scale(1.3); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sdn-pulse {
+    animation: none;
+    transform: scale(0.8);
+    opacity: 0.8;
+  }
+}
+
+/* ── แผนที่: หมุดโลโก้ประเด็นงาน (หมวดที่มีโลโก้) — วงกลมขาวเปล่า ไม่มีขอบ (ผู้ใช้เลือก: สวยกว่า) */
+.sdn-logo-pin {
+  box-sizing: border-box;
+  width: 36px;
+  height: 36px;
+  border-radius: 9999px;
+  background: #ffffff;
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.35);
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+.sdn-logo-pin:hover {
+  transform: scale(1.15);
+}
+.sdn-logo-pin img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 2px;
+  pointer-events: none;
+}
+/* ตำแหน่งโดยประมาณ (จุดกลางตำบล) — ไม่มีขอบให้ทำเส้นประ จึงจางลงแทน */
+.sdn-logo-pin--approx {
+  opacity: 0.75;
+}

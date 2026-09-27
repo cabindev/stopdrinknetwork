@@ -84,7 +84,8 @@ export async function POST(req: NextRequest) {
     `;
 
     const mailOptions = {
-      from: '"Stop Drink Network" <noreply@stopdrinknetwork.com>',
+      // Gmail ส่งได้เฉพาะในนามบัญชีที่ล็อกอิน SMTP (EMAIL_USER = sdnthailandbackup@gmail.com) — ใส่โดเมนอื่นจะถูกแทนที่/ตกสแปม
+      from: `"Stop Drink Network" <${process.env.EMAIL_USER}>`,
       to: email,
       subject: "รีเซ็ตรหัสผ่าน - Stop Drink Network เครือข่ายงดเหล้า",
       html: htmlContent,

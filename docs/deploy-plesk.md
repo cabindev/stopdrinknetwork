@@ -3,12 +3,27 @@
 เซิร์ฟเวอร์เดียวกับ runludtong.com (14.207.143.39, Plesk Obsidian) — ใช้แนวเดียวกับ activerun:
 Node.js ผ่าน Passenger + `server.js` (Express ห่อ Next.js) · DNS ผ่าน Cloudflare (Proxied) · SSL = Let's Encrypt ใน Plesk
 
+## สภาพจริงบนเซิร์ฟเวอร์ (ตรวจ 27 ก.ย. 2026)
+- เว็บ `network.sdnthailand.com` (site_id 29) อยู่ใต้ subscription **sdnthailand.com** (domainId 4)
+- ฐานข้อมูลเป็น **MariaDB 11.8** (ไม่ใช่ MySQL) — SQL ที่ส่งขึ้นเซิร์ฟเวอร์ห้ามใช้ JSON_TABLE / syntax เฉพาะ MySQL 8
+- ฐานข้อมูลชื่อ **`StopDrinkNetwork`** (ตัวพิมพ์ใหญ่-เล็กมีผลบน Linux — ใน DATABASE_URL ต้องสะกดตรงนี้) · นำเข้าข้อมูลแล้ว
+  27 ก.ย. 2026 (55 งาน, 49 นโยบาย, 4 ผู้ใช้จริง, ไม่มีบัญชี @test.sdn) · มีฐานเก่าชื่อ `stopdrink`,
+  `stopdrink65`, `stopdrink66` ของระบบเดิม — **อย่าสับสน**
+- Node.js 26.9 · startup `server.js` · Document root = `/network.sdnthailand.com/public` (แก้จากค่าเดิมที่ชี้ root
+  ของแอป — ถ้าชี้ root nginx จะเปิดไฟล์ในโฟลเดอร์แอปตรง ๆ รวมถึง uploads/)
+- env ที่ตั้งแล้ว: `NEXTAUTH_URL`, `EMAIL_USER`, `GISTDA_API_BASE_URL`, `GOOGLE_CLIENT_ID`
+  ต้องใส่เอง (ค่าลับ): `DATABASE_URL`, `NEXTAUTH_SECRET`, `GOOGLE_CLIENT_SECRET`, `EMAIL_PASS`, `GISTDA_API_KEY`
+  · **ใช้ชื่อ `GISTDA_API_KEY` ไม่ใช่ `NEXT_PUBLIC_GISTDA_API_KEY`** — ตัวแปร NEXT_PUBLIC_ ถูกฝังตอน build ซึ่ง env ของ
+    Plesk อาจไปไม่ถึง ส่วน GISTDA_API_KEY อ่านตอนรันจริง (lib/sphere.ts รองรับทั้งสองชื่อ)
+  · `DATABASE_URL="mysql://<db user>:<รหัส>@localhost:3306/StopDrinkNetwork"` (รหัสมีอักขระพิเศษต้อง URL-encode)
+
 ## ตั้งครั้งแรก
 
 1. **Git** — Plesk → network.sdnthailand.com → Git → เพิ่ม repo `https://github.com/cabindev/stopdrinknetwork.git`
-   branch `main` · deploy ไปที่ root ของเว็บ (เช่น `/httpdocs`)
+   branch `main` · deploy ไปที่ `/network.sdnthailand.com`
 2. **ฐานข้อมูล** — Databases → Add Database (MySQL) → ผ่าน phpMyAdmin ของ Plesk (ห้ามเปิด URL phpMyAdmin ตรง ๆ
-   ต้องคลิกไอคอนจากแถวฐานข้อมูล) → Import ไฟล์ dump จากเครื่อง dev (`mysqldump` ฐาน StopDrinkNetwork)
+   ต้องคลิกไอคอนจากแถวฐานข้อมูล) → Import ไฟล์ dump ที่เตรียมไว้ (`backups/deploy/stopdrinknetwork-production-*.sql` — ตัดบัญชี @test.sdn ออกแล้ว,
+   รวม schema ล่าสุดแล้ว **ไม่ต้องรัน production-sql/2026-09-27_upgrade.sql ซ้ำ**)
 3. **Node.js** — Plesk → Node.js
    - Node.js version: 20 ขึ้นไป · Application mode: **production**
    - Application root = โฟลเดอร์ repo · Document root = `<repo>/public` · Application startup file = **`server.js`**
@@ -17,7 +32,7 @@ Node.js ผ่าน Passenger + `server.js` (Express ห่อ Next.js) · DNS 
      `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `NEXT_PUBLIC_GISTDA_API_KEY`, `GISTDA_API_BASE_URL`
    - กด **NPM install** → **Run script: build** → **Restart App**
 4. **ไฟล์แนบ** — โฟลเดอร์ `uploads/` อยู่ใน application root (gitignore — git pull ไม่ลบ) คัดลอกของเดิมจากเครื่อง dev
-   ขึ้นไปด้วย (File Manager/FTP) · **ห้ามย้ายไปไว้ใน public/** (ไฟล์เป็นข้อมูลส่วนตัว ต้องผ่าน /api/files)
+   ขึ้นไปด้วย — อัป `backups/deploy/uploads.zip` ผ่าน File Manager ไปที่ `/network.sdnthailand.com` แล้วกด Extract · **ห้ามย้ายไปไว้ใน public/** (ไฟล์เป็นข้อมูลส่วนตัว ต้องผ่าน /api/files)
 5. **ขนาดอัปโหลด** — ระบบรับได้ 60MB ต่อครั้ง: Apache & nginx Settings → Additional nginx directives
    `client_max_body_size 64m;`
 6. **Google OAuth** — redirect URI `https://network.sdnthailand.com/api/auth/callback/google` ลงทะเบียนไว้แล้ว

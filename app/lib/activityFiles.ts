@@ -5,6 +5,10 @@ import prisma from '@/app/lib/db';
 
 export const UPLOAD_ROOT = path.join(process.cwd(), 'uploads');
 
+// ใส่กับ response ที่เป็น error ของ route เสิร์ฟไฟล์ — ถ้าไม่ใส่ Cloudflare เติม max-age=14400 ให้เอง
+// แล้ว browser จำ 404 ไว้ 4 ชม. (เคยเกิดจริง: อัป uploads/ ทีหลังแล้วโลโก้บนแผนที่ยังว่างอยู่)
+export const NO_STORE = { 'Cache-Control': 'no-store' };
+
 // รูป: HEIC/HEIF จาก iPhone ถูกแปลงเป็น JPEG ตั้งแต่ฝั่ง browser (เบราว์เซอร์ส่วนใหญ่แสดง HEIC ไม่ได้)
 export const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 export const DOC_TYPES = [

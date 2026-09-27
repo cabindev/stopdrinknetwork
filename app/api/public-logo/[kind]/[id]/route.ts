@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import path from 'path';
 import fs from 'fs/promises';
 import prisma from '@/app/lib/db';
+import { NO_STORE } from '@/app/lib/activityFiles';
 
 const UPLOAD_ROOT = path.join(process.cwd(), 'uploads');
 const TYPES: Record<string, string> = { '.webp': 'image/webp', '.png': 'image/png', '.jpg': 'image/jpeg' };
@@ -11,15 +12,15 @@ const TYPES: Record<string, string> = { '.webp': 'image/webp', '.png': 'image/pn
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ kind: string; id: string }> }) {
   const { kind, id: idRaw } = await params;
   const id = Number(idRaw);
-  if (!Number.isInteger(id) || !['category', 'sub'].includes(kind)) return new NextResponse(null, { status: 404 });
+  if (!Number.isInteger(id) || !['category', 'sub'].includes(kind)) return new NextResponse(null, { status: 404, headers: NO_STORE });
   const row =
     kind === 'sub'
       ? await prisma.workSubCategory.findUnique({ where: { id }, select: { logo: true } })
       : await prisma.workCategory.findUnique({ where: { id }, select: { logo: true } });
   const rel = row?.logo;
-  if (!rel?.startsWith('category-logos/')) return new NextResponse(null, { status: 404 });
+  if (!rel?.startsWith('category-logos/')) return new NextResponse(null, { status: 404, headers: NO_STORE });
   const abs = path.join(UPLOAD_ROOT, rel);
-  if (!path.resolve(abs).startsWith(path.resolve(UPLOAD_ROOT) + path.sep)) return new NextResponse(null, { status: 404 });
+  if (!path.resolve(abs).startsWith(path.resolve(UPLOAD_ROOT) + path.sep)) return new NextResponse(null, { status: 404, headers: NO_STORE });
   try {
     const buf = await fs.readFile(abs);
     return new NextResponse(new Uint8Array(buf), {
@@ -30,6 +31,6 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
       },
     });
   } catch {
-    return new NextResponse(null, { status: 404 });
+    return new NextResponse(null, { status: 404, headers: NO_STORE });
   }
 }

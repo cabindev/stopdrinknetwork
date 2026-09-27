@@ -77,6 +77,11 @@ node scripts/backfill-coords.mjs      # เติม lat/lng ให้ Activity 
    --to-schema-datamodel prisma/schema.prisma --script` → เซฟเป็น `prisma/migrations/<YYYYMMDDHHMMSS>_<ชื่อ>/migration.sql`
    (**ถ้ามี DROP COLUMN ต้องเขียนขั้นย้ายข้อมูลแทรกก่อน** ดูตัวอย่าง `..._activity_policy_table`) → `migrate deploy`
    → `generate` → restart dev server · สำรองก่อนเสมอ: `mysqldump ... > backups/` (gitignore แล้ว)
+10. **response error ของ route เสิร์ฟไฟล์ต้องใส่ `NO_STORE`** (`lib/activityFiles.ts`) — Cloudflare เติม
+   `max-age=14400` ให้ response ที่ไม่มี Cache-Control → browser จำ 404 ไว้ 4 ชม. (เคยเกิดบน production:
+   อัป uploads/ ทีหลังแล้วโลโก้บนแผนที่ยังว่าง ทั้งที่ไฟล์มีแล้ว)
+11. **ห้ามเขียนไฟล์ผู้ใช้ลง `public/`** — production ไม่เสิร์ฟไฟล์ที่เพิ่มหลัง build และ `public/img` อยู่ใน .gitignore
+   (signup เดิมเขียน `/img/...` → รูปโปรไฟล์พังบนเซิร์ฟเวอร์ แก้แล้วให้ไป `uploads/avatars/`)
 9. **งานในถังขยะถูกกรองอัตโนมัติใน `app/lib/db.ts`** (Prisma extension ใส่ `deletedAt: null` ให้ทุก query อ่านของ activity)
    แต่**ไม่ครอบคลุม relation ซ้อน** — `_count: { activities }`, `include: { activities }`, `where: { activity: {...} }`
    ต้องใส่ `ACTIVE_ACTIVITY` เอง · query ที่อยากเห็นของในถังขยะให้ระบุ `deletedAt` ใน where เอง (ตัวกรองจะไม่ทับ)

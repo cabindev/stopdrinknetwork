@@ -5,6 +5,7 @@ import { getServerSession } from 'next-auth';
 import path from 'path';
 import fs from 'fs/promises';
 import authOptions from '@/app/lib/configs/auth/authOptions';
+import { NO_STORE } from '@/app/lib/activityFiles';
 
 const UPLOAD_ROOT = path.join(process.cwd(), 'uploads');
 
@@ -14,7 +15,7 @@ export async function GET(
 ) {
   const session = await getServerSession(authOptions);
   if (!session?.user) {
-    return NextResponse.json({ error: 'กรุณาเข้าสู่ระบบ' }, { status: 401 });
+    return NextResponse.json({ error: 'กรุณาเข้าสู่ระบบ' }, { status: 401, headers: NO_STORE });
   }
 
   const { path: segments } = await params;
@@ -22,7 +23,7 @@ export async function GET(
 
   // กัน path traversal — ไฟล์ที่ resolve แล้วต้องอยู่ใต้ uploads/ เท่านั้น
   if (!path.resolve(filePath).startsWith(path.resolve(UPLOAD_ROOT) + path.sep)) {
-    return NextResponse.json({ error: 'Invalid path' }, { status: 400 });
+    return NextResponse.json({ error: 'Invalid path' }, { status: 400, headers: NO_STORE });
   }
 
   try {
@@ -47,6 +48,6 @@ export async function GET(
       },
     });
   } catch {
-    return NextResponse.json({ error: 'ไม่พบไฟล์' }, { status: 404 });
+    return NextResponse.json({ error: 'ไม่พบไฟล์' }, { status: 404, headers: NO_STORE });
   }
 }

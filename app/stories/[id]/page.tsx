@@ -2,11 +2,12 @@
 // บริบท → กระบวนการ → นโยบาย/กติกา (ไฟล์ดาวน์โหลด) → ผลลัพธ์ → ปัจจัยสำเร็จ · แกลเลอรี · แชร์
 // ข้อมูลจาก STORY_SELECT เท่านั้น (ไม่มีชื่อเจ้าหน้าที่/ผู้ประสานงาน/เบอร์/หมุดจริง)
 // งานที่ยังไม่เผยแพร่: แอดมินดูตัวอย่างได้ (มีแถบเตือน) คนอื่นได้ 404
+import LinkList from '@/app/components/LinkList';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { getServerSession } from 'next-auth/next';
-import { ArrowLeft, MapPin, CalendarDays, FileText, Download, Users, Home, UserRound, Handshake, EyeOff } from 'lucide-react';
+import { ArrowLeft, MapPin, CalendarDays, FileText, Download, Users, Home, UserRound, Handshake, EyeOff, Link2 } from 'lucide-react';
 import authOptions from '@/app/lib/configs/auth/authOptions';
 import prisma from '@/app/lib/db';
 import { STORY_SELECT, storyCover, storyExcerpt, storyPlace, publicFileUrl, storyLogoUrl } from '@/app/lib/story';
@@ -205,6 +206,13 @@ export default async function StoryPage({ params }: { params: Promise<{ id: stri
                 </ul>
               </div>
             )}
+          </section>
+        )}
+
+        {story.links.length > 0 && (
+          <section className={section}>
+            <h2 className={h2}><Link2 className="w-5 h-5 text-orange-600" /> ติดตามเพิ่มเติม</h2>
+            <LinkList links={story.links} />
           </section>
         )}
 

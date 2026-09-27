@@ -13,6 +13,7 @@
 | ไฟล์ | เนื้อหา | รันบน production แล้ว |
 |---|---|---|
 | `2026-09-27_upgrade.sql` | นโยบาย → ตาราง ActivityPolicy · ทีมงาน ActivityMember · ถังขยะ · role enum · index | **ไม่ต้องรัน** — production สร้างใหม่จาก dump ที่อัปเกรดแล้ว (27 ก.ย. 2026) |
+| `2026-09-28_activity-links.sql` | ตาราง ActivityLink (แนบลิงก์ FB/YouTube/Drive/ข่าว) | ☐ (ลงวันที่เมื่อรัน) |
 
 ไฟล์นี้ทดสอบแล้วกับสำเนาฐานข้อมูล ณ 27 ก.ย. 2026 (ก่อนปรับ) — ผลตรงกับ `schema.prisma` ทุกคอลัมน์
 ถ้าฐานข้อมูล production เก่ากว่านั้น (เช่น ยังไม่มีตาราง WorkSubCategory หรือคอลัมน์ policyLevels) ห้ามรัน —

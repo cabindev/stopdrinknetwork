@@ -7,6 +7,16 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 import { Globe, EyeOff, Save, ExternalLink, Loader2, FileText } from 'lucide-react';
+import LinkKindIcon from '@/app/components/LinkKindIcon';
+import { linkDisplayName } from '@/app/lib/activityLinks';
+
+interface LinkItem {
+  id: number;
+  url: string;
+  title: string | null;
+  kind: string;
+  isPublic: boolean;
+}
 
 interface FileItem {
   id: number;
@@ -27,17 +37,24 @@ export default function PublishForm({
   isPublished,
   initial,
   files,
+  links = [],
 }: {
   activityId: number;
   isPublished: boolean;
   initial: { storyLead: string; storyProcess: string; storyLessons: string };
   files: FileItem[];
+  links?: LinkItem[];
 }) {
   const router = useRouter();
   const [form, setForm] = useState(initial);
   const firstTime = !isPublished && !files.some((f) => f.isPublic);
   const [picked, setPicked] = useState<Set<number>>(
     new Set(files.filter((f) => (firstTime ? f.kind === 'DOCUMENT' : f.isPublic)).map((f) => f.id))
+  );
+  // ลิงก์: ครั้งแรกติ๊กให้ทุกลิงก์ยกเว้น Google Drive (มักเป็นเอกสารภายใน) — ครั้งต่อไปตามที่เคยเลือก
+  const firstLinks = !isPublished && !links.some((l) => l.isPublic);
+  const [pickedLinks, setPickedLinks] = useState<Set<number>>(
+    new Set(links.filter((l) => (firstLinks ? l.kind !== 'DRIVE' : l.isPublic)).map((l) => l.id))
   );
   const [busy, setBusy] = useState<string | null>(null);
 
@@ -47,7 +64,7 @@ export default function PublishForm({
       const res = await fetch(`/api/activities/${activityId}/publish`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, publicAttachmentIds: [...picked], publish }),
+        body: JSON.stringify({ ...form, publicAttachmentIds: [...picked], publicLinkIds: [...pickedLinks], publish }),
       });
       const d = await res.json();
       if (!res.ok) throw new Error(d.error);
@@ -148,6 +165,48 @@ export default function PublishForm({
           ))
         )}
       </section>
+
+      {links.length > 0 && (
+        <section className="bg-white rounded-2xl border border-orange-100 p-6" data-testid="publish-links">
+          <h2 className="text-base font-semibold text-gray-800">ลิงก์ที่แสดงบนหน้าสาธารณะ</h2>
+          <p className="text-xs text-gray-400 mt-1 mb-4">
+            ลิงก์ Google Drive ไม่ติ๊กให้ตั้งต้น — ตรวจก่อนว่าไฟล์ตั้งแชร์สาธารณะและไม่มีข้อมูลส่วนตัว
+          </p>
+          <ul className="space-y-2">
+            {links.map((l) => {
+              const on = pickedLinks.has(l.id);
+              return (
+                <li key={l.id}>
+                  <label className={`flex items-center gap-3 rounded-xl border px-3 py-2.5 cursor-pointer ${on ? 'border-orange-500 bg-orange-50/60' : 'border-orange-100'}`}>
+                    <input
+                      type="checkbox"
+                      checked={on}
+                      onChange={(e) =>
+                        setPickedLinks((prev) => {
+                          const next = new Set(prev);
+                          if (e.target.checked) next.add(l.id);
+                          else next.delete(l.id);
+                          return next;
+                        })
+                      }
+                      aria-label={`เปิดเผยลิงก์ ${linkDisplayName(l.url, l.title)}`}
+                      className="accent-orange-600"
+                    />
+                    <span className="text-orange-600 shrink-0"><LinkKindIcon kind={l.kind} /></span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-sm text-gray-800 truncate">{linkDisplayName(l.url, l.title)}</span>
+                      <span className="block text-[11px] text-gray-400 truncate">{l.url}</span>
+                    </span>
+                    <a href={l.url} target="_blank" rel="noopener noreferrer" className="p-1 text-gray-400 hover:text-orange-700" aria-label="เปิดลิงก์">
+                      <ExternalLink className="w-4 h-4" />
+                    </a>
+                  </label>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
 
       <div className="flex flex-wrap items-center gap-2">
         <button

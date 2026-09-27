@@ -31,6 +31,7 @@ export default async function EditActivityPage({
     include: {
       attachments: { orderBy: { id: 'asc' } },
       policies: true,
+      links: { select: { url: true, title: true }, orderBy: { sortOrder: 'asc' } },
       members: { select: { userId: true }, orderBy: { addedAt: 'asc' } },
     },
   });
@@ -96,6 +97,7 @@ export default async function EditActivityPage({
     coordinatorPhone: activity.coordinatorPhone,
     coordinatorLine: activity.coordinatorLine,
     coordinatorConsent: activity.coordinatorConsent,
+    links: activity.links,
     ownerId: activity.userId,
     memberIds: activity.members.map((m) => m.userId),
   };

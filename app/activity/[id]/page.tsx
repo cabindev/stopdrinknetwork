@@ -1,4 +1,5 @@
 // app/activity/[id]/page.tsx — รายละเอียดการดำเนินงาน + ไฟล์แนบ (login ทุกคนดูได้, เจ้าของ/แอดมินแก้ได้)
+import LinkList from '@/app/components/LinkList';
 import { getServerSession } from 'next-auth/next';
 import { redirect, notFound } from 'next/navigation';
 import Link from 'next/link';
@@ -66,6 +67,7 @@ export default async function ActivityDetailPage({
       user: { select: { id: true, firstName: true, lastName: true } },
       attachments: { orderBy: { id: 'asc' } },
       policies: true,
+      links: { orderBy: { sortOrder: 'asc' } },
       members: {
         select: { userId: true, user: { select: { firstName: true, lastName: true } } },
         orderBy: { addedAt: 'asc' },
@@ -350,6 +352,14 @@ export default async function ActivityDetailPage({
                 </a>
               ))}
             </div>
+          </section>
+        )}
+
+        {/* ลิงก์ที่เกี่ยวข้อง */}
+        {activity.links.length > 0 && (
+          <section className="mt-6 bg-white rounded-2xl border border-orange-100 p-5">
+            <h2 className="text-sm font-semibold text-gray-800 mb-3">ลิงก์ที่เกี่ยวข้อง ({activity.links.length})</h2>
+            <LinkList links={activity.links} />
           </section>
         )}
 

@@ -8,7 +8,7 @@ import { provinceHealthZones } from '@/app/utils/healthZones';
 import { filesFrom, validateFiles, saveAttachment, IMAGE_TYPES } from '@/app/lib/activityFiles';
 import { resolveActivityCoords } from '@/app/lib/provinceGeo';
 import { writeAuditLog } from '@/app/lib/audit';
-import { parseMemberIds, parseActivityExtras, imageLimitError, applyImageMeta, policyFilesFrom } from '@/app/lib/activityInput';
+import { parseLinksField, parseMemberIds, parseActivityExtras, imageLimitError, applyImageMeta, policyFilesFrom } from '@/app/lib/activityInput';
 import { descriptionError } from '@/app/lib/activityMeta';
 
 const STATUSES = ['PLANNING', 'ACTIVE', 'COMPLETED'] as const;
@@ -96,6 +96,10 @@ export async function POST(request: NextRequest) {
     if ('error' in team) {
       return NextResponse.json({ error: team.error }, { status: 400 });
     }
+    const linkField = parseLinksField(formData);
+    if ('error' in linkField) {
+      return NextResponse.json({ error: linkField.error }, { status: 400 });
+    }
     // วันเริ่มแบบรู้แค่ปี → 1 ม.ค. ของปีนั้น (precision เก็บใน extras.data)
     if (extras.data.startDatePrecision === 'YEAR') startDate = extras.startYearDate;
     if (startDate && endDate && endDate < startDate) {
@@ -132,6 +136,9 @@ export async function POST(request: NextRequest) {
         ...coords,
         ...extras.data,
         policies: { create: extras.policies },
+        ...(linkField.links && linkField.links.length > 0 && {
+          links: { create: linkField.links.map((l, i) => ({ url: l.url, title: l.title || null, kind: l.kind, sortOrder: i })) },
+        }),
         ...(team.ids && team.ids.length > 0 && { members: { create: team.ids.map((uid) => ({ userId: uid })) } }),
         status: status as (typeof STATUSES)[number],
         startDate,

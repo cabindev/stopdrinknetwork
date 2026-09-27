@@ -295,6 +295,11 @@ uploads/                          # ไฟล์แนบ runtime (gitignore) �
   คำบรรยาย `caption` · ภาคี `partners` = Json string[] จาก PARTNER_OPTIONS · แผนเฟส 2-3 ดู memory activity-data-roadmap
 - **ฟอร์มห้าม fade-in จาก opacity 0** — HTML จาก server ต้องมองเห็นทันที (เดิมจอว่างจนกว่า JS โหลด) และ
   ActivityForm ครอบด้วย `<fieldset disabled={!hydrated}>`: พิมพ์ก่อน hydrate เสร็จ React ล้างค่าช่อง controlled ทิ้งเงียบ ๆ
+- **ลิงก์ที่เกี่ยวข้อง** (`ActivityLink`, ก.ย. 2026) — โพสต์ FB/คลิป YouTube-TikTok/ไฟล์ใน Drive/ข่าว แทนการอัปไฟล์ใหญ่
+  · ≤10 ลิงก์/งาน · รับเฉพาะ http(s) (`normalizeUrl()` ใน `lib/activityLinks.ts` — กัน `javascript:` ที่จะเป็น XSS ใน href)
+  · ชนิดเดาจากโดเมน (`detectLinkKind`) ต้องเทียบ "โดเมนตรง/ซับโดเมน" ไม่ใช่ includes (evil-facebook.com ≠ Facebook)
+  · แก้งานแล้วลิงก์เดิมคง `isPublic` · หน้าเผยแพร่: ครั้งแรกติ๊กทุกลิงก์ **ยกเว้น Google Drive** (มักเป็นเอกสารภายใน)
+  · UI: `LinksField` (ฟอร์ม), `components/LinkList` (detail + stories), Excel คอลัมน์ "ลิงก์ที่เกี่ยวข้อง"
 - **ไฟล์แนบเป็นทางเลือกเสมอ ห้ามบังคับ** (บังคับแค่ ชื่องาน/ประเด็น/พื้นที่/รายละเอียด) —
   งานที่เพิ่งวางแผนยังไม่มีรูป ถ้าบังคับผู้ใช้จะอัปมั่วหรือเลี่ยงไม่บันทึก
   - DOCUMENT: pdf, word, excel, **powerpoint** · IMAGE: jpg, png, webp, gif
@@ -381,6 +386,7 @@ uploads/                          # ไฟล์แนบ runtime (gitignore) �
 - คู่มือเต็ม + เช็กลิสต์: `.claude/skills/qa-e2e/SKILL.md` (เรียกด้วย skill `qa-e2e`)
 - สคริปต์พร้อมใช้: `scripts/qa/full-flow.mjs` (ครบวงจร), `scripts/qa/map-ui.mjs` (หน้าแผนที่),
   `scripts/qa/team-policy-trash.mjs` (ทีมงาน + นโยบาย + ถังขยะ — ลบงานทดสอบถาวรเองตอนจบ)
+  `scripts/qa/links.mjs` (แนบลิงก์ → แก้ → เผยแพร่ → หน้าสาธารณะ · ต้องลบงาน "QA " เองหลังรัน)
 ```bash
 mkdir -p /tmp/sdn-qa
 node ~/.claude/skills/browser-automation/browser.mjs http://localhost:3000/ --script scripts/qa/full-flow.mjs

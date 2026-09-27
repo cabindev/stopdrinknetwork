@@ -4,6 +4,7 @@ import prisma from '@/app/lib/db';
 import { MAX_IMAGES, parsePartners, parsePolicyLevels, parsePolicyDetails, POLICY_LEVELS, POLICY_LABEL, AREA_SCOPES } from '@/app/lib/activityMeta';
 import type { AreaScopeValue, PolicyDetail } from '@/app/lib/activityMeta';
 import type { PolicyLevelValue } from '@/app/lib/activityMeta';
+import { parseLinkList } from '@/app/lib/activityLinks';
 import { DOC_TYPES, IMAGE_TYPES, MAX_FILE_SIZE, filesFrom } from '@/app/lib/activityFiles';
 
 const str = (fd: FormData, k: string, max: number) =>
@@ -205,4 +206,18 @@ export async function parseMemberIds(fd: FormData, ownerId: number) {
   const found = await prisma.user.findMany({ where: { id: { in: ids } }, select: { id: true } });
   if (found.length !== ids.length) return { error: 'ไม่พบผู้ใช้บางคนในทีมงาน' } as const;
   return { ids } as const;
+}
+
+// ลิงก์ภายนอกจาก formData `links` (JSON [{url,title}]) — ไม่ส่งมา = ไม่แตะของเดิม (null)
+export function parseLinksField(fd: FormData) {
+  const raw = fd.get('links');
+  if (raw === null) return { links: null } as const;
+  let v: unknown;
+  try {
+    v = JSON.parse(String(raw));
+  } catch {
+    return { error: 'รายการลิงก์ไม่ถูกต้อง' } as const;
+  }
+  const r = parseLinkList(v);
+  return 'error' in r ? ({ error: r.error } as const) : ({ links: r.links } as const);
 }

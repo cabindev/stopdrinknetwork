@@ -15,7 +15,7 @@ import {
 import { resolveActivityCoords } from '@/app/lib/provinceGeo';
 import { purgeExpiredTrash, TRASH_DAYS } from '@/app/lib/activityAccess';
 import { writeAuditLog, diffFields, STATUS_LABEL } from '@/app/lib/audit';
-import { parseActivityExtras, imageLimitError, applyImageMeta, policyFilesFrom, parseMemberIds } from '@/app/lib/activityInput';
+import { parseActivityExtras, imageLimitError, applyImageMeta, policyFilesFrom, parseMemberIds, parseLinksField } from '@/app/lib/activityInput';
 import {
   canSeeCoordinatorContact,
   canEditActivity,
@@ -41,6 +41,7 @@ async function findActivity(id: string) {
       user: { select: { id: true, firstName: true, lastName: true } },
       attachments: true,
       policies: true,
+      links: { orderBy: { sortOrder: 'asc' } },
       members: { select: { userId: true, user: { select: { firstName: true, lastName: true } } } },
     },
   });
@@ -68,6 +69,9 @@ const contactLabel = (phone: string | null, line: string | null) =>
 function canEdit(session: { user: { id: number | string; role?: string } }, a: { userId: number; members: { userId: number }[] }) {
   return canEditActivity(session.user.role, Number(session.user.id), a);
 }
+// audit: ลิงก์เป็นรายการ "ชื่อ (url)" — เทียบทั้งชุด
+const linksText = (l: { url: string; title: string | null }[]) =>
+  l.map((x) => (x.title ? `${x.title} (${x.url})` : x.url)).join(' · ') || null;
 const teamText = (m: { user: { firstName: string; lastName: string } }[]) =>
   m.map((x) => `${x.user.firstName} ${x.user.lastName}`).sort().join(', ') || null;
 
@@ -190,6 +194,12 @@ export async function PATCH(
     if ('error' in team) {
       return NextResponse.json({ error: team.error }, { status: 400 });
     }
+    const linkField = parseLinksField(formData);
+    if ('error' in linkField) {
+      return NextResponse.json({ error: linkField.error }, { status: 400 });
+    }
+    // ลิงก์เดิมที่ยังอยู่คงสถานะ "เปิดเผยบนกรณีศึกษา" ไว้ (แอดมินไม่ต้องติ๊กใหม่ทุกครั้งที่มีคนแก้งาน)
+    const wasPublic = new Set(activity.links.filter((l) => l.isPublic).map((l) => l.url));
     // วันเริ่มแบบรู้แค่ปี → 1 ม.ค. ของปีนั้น (precision เก็บใน extras.data)
     if (extras.data.startDatePrecision === 'YEAR') startDate = extras.startYearDate;
     if (startDate && endDate && endDate < startDate) {
@@ -235,6 +245,18 @@ export async function PATCH(
         // นโยบาย: แทนทั้งชุดตามที่ติ๊กในฟอร์ม
         policies: { deleteMany: {}, create: extras.policies },
         ...(team.ids && { members: { deleteMany: {}, create: team.ids.map((userId) => ({ userId })) } }),
+        ...(linkField.links && {
+          links: {
+            deleteMany: {},
+            create: linkField.links.map((l, i) => ({
+              url: l.url,
+              title: l.title || null,
+              kind: l.kind,
+              sortOrder: i,
+              isPublic: wasPublic.has(l.url),
+            })),
+          },
+        }),
         status: status as (typeof STATUSES)[number],
         startDate,
         endDate,
@@ -266,6 +288,7 @@ export async function PATCH(
         policyText: policyText(beforePolicy.levels),
         policyDetailsText: detailsText(beforePolicy),
         teamText: teamText(activity.members),
+        linksText: linksText(activity.links),
         areaScopeLabel: AREA_SCOPE_LABEL[activity.areaScope],
         coverageText: coverageText(activity.coverageVillages, activity.coverageHouseholds, activity.coveragePopulation),
         coordinatorName: activity.coordinatorName,
@@ -293,6 +316,7 @@ export async function PATCH(
         teamText: team.ids
           ? teamText((await prisma.user.findMany({ where: { id: { in: team.ids } }, select: { firstName: true, lastName: true } })).map((user) => ({ user })))
           : teamText(activity.members),
+        linksText: linkField.links ? linksText(linkField.links) : linksText(activity.links),
         areaScopeLabel: AREA_SCOPE_LABEL[extras.data.areaScope],
         coverageText: coverageText(extras.data.coverageVillages, extras.data.coverageHouseholds, extras.data.coveragePopulation),
         coordinatorName: extras.data.coordinatorName,

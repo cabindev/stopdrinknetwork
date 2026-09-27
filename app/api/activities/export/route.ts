@@ -63,6 +63,7 @@ export async function GET(request: NextRequest) {
         user: { select: { firstName: true, lastName: true } },
         attachments: { select: { kind: true } },
         policies: true,
+        links: { select: { url: true, title: true }, orderBy: { sortOrder: 'asc' } },
       },
       orderBy: [{ province: 'asc' }, { createdAt: 'desc' }],
     });
@@ -113,6 +114,7 @@ export async function GET(request: NextRequest) {
         : []),
       { header: 'รูป', key: 'images', width: 6 },
       { header: 'เอกสาร', key: 'docs', width: 8 },
+      { header: 'ลิงก์ที่เกี่ยวข้อง', key: 'links', width: 50 },
       { header: 'รายละเอียด', key: 'description', width: 60 },
       { header: 'บันทึกเมื่อ', key: 'createdAt', width: 16 },
     ];
@@ -148,11 +150,14 @@ export async function GET(request: NextRequest) {
         endDate: a.endDate ? fmtDate(a.endDate) : a.startDate ? 'ต่อเนื่อง' : '',
         images: a.attachments.filter((x) => x.kind === 'IMAGE').length,
         docs: a.attachments.filter((x) => x.kind === 'DOCUMENT').length,
+        // หนึ่งบรรทัดต่อลิงก์ "ชื่อ — url" (ใน cell เดียว)
+        links: a.links.map((l) => (l.title ? `${l.title} — ${l.url}` : l.url)).join('\n'),
         description: a.description,
         createdAt: fmtDate(a.createdAt),
       });
     });
     ws.getColumn('description').alignment = { wrapText: true, vertical: 'top' };
+    ws.getColumn('links').alignment = { wrapText: true, vertical: 'top' };
 
     // ── ชีต 2: สรุป ──
     const sum = wb.addWorksheet('สรุป');

@@ -187,6 +187,8 @@ model Activity {
   endDate   DateTime? // null = ยังดำเนินการต่อเนื่อง
 
   attachments ActivityAttachment[]
+  // ลิงก์ภายนอก (โพสต์ FB, คลิป YouTube, ไฟล์ใน Drive, ข่าว) — แทนการอัปไฟล์ใหญ่/เนื้อหาที่อยู่ที่อื่นแล้ว
+  links       ActivityLink[]
   // ทีมงานร่วม (งานเป็นงานทีม — ผู้ใช้ตัดสินใจ ก.ย. 2026) — userId ด้านบน = ผู้เขียน/หัวหน้างาน
   members     ActivityMember[]
 
@@ -239,6 +241,32 @@ model ActivityPolicy {
   @@index([level])
   @@index([type])
   @@index([year])
+}
+
+// ชนิดลิงก์ — ระบบเดาจากโดเมนให้เอง (lib/activityLinks.ts) ใช้เลือกไอคอน/กรอง เช่น "งานไหนมีคลิป"
+enum LinkKind {
+  FACEBOOK
+  YOUTUBE
+  TIKTOK
+  DRIVE // Google Drive/Docs/Sheets/Slides
+  WEB // ข่าว/เว็บทั่วไป
+}
+
+// ลิงก์ที่เกี่ยวข้องกับงาน — สูงสุด 10 ลิงก์ต่องาน, รับเฉพาะ http(s)
+model ActivityLink {
+  id         Int      @id @default(autoincrement())
+  activityId Int
+  activity   Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  url        String   @db.VarChar(2000)
+  title      String?  @db.VarChar(200) // ชื่อสั้น ๆ ที่ผู้ใช้พิมพ์ (ไม่บังคับ — ว่าง = แสดงโดเมน)
+  kind       LinkKind @default(WEB)
+  sortOrder  Int      @default(0)
+  // แสดงบนหน้ากรณีศึกษาสาธารณะ (แอดมินติ๊กเองเหมือนไฟล์ isPublic)
+  isPublic   Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  @@index([activityId])
+  @@index([kind])
 }
 
 enum AttachmentKind {

@@ -1,5 +1,5 @@
 // app/api/activities/[id]/publish/route.ts — แอดมินเผยแพร่/แก้เนื้อหา/ยกเลิกเผยแพร่กรณีศึกษา
-// body: { storyLead, storyProcess, storyLessons, publicAttachmentIds: number[], publish: boolean }
+// body: { storyLead, storyProcess, storyLessons, publicAttachmentIds: number[], publicLinkIds?: number[], publish: boolean }
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/app/lib/db';
 import { getAdminUser } from '@/app/lib/adminAuth';
@@ -15,7 +15,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     const id = Number((await params).id);
     const activity = Number.isInteger(id)
-      ? await prisma.activity.findUnique({ where: { id }, include: { attachments: { select: { id: true } } } })
+      ? await prisma.activity.findUnique({
+          where: { id },
+          include: { attachments: { select: { id: true } }, links: { select: { id: true } } },
+        })
       : null;
     if (!activity) return NextResponse.json({ error: 'ไม่พบงาน' }, { status: 404 });
 
@@ -25,10 +28,21 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const publicIds = (Array.isArray(body.publicAttachmentIds) ? body.publicAttachmentIds : [])
       .map(Number)
       .filter((x: number) => ownIds.has(x)); // ต้องเป็นไฟล์ของงานนี้เท่านั้น
+    // ลิงก์: ไม่ส่งมา (ไคลเอนต์เก่า) = ไม่แตะ · ส่งมา = ตั้งตามที่ติ๊ก (ต้องเป็นลิงก์ของงานนี้)
+    const ownLinks = new Set(activity.links.map((l) => l.id));
+    const publicLinkIds: number[] | null = Array.isArray(body.publicLinkIds)
+      ? body.publicLinkIds.map(Number).filter((x: number) => ownLinks.has(x))
+      : null;
 
     await prisma.$transaction([
       prisma.activityAttachment.updateMany({ where: { activityId: id }, data: { isPublic: false } }),
       prisma.activityAttachment.updateMany({ where: { id: { in: publicIds } }, data: { isPublic: true } }),
+      ...(publicLinkIds
+        ? [
+            prisma.activityLink.updateMany({ where: { activityId: id }, data: { isPublic: false } }),
+            prisma.activityLink.updateMany({ where: { id: { in: publicLinkIds } }, data: { isPublic: true } }),
+          ]
+        : []),
       prisma.activity.update({
         where: { id },
         data: {

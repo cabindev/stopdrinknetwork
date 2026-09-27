@@ -16,7 +16,11 @@ export default async function PublishStoryPage({ params }: { params: Promise<{ i
 
   const activity = await prisma.activity.findUnique({
     where: { id: Number(id) || 0 },
-    include: { attachments: { orderBy: { id: 'asc' } }, subCategory: { select: { name: true } } },
+    include: {
+      attachments: { orderBy: { id: 'asc' } },
+      links: { orderBy: { sortOrder: 'asc' } },
+      subCategory: { select: { name: true } },
+    },
   });
   if (!activity) notFound();
 
@@ -53,6 +57,7 @@ export default async function PublishStoryPage({ params }: { params: Promise<{ i
             group: a.policyLevel ? `ไฟล์นโยบายระดับ${POLICY_LABEL[a.policyLevel]}` : a.kind === 'IMAGE' ? 'รูปกิจกรรม' : 'เอกสาร',
             src: `/api/files/${a.filePath}`,
           }))}
+          links={activity.links.map((l) => ({ id: l.id, url: l.url, title: l.title, kind: l.kind, isPublic: l.isPublic }))}
         />
       </div>
     </main>

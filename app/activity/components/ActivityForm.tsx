@@ -1,5 +1,6 @@
 'use client';
 
+import LinksField from './LinksField';
 import TeamField from './TeamField';
 import type { TeamPerson } from './TeamField';
 import { useState, useEffect, useRef } from 'react';
@@ -82,6 +83,7 @@ export interface ActivityInitialData {
   coordinatorPhone: string | null;
   coordinatorLine: string | null;
   coordinatorConsent: boolean;
+  links: { url: string; title: string | null }[]; // ลิงก์ที่เกี่ยวข้อง (เรียงตาม sortOrder)
   ownerId: number; // ผู้เขียน (เจ้าของงาน)
   memberIds: number[]; // ทีมงานร่วม
   attachments: {
@@ -117,6 +119,9 @@ export default function ActivityForm({
   const router = useRouter();
   const isEdit = !!initial;
   const [memberIds, setMemberIds] = useState<number[]>(initial?.memberIds ?? []);
+  const [links, setLinks] = useState<{ url: string; title: string }[]>(
+    (initial?.links ?? []).map((l) => ({ url: l.url, title: l.title ?? '' }))
+  );
   const [categories, setCategories] = useState<Category[]>([]);
   const [location, setLocation] = useState<RegionData | null>(
     initial
@@ -377,6 +382,7 @@ export default function ActivityForm({
       fd.set('coordinatorLine', extra.coordinatorLine);
       fd.set('coordinatorConsent', String(extra.coordinatorConsent));
       fd.set('memberIds', JSON.stringify(memberIds));
+      fd.set('links', JSON.stringify(links));
       if (isEdit) fd.set('removeAttachmentIds', JSON.stringify(removeIds));
 
       const res = await fetch(isEdit ? `/api/activities/${initial!.id}` : '/api/activities', {
@@ -1084,6 +1090,9 @@ export default function ActivityForm({
           (รวมครั้งละไม่เกิน 60MB) · รูป HEIC จาก iPhone ระบบแปลงเป็น JPEG ให้อัตโนมัติ
         </p>
       </section>
+
+      {/* ลิงก์ภายนอก — ต่อจากไฟล์แนบ */}
+      <LinksField value={links} onChange={setLinks} />
 
       {error && (
         <motion.div

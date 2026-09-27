@@ -38,7 +38,9 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    const resetUrl = `${process.env.NEXTAUTH_URL}/auth/reset-password?token=${token}`;
+    // NEXTAUTH_URL มักลงท้ายด้วย "/" — ตัดออกก่อนต่อ path ไม่งั้นลิงก์ในอีเมลเป็น "//auth/..."
+    const baseUrl = (process.env.NEXTAUTH_URL || "http://localhost:3000").replace(/\/+$/, "");
+    const resetUrl = `${baseUrl}/auth/reset-password?token=${token}`;
 
     const htmlContent = `
       <!DOCTYPE html>

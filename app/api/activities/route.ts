@@ -8,7 +8,7 @@ import { provinceHealthZones } from '@/app/utils/healthZones';
 import { filesFrom, validateFiles, saveAttachment, IMAGE_TYPES } from '@/app/lib/activityFiles';
 import { resolveActivityCoords } from '@/app/lib/provinceGeo';
 import { writeAuditLog } from '@/app/lib/audit';
-import { parseLinksField, parseMemberIds, parseActivityExtras, imageLimitError, applyImageMeta, policyFilesFrom } from '@/app/lib/activityInput';
+import { parseLinksField, parseMemberIds, parseActivityExtras, imageLimitError, applyImageMeta, policyFilesFrom, surveyFilesFrom } from '@/app/lib/activityInput';
 import { canCreateActivity, descriptionError } from '@/app/lib/activityMeta';
 
 const STATUSES = ['PLANNING', 'ACTIVE', 'COMPLETED'] as const;
@@ -118,7 +118,11 @@ export async function POST(request: NextRequest) {
     if ('error' in policy) {
       return NextResponse.json({ error: policy.error }, { status: 400 });
     }
-    const totalError = validateFiles(documents, images, policy.files.map((p) => p.file));
+    const survey = surveyFilesFrom(formData, extras.data.hasSurvey);
+    if ('error' in survey) {
+      return NextResponse.json({ error: survey.error }, { status: 400 });
+    }
+    const totalError = validateFiles(documents, images, [...policy.files.map((p) => p.file), ...survey.files]);
     if (totalError) {
       return NextResponse.json({ error: totalError }, { status: 400 });
     }
@@ -155,6 +159,9 @@ export async function POST(request: NextRequest) {
     await applyImageMeta(activity.id, formData, newImageIds);
     for (const { level, file } of policy.files) {
       await saveAttachment(activity.id, file, IMAGE_TYPES.includes(file.type) ? 'IMAGE' : 'DOCUMENT', level);
+    }
+    for (const file of survey.files) {
+      await saveAttachment(activity.id, file, IMAGE_TYPES.includes(file.type) ? 'IMAGE' : 'DOCUMENT', null, true);
     }
 
     await writeAuditLog({

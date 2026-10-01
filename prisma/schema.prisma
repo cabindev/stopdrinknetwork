@@ -161,6 +161,8 @@ model Activity {
   partners         Json? // string[] จากรายการ PARTNER_OPTIONS (lib/activityMeta.ts)
   // นโยบาย/ข้อตกลงรายระดับ → ตาราง ActivityPolicy (เดิมเป็น JSON policyLevels/policyDetails — ย้าย ก.ย. 2026)
   policies         ActivityPolicy[]
+  // มีแบบสำรวจ (ติ๊กได้โดยไม่แนบไฟล์) — ไฟล์แบบสำรวจ = ActivityAttachment.isSurvey
+  hasSurvey        Boolean          @default(false)
   // ความครอบคลุมของพื้นที่ (ไม่บังคับ) — ต่างจาก participantCount ที่นับคนเข้าร่วมกิจกรรม
   coverageVillages   Int?
   coverageHouseholds Int?
@@ -288,6 +290,8 @@ model ActivityAttachment {
   // ไฟล์นโยบาย/ข้อตกลงระดับนี้ (PDF/Word/รูปถ่ายเอกสาร) — null = ไฟล์แนบทั่วไป
   // ไม่นับรวมเพดานรูป 5 รูป และไม่ขึ้นในแกลเลอรีรูปกิจกรรม
   policyLevel PolicyLevel?
+  // ไฟล์แบบสำรวจ (Activity.hasSurvey) — แยกจากไฟล์ทั่วไปเหมือนไฟล์นโยบาย · อาจมีข้อมูลผู้ตอบ ไม่เปิดเผยเป็นค่าเริ่มต้น
+  isSurvey    Boolean        @default(false)
   // เปิดให้หน้าสาธารณะใช้ได้ (แอดมินติ๊กเองทีละไฟล์ — รูปคน/เด็กต้องได้รับอนุญาตก่อน) ผ่าน /api/public-files/[id]
   isPublic    Boolean        @default(false)
   createdAt  DateTime       @default(now())

@@ -107,7 +107,7 @@ export default async function MyActivitiesPage({
       category: { select: { name: true, logo: true } },
       subCategory: { select: { name: true, logo: true } },
       attachments: {
-        where: { policyLevel: null },
+        where: { policyLevel: null, isSurvey: false },
         select: { kind: true, filePath: true, isCover: true },
         orderBy: { id: 'asc' },
       },

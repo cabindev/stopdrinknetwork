@@ -32,7 +32,7 @@ export const STORY_SELECT = {
   links: { where: { isPublic: true }, select: { id: true, url: true, title: true, kind: true }, orderBy: { sortOrder: 'asc' } },
   attachments: {
     where: { isPublic: true },
-    select: { id: true, kind: true, fileName: true, caption: true, isCover: true, policyLevel: true, size: true },
+    select: { id: true, kind: true, fileName: true, caption: true, isCover: true, policyLevel: true, isSurvey: true, size: true },
     orderBy: { id: 'asc' },
   },
 } satisfies Prisma.ActivitySelect;
@@ -45,7 +45,7 @@ export const publicFileUrl = (attachmentId: number, v?: 'card' | 'cover') =>
 
 // รูปปกสาธารณะ: รูป public ที่เป็นปก → รูป public รูปแรก
 export function storyCover(s: Pick<StoryRow, 'attachments'>) {
-  const imgs = s.attachments.filter((a) => a.kind === 'IMAGE' && !a.policyLevel);
+  const imgs = s.attachments.filter((a) => a.kind === 'IMAGE' && !a.policyLevel && !a.isSurvey);
   return imgs.find((a) => a.isCover) ?? imgs[0] ?? null;
 }
 

@@ -101,6 +101,7 @@ export async function GET(request: NextRequest) {
       { header: 'ภาคีที่ร่วม', key: 'partners', width: 36 },
       { header: 'นโยบาย/ข้อตกลง (ระดับ)', key: 'policy', width: 26 },
       { header: 'รายละเอียดนโยบาย', key: 'policyDetail', width: 44 },
+      { header: 'แบบสำรวจ', key: 'survey', width: 10 },
       { header: 'ขอบเขตพื้นที่', key: 'scope', width: 14 },
       { header: 'หมู่บ้าน', key: 'villages', width: 9 },
       { header: 'ครัวเรือน', key: 'households', width: 10 },
@@ -133,6 +134,7 @@ export async function GET(request: NextRequest) {
           const { levels: lv, details: d } = policyShape(a.policies);
           return lv.map((l) => d[l] && `${POLICY_LABEL[l]}: ${policyDetailText(d[l])}`).filter(Boolean).join(' · ');
         })(),
+        survey: a.hasSurvey ? 'มี' : '',
         scope: AREA_SCOPE_LABEL[a.areaScope] ?? '',
         villages: a.coverageVillages ?? '',
         households: a.coverageHouseholds ?? '',

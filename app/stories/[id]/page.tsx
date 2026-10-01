@@ -67,12 +67,12 @@ export default async function StoryPage({ params }: { params: Promise<{ id: stri
   const coverSrc = cover ? await fileSrc(cover.id, 'cover') : null;
   const images = await Promise.all(
     story.attachments
-      .filter((a) => a.kind === 'IMAGE' && !a.policyLevel)
+      .filter((a) => a.kind === 'IMAGE' && !a.policyLevel && !a.isSurvey)
       .map(async (a) => ({ ...a, src: await fileSrc(a.id, 'cover'), full: await fileSrc(a.id) }))
   );
   const { levels, details } = policyShape(story.policies);
   const policyFiles = await Promise.all(
-    story.attachments.filter((a) => a.kind === 'DOCUMENT' || a.policyLevel).map(async (a) => ({ ...a, src: await fileSrc(a.id) }))
+    story.attachments.filter((a) => a.kind === 'DOCUMENT' || a.policyLevel || a.isSurvey).map(async (a) => ({ ...a, src: await fileSrc(a.id) }))
   );
   const partners = parsePartners(story.partners);
   const stats = [

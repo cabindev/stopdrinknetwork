@@ -51,7 +51,8 @@ export async function saveAttachment(
   activityId: number,
   file: File,
   kind: 'DOCUMENT' | 'IMAGE',
-  policyLevel: 'VILLAGE' | 'SUBDISTRICT' | 'DISTRICT' | 'PROVINCE' | 'NATIONAL' | null = null
+  policyLevel: 'VILLAGE' | 'SUBDISTRICT' | 'DISTRICT' | 'PROVINCE' | 'NATIONAL' | null = null,
+  isSurvey = false
 ) {
   const buffer = Buffer.from(await file.arrayBuffer());
   const ext = path.extname(file.name) || '';
@@ -71,6 +72,7 @@ export async function saveAttachment(
       mimeType: file.type,
       size: file.size,
       policyLevel,
+      isSurvey,
     },
   });
 }

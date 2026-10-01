@@ -15,6 +15,7 @@ import {
   Download,
   Phone,
   ScrollText,
+  ClipboardCheck,
   Globe,
   Navigation,
 } from 'lucide-react';
@@ -84,7 +85,7 @@ export default async function ActivityDetailPage({
   const isAdmin = ['admin', 'superadmin'].includes(session.user.role);
   // รูปปกขึ้นก่อน
   const images = activity.attachments
-    .filter((a) => a.kind === 'IMAGE' && !a.policyLevel)
+    .filter((a) => a.kind === 'IMAGE' && !a.policyLevel && !a.isSurvey)
     .sort((a, b) => Number(b.isCover) - Number(a.isCover));
   const partners = parsePartners(activity.partners);
   // เบอร์/LINE ผู้ประสานงาน: แอดมิน + เจ้าของงานเท่านั้น (PDPA)
@@ -92,7 +93,8 @@ export default async function ActivityDetailPage({
   const hasExtra =
     activity.participantCount != null || partners.length > 0 || !!activity.coordinatorName ||
     (showContact && !!(activity.coordinatorPhone || activity.coordinatorLine));
-  const documents = activity.attachments.filter((a) => a.kind === 'DOCUMENT' && !a.policyLevel);
+  const documents = activity.attachments.filter((a) => a.kind === 'DOCUMENT' && !a.policyLevel && !a.isSurvey);
+  const surveyFiles = activity.attachments.filter((a) => a.isSurvey);
   // นโยบาย/ข้อตกลงรายระดับ + ไฟล์ของแต่ละระดับ (เรียง หมู่บ้าน → ประเทศ)
   const { levels: policyLevelList, details } = policyShape(activity.policies);
   const policies = policyLevelList.map((level) => ({
@@ -322,6 +324,36 @@ export default async function ActivityDetailPage({
                 </li>
               ))}
             </ul>
+          </section>
+        )}
+
+        {/* แบบสำรวจ */}
+        {activity.hasSurvey && (
+          <section className="mt-6 bg-white rounded-2xl border border-orange-100 p-5">
+            <h2 className="flex items-center gap-2 text-sm font-semibold text-gray-800 mb-3">
+              <ClipboardCheck className="w-4 h-4 text-orange-600" /> แบบสำรวจ
+              {surveyFiles.length > 1 && <span className="text-xs font-normal text-gray-400">({surveyFiles.length} ชุด)</span>}
+            </h2>
+            {surveyFiles.length === 0 ? (
+              <p className="text-xs text-gray-400">มีแบบสำรวจ — ยังไม่มีไฟล์แนบ</p>
+            ) : (
+              <ol className="space-y-1.5">
+                {surveyFiles.map((f, i) => (
+                  <li key={f.id}>
+                    <a
+                      href={`/api/files/${f.filePath}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg border border-orange-100 text-sm text-gray-700 hover:bg-orange-50"
+                    >
+                      <span className="shrink-0 w-5 text-xs text-gray-400 tabular-nums">{i + 1}.</span>
+                      <FileText className="w-4 h-4 shrink-0 text-orange-600" />
+                      <span className="truncate">{f.fileName}</span>
+                    </a>
+                  </li>
+                ))}
+              </ol>
+            )}
           </section>
         )}
 

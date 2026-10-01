@@ -15,7 +15,7 @@ import {
 import { resolveActivityCoords } from '@/app/lib/provinceGeo';
 import { purgeExpiredTrash, TRASH_DAYS } from '@/app/lib/activityAccess';
 import { writeAuditLog, diffFields, STATUS_LABEL } from '@/app/lib/audit';
-import { parseActivityExtras, imageLimitError, applyImageMeta, policyFilesFrom, parseMemberIds, parseLinksField } from '@/app/lib/activityInput';
+import { parseActivityExtras, imageLimitError, applyImageMeta, policyFilesFrom, surveyFilesFrom, parseMemberIds, parseLinksField } from '@/app/lib/activityInput';
 import {
   canSeeCoordinatorContact,
   canEditActivity,
@@ -179,7 +179,7 @@ export async function PATCH(
       removeIds = [];
     }
     const keptImages = activity.attachments.filter(
-      (a) => a.kind === 'IMAGE' && a.policyLevel === null && !removeIds.includes(a.id)
+      (a) => a.kind === 'IMAGE' && a.policyLevel === null && !a.isSurvey && !removeIds.includes(a.id)
     ).length;
     const limitError = imageLimitError(keptImages, images.length);
     if (limitError) {
@@ -215,16 +215,21 @@ export async function PATCH(
     if ('error' in policy) {
       return NextResponse.json({ error: policy.error }, { status: 400 });
     }
-    const totalError = validateFiles(documents, images, policy.files.map((p) => p.file));
+    const survey = surveyFilesFrom(formData, extras.data.hasSurvey);
+    if ('error' in survey) {
+      return NextResponse.json({ error: survey.error }, { status: 400 });
+    }
+    const totalError = validateFiles(documents, images, [...policy.files.map((p) => p.file), ...survey.files]);
     if (totalError) {
       return NextResponse.json({ error: totalError }, { status: 400 });
     }
 
-    // ไฟล์ที่สั่งลบ + ไฟล์นโยบายของระดับที่เลิกติ๊ก (ต้องเป็นของ activity นี้เท่านั้น)
+    // ไฟล์ที่สั่งลบ + ไฟล์นโยบายของระดับที่เลิกติ๊ก + ไฟล์แบบสำรวจถ้าเลิกติ๊ก (ต้องเป็นของ activity นี้เท่านั้น)
     const toRemove = activity.attachments.filter(
       (a) =>
         removeIds.includes(a.id) ||
-        (a.policyLevel !== null && !extras.policyLevels.includes(a.policyLevel))
+        (a.policyLevel !== null && !extras.policyLevels.includes(a.policyLevel)) ||
+        (a.isSurvey && !extras.data.hasSurvey)
     );
 
     await prisma.activity.update({
@@ -274,6 +279,9 @@ export async function PATCH(
     for (const { level, file } of policy.files) {
       await saveAttachment(activity.id, file, IMAGE_TYPES.includes(file.type) ? 'IMAGE' : 'DOCUMENT', level);
     }
+    for (const file of survey.files) {
+      await saveAttachment(activity.id, file, IMAGE_TYPES.includes(file.type) ? 'IMAGE' : 'DOCUMENT', null, true);
+    }
 
     // audit: บันทึกเฉพาะฟิลด์ที่เปลี่ยนจริง + สรุปไฟล์แนบที่เพิ่ม/ลบ
     const beforePolicy = policyShape(activity.policies);
@@ -287,6 +295,7 @@ export async function PATCH(
         partnersText: partnersText(activity.partners),
         policyText: policyText(beforePolicy.levels),
         policyDetailsText: detailsText(beforePolicy),
+        surveyText: activity.hasSurvey ? 'มี' : null,
         teamText: teamText(activity.members),
         linksText: linksText(activity.links),
         areaScopeLabel: AREA_SCOPE_LABEL[activity.areaScope],
@@ -313,6 +322,7 @@ export async function PATCH(
         partnersText: partnersText(extras.data.partners),
         policyText: policyText(extras.policyLevels),
         policyDetailsText: detailsText({ levels: extras.policyLevels, details: extras.policyDetails }),
+        surveyText: extras.data.hasSurvey ? 'มี' : null,
         teamText: team.ids
           ? teamText((await prisma.user.findMany({ where: { id: { in: team.ids } }, select: { firstName: true, lastName: true } })).map((user) => ({ user })))
           : teamText(activity.members),

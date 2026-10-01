@@ -54,7 +54,8 @@ export default async function PublishStoryPage({ params }: { params: Promise<{ i
             caption: a.caption,
             isCover: a.isCover,
             isPublic: a.isPublic,
-            group: a.policyLevel ? `ไฟล์นโยบายระดับ${POLICY_LABEL[a.policyLevel]}` : a.kind === 'IMAGE' ? 'รูปกิจกรรม' : 'เอกสาร',
+            group: a.policyLevel ? `ไฟล์นโยบายระดับ${POLICY_LABEL[a.policyLevel]}` : a.isSurvey ? 'แบบสำรวจ' : a.kind === 'IMAGE' ? 'รูปกิจกรรม' : 'เอกสาร',
+            isSurvey: a.isSurvey,
             src: `/api/files/${a.filePath}`,
           }))}
           links={activity.links.map((l) => ({ id: l.id, url: l.url, title: l.title, kind: l.kind, isPublic: l.isPublic }))}

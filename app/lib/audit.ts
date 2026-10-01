@@ -24,6 +24,7 @@ const TRACKED: { field: string; label: string }[] = [
   { field: 'partnersText', label: 'ภาคีที่ร่วม' },
   { field: 'policyText', label: 'นโยบาย/ข้อตกลง (ระดับ)' },
   { field: 'policyDetailsText', label: 'รายละเอียดนโยบาย' },
+  { field: 'surveyText', label: 'แบบสำรวจ' },
   { field: 'teamText', label: 'ทีมงานร่วม' },
   { field: 'linksText', label: 'ลิงก์ที่เกี่ยวข้อง' },
   { field: 'areaScopeLabel', label: 'ขอบเขตพื้นที่' },

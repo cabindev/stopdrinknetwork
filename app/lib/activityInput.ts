@@ -111,6 +111,7 @@ export async function parseActivityExtras(
       coordinatorPhone,
       coordinatorLine,
       coordinatorConsent: coordinatorPhone || coordinatorLine ? coordinatorConsent : false,
+      hasSurvey: fd.get('hasSurvey') === 'true',
     },
     startYearDate,
     policyLevels,
@@ -147,7 +148,7 @@ export async function applyImageMeta(activityId: number, fd: FormData, newImageI
   const clean = (v: unknown) => (typeof v === 'string' ? v.trim().slice(0, 200) || null : null);
 
   const images = await prisma.activityAttachment.findMany({
-    where: { activityId, kind: 'IMAGE', policyLevel: null },
+    where: { activityId, kind: 'IMAGE', policyLevel: null, isSurvey: false },
     orderBy: { id: 'asc' },
   });
   const ids = new Set(images.map((i) => i.id));
@@ -167,7 +168,7 @@ export async function applyImageMeta(activityId: number, fd: FormData, newImageI
   else if (cover.startsWith('existing:')) coverId = Number(cover.slice(9));
   if (!coverId || !ids.has(coverId)) coverId = images.find((i) => i.isCover)?.id ?? images[0]?.id;
 
-  await prisma.activityAttachment.updateMany({ where: { activityId, kind: 'IMAGE', policyLevel: null }, data: { isCover: false } });
+  await prisma.activityAttachment.updateMany({ where: { activityId, kind: 'IMAGE', policyLevel: null, isSurvey: false }, data: { isCover: false } });
   if (coverId) await prisma.activityAttachment.update({ where: { id: coverId }, data: { isCover: true } });
 }
 
@@ -186,6 +187,19 @@ export function policyFilesFrom(fd: FormData, levels: PolicyLevelValue[]) {
     if (file.size > MAX_FILE_SIZE) return { error: `ไฟล์ "${file.name}" เกิน 20MB` } as const;
   }
   return { files: out } as const;
+}
+
+// ไฟล์แบบสำรวจ: formData field `survey` — รับเฉพาะเมื่อติ๊ก "มีแบบสำรวจ" (ชนิดไฟล์เดียวกับไฟล์นโยบาย)
+export function surveyFilesFrom(fd: FormData, hasSurvey: boolean) {
+  const files = filesFrom(fd, 'survey');
+  for (const file of files) {
+    if (!hasSurvey) return { error: `ไฟล์แบบสำรวจ "${file.name}" แนบมาแต่ไม่ได้ติ๊ก "มีแบบสำรวจ"` } as const;
+    if (![...DOC_TYPES, ...IMAGE_TYPES].includes(file.type)) {
+      return { error: `ไฟล์แบบสำรวจ "${file.name}" ต้องเป็น PDF, Word, Excel, PowerPoint หรือรูปภาพ` } as const;
+    }
+    if (file.size > MAX_FILE_SIZE) return { error: `ไฟล์ "${file.name}" เกิน 20MB` } as const;
+  }
+  return { files } as const;
 }
 
 // ทีมงานร่วมจาก formData `memberIds` (JSON number[]) — ไม่ส่งมา = ไม่แตะทีมเดิม (null)

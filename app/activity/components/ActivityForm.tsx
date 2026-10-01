@@ -19,6 +19,9 @@ import {
   Star,
   Undo2,
   ScrollText,
+  ClipboardCheck,
+  FileText,
+  Plus,
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import imageCompression from 'browser-image-compression';
@@ -73,6 +76,7 @@ export interface ActivityInitialData {
   partners: string[];
   policyLevels: string[];
   policyDetails: Record<string, PolicyDetail>;
+  hasSurvey: boolean;
   areaScope: string;
   coverageVillages: number | null;
   coverageHouseholds: number | null;
@@ -94,6 +98,7 @@ export interface ActivityInitialData {
     caption: string | null;
     isCover: boolean;
     policyLevel: string | null; // ไฟล์นโยบายระดับไหน (null = ไฟล์แนบทั่วไป)
+    isSurvey: boolean; // ไฟล์แบบสำรวจ
   }[];
 }
 
@@ -142,9 +147,14 @@ export default function ActivityForm({
   const [documents, setDocuments] = useState<File[]>([]);
   const [existingAttachments] = useState(initial?.attachments ?? []);
   // ไฟล์นโยบายแยกออกจากรูป/เอกสารทั่วไป (ไม่นับเพดาน 5 รูป)
-  const existingImages = existingAttachments.filter((a) => a.kind === 'IMAGE' && !a.policyLevel);
-  const existingDocs = existingAttachments.filter((a) => a.kind === 'DOCUMENT' && !a.policyLevel);
+  const existingImages = existingAttachments.filter((a) => a.kind === 'IMAGE' && !a.policyLevel && !a.isSurvey);
+  const existingDocs = existingAttachments.filter((a) => a.kind === 'DOCUMENT' && !a.policyLevel && !a.isSurvey);
   const existingPolicy = existingAttachments.filter((a) => a.policyLevel);
+  const existingSurvey = existingAttachments.filter((a) => a.isSurvey);
+  // แบบสำรวจ: ติ๊กได้โดยไม่แนบไฟล์ · เลิกติ๊ก = ไฟล์แบบสำรวจเดิมถูกลบตอนบันทึก (เหมือนนโยบาย)
+  const [hasSurvey, setHasSurvey] = useState(initial?.hasSurvey ?? false);
+  const [surveyFiles, setSurveyFiles] = useState<File[]>([]);
+  const surveyInputRef = useRef<HTMLInputElement>(null);
   const [policyLevels, setPolicyLevels] = useState<string[]>(initial?.policyLevels ?? []);
   const [policyDetails, setPolicyDetails] = useState<Record<string, PolicyDetail>>(initial?.policyDetails ?? {});
   const setPolicyDetail = (level: string, patch: PolicyDetail) =>
@@ -327,9 +337,10 @@ export default function ActivityForm({
     if ((extra.coordinatorPhone.trim() || extra.coordinatorLine.trim()) && !extra.coordinatorConsent)
       return setError('กรุณายืนยันว่าผู้ประสานงานยินยอมให้บันทึกช่องทางติดต่อ');
     const imageFiles = images.map((i) => i.file);
-    const oversize = [...documents, ...imageFiles, ...allPolicyFiles].find((f) => f.size > 20 * 1024 * 1024);
+    const sentSurvey = hasSurvey ? surveyFiles : [];
+    const oversize = [...documents, ...imageFiles, ...allPolicyFiles, ...sentSurvey].find((f) => f.size > 20 * 1024 * 1024);
     if (oversize) return setError(`ไฟล์ "${oversize.name}" เกิน 20MB`);
-    const totalSize = [...documents, ...imageFiles, ...allPolicyFiles].reduce((sum, f) => sum + f.size, 0);
+    const totalSize = [...documents, ...imageFiles, ...allPolicyFiles, ...sentSurvey].reduce((sum, f) => sum + f.size, 0);
     if (totalSize > 60 * 1024 * 1024)
       return setError(
         `ไฟล์แนบรวมกัน ${Math.round(totalSize / 1024 / 1024)}MB เกินเพดาน 60MB — ลองลบบางไฟล์ออกหรือแยกบันทึกเป็นสองรายการ`
@@ -376,6 +387,8 @@ export default function ActivityForm({
       for (const level of policyLevels) {
         for (const f of policyFiles[level] ?? []) fd.append(`policy_${level}`, f);
       }
+      fd.set('hasSurvey', String(hasSurvey));
+      for (const f of sentSurvey) fd.append('survey', f);
       fd.set('coordinatorName', extra.coordinatorName);
       fd.set('coordinatorRole', extra.coordinatorRole);
       fd.set('coordinatorPhone', extra.coordinatorPhone);
@@ -889,6 +902,117 @@ export default function ActivityForm({
               );
             })}
           </ul>
+        )}
+      </section>
+
+      {/* แบบสำรวจ — ติ๊ก "มีแบบสำรวจ" แล้วแนบไฟล์ได้ (ไม่บังคับ) */}
+      <section className="bg-white rounded-2xl border border-orange-100 p-6">
+        <h2 className="flex flex-wrap items-baseline gap-x-2 text-base font-semibold text-gray-800 mb-3">
+          <ClipboardCheck className="w-5 h-5 text-orange-600 self-center" />
+          แบบสำรวจ
+          <span className="text-xs font-normal text-gray-400">(ถ้ามี — แนบไฟล์ PDF, Word, Excel หรือรูปถ่ายแบบสำรวจ)</span>
+        </h2>
+        <input
+          ref={surveyInputRef}
+          data-testid="survey-input"
+          type="file"
+          multiple
+          accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,image/jpeg,image/png,image/webp"
+          className="hidden"
+          onChange={(e) => {
+            // อ่าน FileList ออกมาก่อนล้างค่า input (กับดักข้อ 2 ใน CLAUDE.md)
+            const files = Array.from(e.target.files ?? []);
+            e.target.value = '';
+            if (files.length > 0) setSurveyFiles((prev) => [...prev, ...files]);
+          }}
+        />
+        <label
+          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-sm cursor-pointer select-none transition-colors ${
+            hasSurvey
+              ? 'bg-orange-600 border-orange-600 text-white'
+              : 'bg-white border-orange-200 text-gray-700 hover:bg-orange-50'
+          }`}
+        >
+          <input
+            type="checkbox"
+            checked={hasSurvey}
+            onChange={(e) => setHasSurvey(e.target.checked)}
+            className="w-3.5 h-3.5 accent-white"
+          />
+          มีแบบสำรวจ
+        </label>
+        {/* 1 แถว = 1 แบบสำรวจ · กด "+ เพิ่มแบบสำรวจ" ได้เรื่อย ๆ (เลือกทีละหลายไฟล์ก็ได้) */}
+        {hasSurvey && (
+          <div className="mt-3 space-y-1.5 text-xs" data-testid="survey-list">
+            {existingSurvey.map((a, i) => {
+              const marked = removeIds.includes(a.id);
+              return (
+                <div
+                  key={a.id}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg border ${
+                    marked ? 'bg-red-50 border-red-100 text-red-500' : 'bg-orange-50 border-orange-100 text-gray-700'
+                  }`}
+                >
+                  <span className="shrink-0 w-5 text-gray-400 tabular-nums">{i + 1}.</span>
+                  <FileText className="w-3.5 h-3.5 shrink-0 text-orange-600" />
+                  <span className={`flex-1 truncate ${marked ? 'line-through' : ''}`}>{a.fileName}</span>
+                  {marked && <span className="shrink-0">จะถูกลบ</span>}
+                  <button
+                    type="button"
+                    aria-label={marked ? 'เลิกลบไฟล์' : 'ลบไฟล์'}
+                    onClick={() => setRemoveIds((prev) => (marked ? prev.filter((x) => x !== a.id) : [...prev, a.id]))}
+                    className="shrink-0 p-0.5"
+                  >
+                    {marked ? (
+                      <Undo2 className="w-3.5 h-3.5 text-red-400" />
+                    ) : (
+                      <X className="w-3.5 h-3.5 text-gray-400 hover:text-red-500" />
+                    )}
+                  </button>
+                </div>
+              );
+            })}
+            {surveyFiles.map((f, i) => {
+              const tooBig = f.size > 20 * 1024 * 1024;
+              return (
+                <div
+                  key={`${f.name}-${i}`}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg border ${
+                    tooBig ? 'bg-red-50 border-red-200' : 'bg-orange-50 border-orange-200'
+                  } text-gray-700`}
+                >
+                  <span className="shrink-0 w-5 text-gray-400 tabular-nums">{existingSurvey.length + i + 1}.</span>
+                  <FileText className="w-3.5 h-3.5 shrink-0 text-orange-600" />
+                  <span className="flex-1 truncate">{f.name}</span>
+                  <span className={`shrink-0 ${tooBig ? 'text-red-500' : 'text-orange-600'}`}>
+                    {tooBig ? `${Math.round(f.size / 1024 / 1024)}MB เกิน 20MB` : 'ใหม่'}
+                  </span>
+                  <button
+                    type="button"
+                    aria-label="ลบไฟล์"
+                    onClick={() => setSurveyFiles((prev) => prev.filter((_, j) => j !== i))}
+                    className="shrink-0 p-0.5"
+                  >
+                    <X className="w-3.5 h-3.5 text-gray-400 hover:text-red-500" />
+                  </button>
+                </div>
+              );
+            })}
+            <button
+              type="button"
+              onClick={() => surveyInputRef.current?.click()}
+              aria-label="แนบไฟล์แบบสำรวจ"
+              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-dashed border-orange-300 text-orange-700 hover:bg-orange-50"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              {existingSurvey.length + surveyFiles.length > 0 ? 'เพิ่มแบบสำรวจ' : 'แนบไฟล์แบบสำรวจ'}
+            </button>
+          </div>
+        )}
+        {!hasSurvey && existingSurvey.length > 0 && (
+          <p className="mt-2 text-xs text-red-500">
+            เลิกติ๊กแล้ว — ไฟล์แบบสำรวจเดิม {existingSurvey.length} ไฟล์จะถูกลบเมื่อบันทึก
+          </p>
         )}
       </section>
 

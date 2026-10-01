@@ -26,6 +26,7 @@ interface FileItem {
   isCover: boolean;
   isPublic: boolean;
   group: string;
+  isSurvey: boolean; // แบบสำรวจอาจมีข้อมูลผู้ตอบ — ครั้งแรกไม่ติ๊กให้ (เหมือนรูป)
   src: string;
 }
 
@@ -49,7 +50,7 @@ export default function PublishForm({
   const [form, setForm] = useState(initial);
   const firstTime = !isPublished && !files.some((f) => f.isPublic);
   const [picked, setPicked] = useState<Set<number>>(
-    new Set(files.filter((f) => (firstTime ? f.kind === 'DOCUMENT' : f.isPublic)).map((f) => f.id))
+    new Set(files.filter((f) => (firstTime ? f.kind === 'DOCUMENT' && !f.isSurvey : f.isPublic)).map((f) => f.id))
   );
   // ลิงก์: ครั้งแรกติ๊กให้ทุกลิงก์ยกเว้น Google Drive (มักเป็นเอกสารภายใน) — ครั้งต่อไปตามที่เคยเลือก
   const firstLinks = !isPublished && !links.some((l) => l.isPublic);

@@ -1,4 +1,5 @@
 // QA: ทีมงานร่วม + นโยบาย (ตาราง ActivityPolicy) + ถังขยะ — ครบวงจรในเบราว์เซอร์จริง
+// เพิ่ม/แก้/ลบงานได้เฉพาะแอดมิน (1 ต.ค. 2026) — ทีมงานเห็นงานแต่แก้ไม่ได้ (403)
 // รัน: node ~/.claude/skills/browser-automation/browser.mjs http://localhost:3000/ --script scripts/qa/team-policy-trash.mjs
 const BASE = 'http://localhost:3000';
 
@@ -19,8 +20,8 @@ const api = (page, path, init) =>
 
 export default async (page) => {
   const r = {};
-  // ── A. สมชายสร้างงาน + ทีม (สมหญิง) + นโยบายระดับตำบล
-  await login(page, 'somchai@test.sdn');
+  // ── A. แอดมินสร้างงาน + ทีม (สมหญิง) + นโยบายระดับตำบล (เพิ่มงานได้เฉพาะแอดมิน — ต.ค. 2026)
+  await login(page, 'admin@test.sdn');
   await page.goto(`${BASE}/activity/new`, { waitUntil: 'domcontentloaded' });
   await page.waitForSelector('#title', { timeout: 20000 });
   await page.waitForFunction(() => !document.querySelector('fieldset[disabled]'), { timeout: 20000 });
@@ -46,13 +47,8 @@ export default async (page) => {
   r.A_detailShowsTeam = /ทีมงาน: สมหญิง/.test(body);
   r.A_detailShowsPolicy = /QA ธรรมนูญตำบล/.test(body) && /2567/.test(body);
 
-  // ── B. สมหญิง (ทีม) เห็นใน "งานของฉัน" + แก้ไขได้ + เปลี่ยนปีนโยบาย
-  await logout(page);
-  await login(page, 'somying@test.sdn');
-  await page.goto(`${BASE}/activity`, { waitUntil: 'domcontentloaded' });
-  r.B_inMyWorks = (await page.locator(`a[href="/activity/${id}"]`).count()) > 0;
+  // ── B. แอดมินแก้ปีนโยบาย → ประวัติการแก้ไขบันทึก
   await page.goto(`${BASE}/activity/${id}/edit`, { waitUntil: 'domcontentloaded' });
-  r.B_canOpenEdit = page.url().endsWith('/edit');
   await page.waitForFunction(() => !document.querySelector('fieldset[disabled]'), { timeout: 20000 });
   r.B_policyPrefilled = await page.inputValue('input[placeholder^="ชื่อนโยบาย"]');
   await page.fill('input[placeholder="ปี พ.ศ."]', '2568');
@@ -62,17 +58,28 @@ export default async (page) => {
   r.B_yearUpdated = /2568/.test(body2);
   r.B_auditPolicy = /รายละเอียดนโยบาย/.test(body2);
 
-  // ── C. วิชัย (นอกทีม) แก้ไม่ได้
+  // ── C. สมหญิง (ทีม) เห็นใน "งานของฉัน" แต่แก้/ลบไม่ได้ · วิชัย (นอกทีม) ก็ไม่ได้
+  await logout(page);
+  await login(page, 'somying@test.sdn');
+  await page.goto(`${BASE}/activity`, { waitUntil: 'domcontentloaded' });
+  r.C_teamSeesInMyWorks = (await page.locator(`a[href="/activity/${id}"]`).count()) > 0;
+  r.C_teamNoNewButton = (await page.locator('a[href="/activity/new"]').count()) === 0;
+  await page.goto(`${BASE}/activity/${id}/edit`, { waitUntil: 'domcontentloaded' });
+  r.C_teamEditRedirected = !page.url().endsWith('/edit');
+  r.C_teamApiPatch = (await api(page, `/api/activities/${id}`, { method: 'PATCH', body: new URLSearchParams() })).status;
+  r.C_teamApiDelete = (await api(page, `/api/activities/${id}`, { method: 'DELETE' })).status;
   await logout(page);
   await login(page, 'wichai@test.sdn');
   await page.goto(`${BASE}/activity/${id}/edit`, { waitUntil: 'domcontentloaded' });
   r.C_outsiderRedirected = !page.url().endsWith('/edit');
   r.C_outsiderApiDelete = (await api(page, `/api/activities/${id}`, { method: 'DELETE' })).status;
 
-  // ── D. สมหญิงลบ → ถังขยะ: หายจากรายการ/แผนที่/หน้า detail
+  // ── D. แอดมินลบ → ถังขยะ: หายจาก "งานของฉัน" ของคนในทีม + หน้า detail
+  await logout(page);
+  await login(page, 'admin@test.sdn');
+  r.D_delete = await api(page, `/api/activities/${id}`, { method: 'DELETE' });
   await logout(page);
   await login(page, 'somying@test.sdn');
-  r.D_delete = await api(page, `/api/activities/${id}`, { method: 'DELETE' });
   await page.goto(`${BASE}/activity`, { waitUntil: 'domcontentloaded' });
   r.D_goneFromMyWorks = (await page.locator(`a[href="/activity/${id}"]`).count()) === 0;
   const res = await page.goto(`${BASE}/activity/${id}`, { waitUntil: 'domcontentloaded' });

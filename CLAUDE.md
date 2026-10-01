@@ -261,7 +261,7 @@ uploads/                          # ไฟล์แนบ runtime (gitignore) �
   (ปรับ healthZones ตาม regions.ts เมื่อ ส.ค. 2026: ชัยนาท→เหนือล่าง, นครนายก→กลาง, มุกดาหาร→อีสานล่าง;
   เหลือต่างแค่ชื่อเรียก กทม. = "กรุงเทพฯ")
 - สถานะ: PLANNING / ACTIVE / COMPLETED
-- **งานเป็นงานทีม** (ผู้ใช้ตัดสินใจ 27 ก.ย. 2026): `Activity.userId` = ผู้เขียน/หัวหน้างาน + `ActivityMember` = ทีมงานร่วม
+- **งานเป็นงานทีม** (ผู้ใช้ตัดสินใจ 27 ก.ย. 2026; แอดมินเป็นผู้บันทึกตั้งแต่ 1 ต.ค.): `Activity.userId` = ผู้รับผิดชอบ + `ActivityMember` = ทีมงานร่วม
   (เลือกใน TeamField ของฟอร์ม, สูงสุด 20 คน) · "งานของฉัน"/โปรไฟล์/Excel ของฉัน ใช้ `involvedWhere()` (ผู้เขียนหรืออยู่ในทีม)
   · เพื่อนร่วมพื้นที่ไม่นับงานที่เราอยู่ในทีม · รายชื่อให้เลือกส่งแค่ชื่อ/หน่วยงาน/รูป (ไม่มีอีเมล/เบอร์)
 - **ลบงาน = ย้ายลงถังขยะ** (`deletedAt`) ไฟล์ยังอยู่ · แอดมินกู้คืน/ลบถาวรที่ `/dashboard/setting/trash` · เกิน 30 วันลบถาวร
@@ -372,8 +372,10 @@ uploads/                          # ไฟล์แนบ runtime (gitignore) �
   · redirect URI ที่ลงทะเบียนแล้ว: `http://localhost:3000` และ `https://network.sdnthailand.com` + `/api/auth/callback/google`
   · แอปยังอยู่โหมด **Testing** — login ได้เฉพาะ test users (ตอนนี้: sdnthailandbackup, sdn.warehouse) ต้องกด Publish app ก่อนเปิดใช้จริง
 - Admin ห้าม demote ตัวเอง · role ของ superadmin แก้ได้เฉพาะ superadmin ด้วยกัน
-- สิทธิ์แก้/ลบ Activity: **ทีมงาน (ผู้เขียน + ActivityMember)** หรือ admin/superadmin — ใช้ `canEditActivity()` เสมอ
-  (เช็คทั้ง API และหน้า UI) · เบอร์ผู้ประสานงานก็เห็นตามกติกาเดียวกัน
+- **เพิ่ม/แก้/ลบ Activity: admin/superadmin เท่านั้น** (ผู้ใช้ตัดสินใจ 1 ต.ค. 2026 — member ดูได้อย่างเดียว)
+  ใช้ `canCreateActivity()` / `canEditActivity()` ใน `lib/activityMeta.ts` เสมอ (เช็คทั้ง API และหน้า UI —
+  POST/PATCH/DELETE ตอบ 403, `/activity/new` redirect, ซ่อนปุ่ม "บันทึกงานใหม่" ใน /activity และ /profile)
+  · เบอร์ผู้ประสานงานยังเห็นได้ทั้งแอดมิน + ทีมงานของงานนั้น (`canSeeCoordinatorContact`)
 - **เปลี่ยนผู้เขียน (เจ้าของงาน) ได้เฉพาะ superadmin** (ผู้ใช้ตัดสินใจ ก.ย. 2026) — ช่อง "ผู้เขียน" แบบ WordPress บนหน้าแก้ไข
   (`AuthorPicker.tsx` เลือกแล้วบันทึกทันที) + โอนหลายงานในตารางแอดมิน · ทั้งคู่ใช้ `POST /api/admin/activities/transfer` + audit
 

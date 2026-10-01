@@ -9,7 +9,7 @@ import { filesFrom, validateFiles, saveAttachment, IMAGE_TYPES } from '@/app/lib
 import { resolveActivityCoords } from '@/app/lib/provinceGeo';
 import { writeAuditLog } from '@/app/lib/audit';
 import { parseLinksField, parseMemberIds, parseActivityExtras, imageLimitError, applyImageMeta, policyFilesFrom } from '@/app/lib/activityInput';
-import { descriptionError } from '@/app/lib/activityMeta';
+import { canCreateActivity, descriptionError } from '@/app/lib/activityMeta';
 
 const STATUSES = ['PLANNING', 'ACTIVE', 'COMPLETED'] as const;
 
@@ -18,6 +18,9 @@ export async function POST(request: NextRequest) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'กรุณาเข้าสู่ระบบก่อนบันทึกข้อมูล' }, { status: 401 });
+    }
+    if (!canCreateActivity(session.user.role)) {
+      return NextResponse.json({ error: 'เพิ่มงานได้เฉพาะผู้ดูแลระบบ' }, { status: 403 });
     }
     const userId = Number(session.user.id);
 

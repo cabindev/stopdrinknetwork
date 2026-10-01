@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import authOptions from '@/app/lib/configs/auth/authOptions';
 import { involvedWhere } from '@/app/lib/activityAccess';
+import { canCreateActivity } from '@/app/lib/activityMeta';
 import prisma from '@/app/lib/db';
 import { getRegionLabel } from '@/app/utils/healthZones';
 import type { HealthZone } from '@/app/utils/healthZones';
@@ -41,6 +42,7 @@ export default async function ProfilePage() {
   const session = await getServerSession(authOptions);
   if (!session?.user) redirect('/auth/signin');
   const userId = Number(session.user.id);
+  const canCreate = canCreateActivity(session.user.role); // เพิ่มงานได้เฉพาะแอดมิน
 
   const [user, activities] = await Promise.all([
     prisma.user.findUnique({
@@ -168,14 +170,18 @@ export default async function ProfilePage() {
             <ClipboardList className="w-12 h-12 text-orange-200 mx-auto mb-4" />
             <p className="text-gray-600 font-medium">ยังไม่มีผลงานในระบบ</p>
             <p className="mt-1 text-sm text-gray-400">
-              เริ่มบันทึกงานแรกเพื่อสร้างพอร์ตของคุณ และให้พื้นที่ของคุณปรากฏบนแผนที่รวม
+              {canCreate
+                ? 'เริ่มบันทึกงานแรกเพื่อสร้างพอร์ตของคุณ และให้พื้นที่ของคุณปรากฏบนแผนที่รวม'
+                : 'ผลงานจะขึ้นที่นี่เมื่อผู้ดูแลระบบบันทึกงานที่มีคุณเป็นผู้รับผิดชอบหรือทีมงาน'}
             </p>
-            <Link
-              href="/activity/new"
-              className="mt-5 inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-orange-600 text-white text-sm font-medium hover:bg-orange-700 transition-colors"
-            >
-              <Plus className="w-4 h-4" /> บันทึกงานใหม่
-            </Link>
+            {canCreate && (
+              <Link
+                href="/activity/new"
+                className="mt-5 inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-orange-600 text-white text-sm font-medium hover:bg-orange-700 transition-colors"
+              >
+                <Plus className="w-4 h-4" /> บันทึกงานใหม่
+              </Link>
+            )}
           </section>
         ) : (
           <>
@@ -305,12 +311,14 @@ export default async function ProfilePage() {
             </section>
 
             <div className="mt-6 flex flex-wrap gap-2">
-              <Link
-                href="/activity/new"
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-orange-600 text-white text-sm font-medium hover:bg-orange-700 transition-colors"
-              >
-                <Plus className="w-4 h-4" /> บันทึกงานใหม่
-              </Link>
+              {canCreate && (
+                <Link
+                  href="/activity/new"
+                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-orange-600 text-white text-sm font-medium hover:bg-orange-700 transition-colors"
+                >
+                  <Plus className="w-4 h-4" /> บันทึกงานใหม่
+                </Link>
+              )}
               <Link
                 href="/activity"
                 className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-orange-200 text-orange-700 text-sm font-medium hover:bg-orange-50 transition-colors"

@@ -65,7 +65,7 @@ const partnersText = (v: unknown) =>
 const contactLabel = (phone: string | null, line: string | null) =>
   [phone ? 'มีเบอร์' : '', line ? 'มี LINE' : ''].filter(Boolean).join(' + ') || null;
 
-// แก้/ลบได้: ผู้เขียน + ทีมงานร่วม + admin/superadmin
+// แก้/ลบได้: admin/superadmin เท่านั้น (canEditActivity)
 function canEdit(session: { user: { id: number | string; role?: string } }, a: { userId: number; members: { userId: number }[] }) {
   return canEditActivity(session.user.role, Number(session.user.id), a);
 }

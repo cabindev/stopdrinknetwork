@@ -28,13 +28,15 @@ export function parsePartners(v: unknown): string[] {
 export type TeamRef = { userId: number; members?: { userId: number }[] };
 export const isTeamMember = (a: TeamRef, uid: number) =>
   a.userId === uid || !!a.members?.some((m) => m.userId === uid);
-// แก้ไข/ลบงาน: ทีมงาน หรือ admin/superadmin
-export const canEditActivity = (role: string | undefined, uid: number, a: TeamRef) =>
-  role === 'admin' || role === 'superadmin' || isTeamMember(a, uid);
+export const isAdminRole = (role: string | undefined) => role === 'admin' || role === 'superadmin';
+// เพิ่ม/แก้ไข/ลบงาน: admin/superadmin เท่านั้น (ผู้ใช้ตัดสินใจ ต.ค. 2026 — สมาชิกดูได้อย่างเดียว)
+// uid/a คงไว้ในลายเซ็นเผื่อกลับไปให้ทีมงานแก้ได้อีก
+export const canCreateActivity = (role: string | undefined) => isAdminRole(role);
+export const canEditActivity = (role: string | undefined, _uid: number, _a: TeamRef) => isAdminRole(role);
 
-// ใครเห็นเบอร์/LINE ผู้ประสานงาน: แอดมิน (ผู้ใช้ตัดสินใจ) + ทีมงาน (เป็นคนกรอกเอง ต้องแก้ไขได้)
+// ใครเห็นเบอร์/LINE ผู้ประสานงาน: แอดมิน (ผู้ใช้ตัดสินใจ) + ทีมงานของงานนั้น
 export const canSeeCoordinatorContact = (role: string | undefined, uid: number, a: TeamRef) =>
-  canEditActivity(role, uid, a);
+  isAdminRole(role) || isTeamMember(a, uid);
 
 // รายละเอียดการดำเนินงาน — DB เป็น MySQL TEXT = 65,535 ไบต์ (ไทย 3 ไบต์/ตัว ≈ 21,800 ตัว)
 // เพดาน 20,000 ตัวเผื่อระยะ · ไม่ใช้ maxLength ใน textarea (วางข้อความยาวแล้ว browser ตัดท้ายเงียบ ๆ)

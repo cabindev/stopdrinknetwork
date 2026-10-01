@@ -6,12 +6,14 @@ import { ArrowLeft } from 'lucide-react';
 import authOptions from '@/app/lib/configs/auth/authOptions';
 import ActivityForm from '../components/ActivityForm';
 import { teamPeople } from '@/app/lib/activityAccess';
+import { canCreateActivity } from '@/app/lib/activityMeta';
 
 export default async function NewActivityPage() {
   const session = await getServerSession(authOptions);
   if (!session?.user) {
     redirect('/auth/signin');
   }
+  if (!canCreateActivity(session.user.role)) redirect('/activity'); // เพิ่มงานได้เฉพาะแอดมิน
   const people = await teamPeople();
 
   return (

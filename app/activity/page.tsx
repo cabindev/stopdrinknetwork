@@ -23,7 +23,7 @@ import { involvedWhere } from '@/app/lib/activityAccess';
 import prisma from '@/app/lib/db';
 import { getRegionLabel } from '@/app/utils/healthZones';
 import type { HealthZone } from '@/app/utils/healthZones';
-import { formatStartDate } from '@/app/lib/activityMeta';
+import { canCreateActivity, formatStartDate } from '@/app/lib/activityMeta';
 import { categoryColor } from '@/app/lib/categoryColors';
 import OverlapSection from './components/OverlapSection';
 import Pagination from '@/app/components/Pagination';
@@ -65,6 +65,7 @@ export default async function MyActivitiesPage({
     redirect('/auth/signin');
   }
   const userId = Number(session.user.id);
+  const canCreate = canCreateActivity(session.user.role); // เพิ่มงานได้เฉพาะแอดมิน
 
   const { page, status: statusRaw } = await searchParams;
   const status = STATUSES.find((s) => s === statusRaw);
@@ -148,7 +149,10 @@ export default async function MyActivitiesPage({
           <div>
             <h1 className="text-2xl font-bold text-gray-800">งานของฉัน</h1>
             <p className="mt-1 text-sm text-gray-500">
-              สวัสดี {session.user.firstName ?? ''} — บันทึกงานไว้ที่นี่ แล้วงานจะขึ้นบนแผนที่รวมของเครือข่าย
+              สวัสดี {session.user.firstName ?? ''} —{' '}
+              {canCreate
+                ? 'บันทึกงานไว้ที่นี่ แล้วงานจะขึ้นบนแผนที่รวมของเครือข่าย'
+                : 'งานที่คุณเป็นผู้รับผิดชอบหรืออยู่ในทีม (ผู้ดูแลระบบเป็นผู้บันทึก)'}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -160,12 +164,14 @@ export default async function MyActivitiesPage({
                 <FileSpreadsheet className="w-4 h-4" /> Excel
               </a>
             )}
-            <Link
-              href="/activity/new"
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-orange-600 text-white text-sm font-medium hover:bg-orange-700 shadow-lg shadow-orange-500/30 transition-all"
-            >
-              <Plus className="w-4 h-4" /> บันทึกงานใหม่
-            </Link>
+            {canCreate && (
+              <Link
+                href="/activity/new"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-orange-600 text-white text-sm font-medium hover:bg-orange-700 shadow-lg shadow-orange-500/30 transition-all"
+              >
+                <Plus className="w-4 h-4" /> บันทึกงานใหม่
+              </Link>
+            )}
           </div>
         </div>
 
@@ -218,7 +224,9 @@ export default async function MyActivitiesPage({
               <>
                 <p className="text-gray-600 font-medium">ยังไม่มีการดำเนินงานที่บันทึกไว้</p>
                 <p className="mt-1 text-sm text-gray-400">
-                  เริ่มบันทึกงานแรกของคุณเพื่อให้พื้นที่ดำเนินงานปรากฏบนแผนที่รวม
+                  {canCreate
+                    ? 'เริ่มบันทึกงานแรกของคุณเพื่อให้พื้นที่ดำเนินงานปรากฏบนแผนที่รวม'
+                    : 'งานจะขึ้นที่นี่เมื่อผู้ดูแลระบบบันทึกงานที่มีคุณเป็นผู้รับผิดชอบหรือทีมงาน'}
                 </p>
               </>
             ) : (

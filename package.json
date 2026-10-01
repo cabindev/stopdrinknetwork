@@ -32,6 +32,9 @@
     "tailwind-merge": "^3.6.0"
   },
   "devDependencies": {
+    "@turf/helpers": "^7.4.0",
+    "@turf/simplify": "^7.4.0",
+    "@turf/union": "^7.4.0",
     "@types/bcrypt": "^5.0.2",
     "@types/node": "^22.15.30",
     "@types/nodemailer": "^6.4.17",

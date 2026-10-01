@@ -184,6 +184,7 @@ app/
 │   └── files/[...path]/          # serve ไฟล์จาก uploads/ (ต้อง login, กัน path traversal)
 ├── components/
 │   ├── SessionProvider.tsx
+│   ├── ImageGallery.tsx          # กริดรูป + พรีวิวเต็มจอ (lightbox): ‹ › / ลูกศร / ปัด / รูปย่อ / Esc — หน้างาน + กรณีศึกษา
 │   ├── Pagination.tsx            # แบ่งหน้าแบบ server component (?page=) ใช้ซ้ำได้ทุกหน้า
 │   ├── ThaiDateField.tsx         # ปฏิทินป๊อปอัป ปี พ.ศ. (เลือกเดือน/ปี, ปุ่มวันนี้) — ใช้แทน
 │                                 #   <input type="date"> ที่บังคับให้แสดง พ.ศ. ไม่ได้ (ค่า in/out = 'YYYY-MM-DD' ค.ศ.)
@@ -320,6 +321,10 @@ uploads/                          # ไฟล์แนบ runtime (gitignore) �
   sessionStorage ให้รีเฟรชแล้วยังเห็น) ไม่นับงานของตัวเอง · ครั้งแรก = 7 วัน · เพดาน 14 วัน
   แสดง: วงกระเพื่อม `.sdn-pulse` (globals.css, ปิดเมื่อ prefers-reduced-motion) + ชิป "ใหม่ N งาน" (กรอง+ซูม)
   + ป้าย "ใหม่" ใน popup/แผงขวา (เรียงขึ้นก่อน) · PNG วาดเป็นวงส้มแทนอนิเมชัน (options.sdn)
+- **เส้นขอบประเทศบาง ๆ** (ก.ย. 2026): `COUNTRY_LINE` สีเกือบดำ หนา 1.2 โปร่ง 0.55 — แค่พอสังเกต ไม่เปลี่ยนหน้าตาเดิม
+  (ผู้ใช้ลองฉากจางนอกประเทศ + เส้นหนาแล้ว **ไม่เอา** — อย่าเพิ่มกลับ) · ไม่ใช้ส้ม (สงวนให้ข้อมูล) · `interactive: false`
+  · มาจาก `data/thailand-outline.json` ที่รวม 77 จังหวัดล่วงหน้าด้วย `node scripts/build-thailand-outline.mjs`
+    (turf, devDependency) — แก้ thailand.json แล้วต้องรันใหม่ · PNG ที่ส่งออกวาดเส้นเดียวกัน
 - 2 โหมด: **หมุด** / **ความหนาแน่น** (choropleth ไล่เฉดส้ม 5 ขั้น,
   จังหวัดไม่มีงาน = เทาอ่อน เห็น "ช่องว่าง") เลือกเกณฑ์ได้: จำนวนงาน / จำนวนเจ้าหน้าที่
 - เลือกจังหวัด → ซูมเข้า + แตกหมุดรายงานสีตามประเด็น (งานที่พิกัดเดียวกันกระจายเป็นวง)
@@ -386,6 +391,7 @@ uploads/                          # ไฟล์แนบ runtime (gitignore) �
 - คู่มือเต็ม + เช็กลิสต์: `.claude/skills/qa-e2e/SKILL.md` (เรียกด้วย skill `qa-e2e`)
 - สคริปต์พร้อมใช้: `scripts/qa/full-flow.mjs` (ครบวงจร), `scripts/qa/map-ui.mjs` (หน้าแผนที่),
   `scripts/qa/team-policy-trash.mjs` (ทีมงาน + นโยบาย + ถังขยะ — ลบงานทดสอบถาวรเองตอนจบ)
+  `scripts/qa/lightbox.mjs` (พรีวิวรูปเต็มจอ ใช้งาน #85 ที่มี 5 รูป),
   `scripts/qa/links.mjs` (แนบลิงก์ → แก้ → เผยแพร่ → หน้าสาธารณะ · ต้องลบงาน "QA " เองหลังรัน)
 ```bash
 mkdir -p /tmp/sdn-qa

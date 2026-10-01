@@ -2,6 +2,7 @@
 // บริบท → กระบวนการ → นโยบาย/กติกา (ไฟล์ดาวน์โหลด) → ผลลัพธ์ → ปัจจัยสำเร็จ · แกลเลอรี · แชร์
 // ข้อมูลจาก STORY_SELECT เท่านั้น (ไม่มีชื่อเจ้าหน้าที่/ผู้ประสานงาน/เบอร์/หมุดจริง)
 // งานที่ยังไม่เผยแพร่: แอดมินดูตัวอย่างได้ (มีแถบเตือน) คนอื่นได้ 404
+import ImageGallery from '@/app/components/ImageGallery';
 import LinkList from '@/app/components/LinkList';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
@@ -237,18 +238,17 @@ export default async function StoryPage({ params }: { params: Promise<{ id: stri
         {images.length > (cover ? 1 : 0) && (
           <section className={section}>
             <h2 className={h2}>ภาพกิจกรรม</h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              {images.map((img) => (
-                <figure key={img.id}>
-                  {/* คลิกดูรูปเต็ม (ไม่ตัด) */}
-                  <a href={img.full} target="_blank" rel="noopener noreferrer">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={img.src} alt={img.caption || story.title} className="w-full aspect-video object-cover rounded-xl border border-orange-100 bg-orange-50" loading="lazy" />
-                  </a>
-                  {img.caption && <figcaption className="mt-1 text-xs text-gray-600">{img.caption}</figcaption>}
-                </figure>
-              ))}
-            </div>
+            {/* กริดใช้รูป 16:9 · คลิก = พรีวิวเต็มจอด้วยรูปเต็มไม่ตัด */}
+            <ImageGallery
+              thumbClassName="w-full aspect-video object-cover"
+              images={images.map((img) => ({
+                id: img.id,
+                thumb: img.src,
+                full: img.full,
+                alt: img.caption || story.title,
+                caption: img.caption,
+              }))}
+            />
           </section>
         )}
 

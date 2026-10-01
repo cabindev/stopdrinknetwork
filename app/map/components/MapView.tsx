@@ -28,6 +28,8 @@ import {
 } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 import thailandGeo from '@/app/data/thailand.json';
+// เส้นขอบประเทศ (รวม 77 จังหวัดไว้ล่วงหน้า — scripts/build-thailand-outline.mjs) ใช้วาดขอบเข้ม + ฉากจางนอกประเทศ
+import thailandOutline from '@/app/data/thailand-outline.json';
 import { getRegionLabel } from '@/app/utils/healthZones';
 import { makeColorOf } from '@/app/lib/categoryColors';
 import type { HealthZone } from '@/app/utils/healthZones';
@@ -118,6 +120,13 @@ interface LogoSpec {
   color: string;
   approx: boolean;
 }
+// เส้นขอบประเทศบาง ๆ สีเกือบดำ — แค่พอสังเกตขอบเขต ไม่ให้หน้าตาแผนที่ต่างจากเดิม (ผู้ใช้ไม่เอาฉากจางนอกประเทศ)
+// ไม่ใช้ส้ม — ส้มสงวนไว้ให้ข้อมูล (หมุด/ความหนาแน่น/จังหวัดที่เลือก)
+const COUNTRY_LINE = { color: '#1c1917', weight: 1.2, opacity: 0.55 };
+const PROVINCE_LINE = { color: '#d1d5db', weight: 1 };
+// วงนอกของแผ่นดินใหญ่ + เกาะ ([lng, lat]) — ใช้วาดเส้นขอบประเทศใน PNG
+const OUTLINE_RINGS = (thailandOutline.geometry.coordinates as number[][][][]).map((p) => p[0]);
+
 const logoPinHtml = (src: string, color: string, approx: boolean) =>
   `<div class="sdn-logo-pin${approx ? ' sdn-logo-pin--approx' : ''}" style="--c:${color}"><img src="${esc(src)}" alt="" draggable="false"></div>`;
 
@@ -260,7 +269,7 @@ export default function MapView({ activities, categories, categoryLogos, subCate
       }).addTo(map);
 
       const geoLayer = L.geoJSON(thailandGeo as GeoJSON.GeoJsonObject, {
-        style: { fillColor: '#ffffff', fillOpacity: 0.02, color: '#d1d5db', weight: 1 },
+        style: { fillColor: '#ffffff', fillOpacity: 0.02, ...PROVINCE_LINE },
         onEachFeature: (feature, layer) => {
           const name = feature?.properties?.name_th as string;
           if (!name) return;
@@ -270,6 +279,11 @@ export default function MapView({ activities, categories, categoryLogos, subCate
           layer.bindTooltip(name, { sticky: true });
           layer.on('click', () => setSelectedProvince((prev) => (prev === name ? '' : name)));
         },
+      }).addTo(map);
+      // เส้นขอบประเทศ — วางทับชั้นจังหวัด (จังหวัดที่เลือกยังเห็นขอบส้ม/ดำของตัวเองด้านใน) ไม่รับคลิก
+      L.geoJSON(thailandOutline as GeoJSON.GeoJsonObject, {
+        style: { ...COUNTRY_LINE, fill: false },
+        interactive: false,
       }).addTo(map);
       fullBoundsRef.current = geoLayer.getBounds();
       map.fitBounds(fullBoundsRef.current, { padding: [16, 16] });
@@ -400,8 +414,8 @@ export default function MapView({ activities, categories, categoryLogos, subCate
         return {
           fillColor: isSelected ? '#ea580c' : '#ffffff',
           fillOpacity: isSelected ? 0.12 : 0.02,
-          color: isSelected ? '#ea580c' : '#d1d5db',
-          weight: isSelected ? 2 : 1,
+          color: isSelected ? '#ea580c' : PROVINCE_LINE.color,
+          weight: isSelected ? 2 : PROVINCE_LINE.weight,
         };
       });
 
@@ -538,6 +552,14 @@ export default function MapView({ activities, categories, categoryLogos, subCate
       ctx.rect(0, offsetY, out.width, out.height - offsetY);
       ctx.clip();
 
+      const tracePath = (ring: number[][]) => {
+        ring.forEach(([lng, lat], i) => {
+          const { x, y } = pt(lat, lng);
+          i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+        });
+        ctx.closePath();
+      };
+
       for (const f of geoAll.features) {
         const name = f.properties?.name_th;
         if (!name) continue;
@@ -567,6 +589,16 @@ export default function MapView({ activities, categories, categoryLogos, subCate
           ctx.stroke();
         }
       }
+
+      // เส้นขอบประเทศ — ทับจังหวัด ใต้หมุด (ลำดับเดียวกับบนจอ)
+      ctx.beginPath();
+      for (const ring of OUTLINE_RINGS) tracePath(ring);
+      ctx.globalAlpha = COUNTRY_LINE.opacity;
+      ctx.strokeStyle = COUNTRY_LINE.color;
+      ctx.lineWidth = COUNTRY_LINE.weight * k;
+      ctx.lineJoin = 'round';
+      ctx.stroke();
+      ctx.globalAlpha = 1;
 
       // หมุด — อ่านตำแหน่ง/สี/ขนาดจาก layer ที่อยู่บนแผนที่จริง (วงงานใหม่อ่านจาก options.sdn)
       const font = (px: number, bold = false) =>

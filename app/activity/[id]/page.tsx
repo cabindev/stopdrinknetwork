@@ -1,4 +1,5 @@
 // app/activity/[id]/page.tsx — รายละเอียดการดำเนินงาน + ไฟล์แนบ (login ทุกคนดูได้, เจ้าของ/แอดมินแก้ได้)
+import ImageGallery from '@/app/components/ImageGallery';
 import LinkList from '@/app/components/LinkList';
 import { getServerSession } from 'next-auth/next';
 import { redirect, notFound } from 'next/navigation';
@@ -330,28 +331,17 @@ export default async function ActivityDetailPage({
             <h2 className="text-sm font-semibold text-gray-800 mb-3">
               รูปภาพกิจกรรม ({images.length})
             </h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              {images.map((img) => (
-                <a
-                  key={img.id}
-                  href={`/api/files/${img.filePath}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block group"
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={`/api/files/${img.filePath}`}
-                    alt={img.caption || img.fileName}
-                    className="w-full h-36 object-cover rounded-xl border border-orange-100 group-hover:opacity-90 transition-opacity"
-                  />
-                  {img.caption && <p className="mt-1 text-xs text-gray-600 leading-snug">{img.caption}</p>}
-                  {img.isCover && images.length > 1 && (
-                    <p className="mt-0.5 text-[10px] font-semibold text-orange-600">รูปปก</p>
-                  )}
-                </a>
-              ))}
-            </div>
+            {/* คลิกรูป = พรีวิวเต็มจอ เลื่อนดูทีละรูปได้ */}
+            <ImageGallery
+              images={images.map((img) => ({
+                id: img.id,
+                thumb: `/api/files/${img.filePath}`,
+                full: `/api/files/${img.filePath}`,
+                alt: img.caption || img.fileName,
+                caption: img.caption,
+                badge: img.isCover && images.length > 1 ? 'รูปปก' : null,
+              }))}
+            />
           </section>
         )}
 

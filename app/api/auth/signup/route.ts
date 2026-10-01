@@ -3,6 +3,7 @@ import bcrypt from 'bcrypt';
 import { NextRequest, NextResponse } from 'next/server';
 import path from 'path';
 import fs from 'fs/promises';
+import { notifyAdminsOfSignup } from '@/app/lib/mailer';
 import prisma from '@/app/lib/db';
 import { IMAGE_TYPES, MAX_FILE_SIZE, UPLOAD_ROOT } from '@/app/lib/activityFiles';
 
@@ -59,6 +60,9 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    // แจ้งแอดมินให้อนุมัติ — ไม่ await (ส่งเมลช้า/พลาดต้องไม่ทำให้การสมัครค้าง)
+    void notifyAdminsOfSignup({ firstName, lastName, email, via: 'form' });
+
     // Return success response
     return new NextResponse(JSON.stringify({ message: 'ลงทะเบียนสำเร็จ', userId: newUser.id }), { status: 200 });
   } catch (error) {
@@ -67,7 +71,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const userCount = await prisma.user.count();
     return new NextResponse(JSON.stringify({ userCount }), { status: 200 });

@@ -14,6 +14,7 @@ import {
   Clock
 } from 'lucide-react';
 import Link from 'next/link';
+import { toast } from 'react-hot-toast';
 
 interface UserItem {
   id: number;
@@ -44,6 +45,8 @@ const AdminManagementPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterRole, setFilterRole] = useState<'all' | 'pending' | 'admin' | 'member'>('all');
   const [updatingUsers, setUpdatingUsers] = useState<Set<number>>(new Set());
+  // ปฏิเสธบัญชีรออนุมัติ = ลบบัญชี — กดสองจังหวะ (ไม่ใช้ confirm() ของ browser)
+  const [confirmReject, setConfirmReject] = useState<number | null>(null);
 
   useEffect(() => {
     fetchUsers();
@@ -116,6 +119,27 @@ const AdminManagementPage: React.FC = () => {
         const newSet = new Set(prev);
         newSet.delete(userId);
         return newSet;
+      });
+    }
+  };
+
+  const rejectUser = async (userId: number) => {
+    setUpdatingUsers(prev => new Set(prev).add(userId));
+    try {
+      const res = await fetch(`/api/admin/users/${userId}`, { method: 'DELETE' });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'ปฏิเสธบัญชีไม่สำเร็จ');
+      setUsers(prev => prev.filter(u => u.id !== userId));
+      setStats(prev => prev ? { ...prev, totalUsers: prev.totalUsers - 1, totalPending: prev.totalPending - 1 } : null);
+      toast.success('ปฏิเสธบัญชีแล้ว');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'ปฏิเสธบัญชีไม่สำเร็จ');
+    } finally {
+      setConfirmReject(null);
+      setUpdatingUsers(prev => {
+        const next = new Set(prev);
+        next.delete(userId);
+        return next;
       });
     }
   };
@@ -416,6 +440,35 @@ const AdminManagementPage: React.FC = () => {
                           )}
                           {user.role === 'pending' ? 'อนุมัติ' : user.role === 'admin' ? 'ยกเลิกสิทธิ์ admin' : 'ตั้งเป็น admin'}
                         </button>
+                        {user.role === 'pending' && (
+                          confirmReject === user.id ? (
+                            <span className="ml-2 inline-flex items-center gap-1">
+                              <button
+                                type="button"
+                                onClick={() => rejectUser(user.id)}
+                                disabled={updatingUsers.has(user.id)}
+                                className="px-3 py-1 rounded-lg border border-red-600 bg-red-600 text-white text-xs font-medium hover:bg-red-700 disabled:opacity-50"
+                              >
+                                ยืนยันลบบัญชี
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setConfirmReject(null)}
+                                className="px-2 py-1 rounded-lg text-xs text-gray-500 hover:bg-gray-100"
+                              >
+                                ยกเลิก
+                              </button>
+                            </span>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => setConfirmReject(user.id)}
+                              className="ml-2 inline-flex items-center px-3 py-1 border border-red-200 rounded-lg text-xs font-medium text-red-600 bg-white hover:bg-red-50"
+                            >
+                              <X className="w-3 h-3 mr-1" /> ปฏิเสธ
+                            </button>
+                          )
+                        )}
                       </td>
                     </tr>
                   ))}

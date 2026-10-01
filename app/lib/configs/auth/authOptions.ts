@@ -5,6 +5,7 @@ import GoogleProvider from 'next-auth/providers/google';
 import { User as PrismaUser } from '@prisma/client';
 import bcrypt from 'bcrypt';
 import prisma from '@/app/lib/db';
+import { notifyAdminsOfSignup } from '@/app/lib/mailer';
 
 interface Credentials {
   email: string;
@@ -121,6 +122,9 @@ const authOptions: NextAuthOptions = {
               emailVerified: new Date(),
             },
           });
+
+      // บัญชีใหม่จาก Google → แจ้งแอดมินให้อนุมัติ (ไม่ await — ไม่ให้การ login ช้า)
+      if (!existing) void notifyAdminsOfSignup({ firstName: dbUser.firstName, lastName: dbUser.lastName, email, via: 'google' });
 
       // ส่งค่าจาก DB ต่อให้ jwt callback (id ของ Google เป็น string ต้องแทนด้วย id ของเรา)
       Object.assign(user, {

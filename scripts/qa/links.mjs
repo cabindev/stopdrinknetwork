@@ -1,5 +1,6 @@
 // QA: แนบลิงก์ภายนอก — ฟอร์ม → รายละเอียด → แก้ไข/audit → เผยแพร่ (Drive ไม่ติ๊กตั้งต้น) → หน้าสาธารณะ → API กันลิงก์อันตราย
 // รัน: node ~/.claude/skills/browser-automation/browser.mjs http://localhost:3000/ --script scripts/qa/links.mjs
+// เพิ่ม/แก้งานได้เฉพาะแอดมิน (ต.ค. 2026) · ลบงานทดสอบถาวรเองตอนจบ
 const BASE = 'http://localhost:3000';
 async function login(page, email) {
   await page.goto(`${BASE}/auth/signin`, { waitUntil: 'domcontentloaded' });
@@ -21,7 +22,7 @@ async function addLink(page, url, title = '') {
 }
 export default async (page) => {
   const r = {};
-  await login(page, 'somchai@test.sdn');
+  await login(page, 'admin@test.sdn');
   await page.goto(`${BASE}/activity/new`, { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => !document.querySelector('fieldset[disabled]'), { timeout: 30000 });
   await page.fill('#title', 'QA ลิงก์ภายนอก');
@@ -76,5 +77,12 @@ export default async (page) => {
   const res = await page.goto(`${BASE}/stories/${id}`, { waitUntil: 'domcontentloaded' });
   r.F_guestStatus = res.status();
   r.F_publicLinks = await page.locator('[data-testid=activity-links] li').allInnerTexts().then((a) => a.map((t) => t.replace(/\s+/g, ' ')));
+
+  // ล้าง: ถังขยะ → ลบถาวร
+  await login(page, 'admin@test.sdn');
+  r.Z_cleanup = await page.evaluate(async (i) => [
+    (await fetch(`/api/activities/${i}`, { method: 'DELETE' })).status,
+    (await fetch(`/api/admin/trash/${i}`, { method: 'DELETE' })).status,
+  ], id);
   return r;
 };

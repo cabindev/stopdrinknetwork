@@ -1,4 +1,5 @@
 // ทดสอบระบบรอบใหญ่ — ครอบคลุมสิทธิ์, ฟอร์ม, ไฟล์แนบ, แก้ไข/ลบ, audit, แผนที่, แดชบอร์ดแอดมิน
+// สิทธิ์ ต.ค. 2026: เพิ่ม/แก้/ลบงาน = แอดมินเท่านั้น · /map เปิดสาธารณะ (ไม่ login เห็นแบบกรองข้อมูล)
 const SHOT = '/tmp/sdn-qa';
 const BASE = 'http://localhost:3000';
 
@@ -20,15 +21,18 @@ export default async function run(page) {
   const r = {};
 
   // ── A. ผู้ใช้ที่ยังไม่ล็อกอิน
-  const guarded = ['/activity', '/activity/new', '/map', '/profile', '/dashboard'];
+  const guarded = ['/activity', '/activity/new', '/profile', '/dashboard'];
   r.A_guardedRedirects = {};
   for (const path of guarded) {
     const res = await page.goto(BASE + path, { waitUntil: 'domcontentloaded' });
     r.A_guardedRedirects[path] = page.url().includes('signin') ? 'redirect→signin' : `เข้าได้! (${res.status()})`;
   }
+  // แผนที่สาธารณะ: เปิดได้ แต่ไม่มีชื่อเจ้าหน้าที่ใน payload
+  const mapRes = await page.goto(`${BASE}/map`, { waitUntil: 'domcontentloaded' });
+  r.A_publicMap = { status: mapRes.status(), noStaffNames: !/"userName\\?":\\?"[^"\\]/.test(await page.content()) };
 
-  // ── B. member: บันทึกงานใหม่ครบทุกช่อง
-  r.B_login = await login(page, 'somchai@test.sdn');
+  // ── B. แอดมิน: บันทึกงานใหม่ครบทุกช่อง (member ไม่มีปุ่ม/สิทธิ์เพิ่มงาน)
+  r.B_login = await login(page, 'admin@test.sdn');
   await page.goto(`${BASE}/activity/new`, { waitUntil: 'domcontentloaded' });
   await page.waitForSelector('#title', { timeout: 15000 });
   await page.fill('#title', 'QA ทดสอบระบบรอบใหญ่');
@@ -62,13 +66,15 @@ export default async function run(page) {
   r.C_showsImageSection = /รูปภาพกิจกรรม/.test(body);
   r.C_showsDocSection = /เอกสาร\/นโยบาย/.test(body);
   r.C_showsHistory = /ประวัติการแก้ไข/.test(body);
-  const imgOk = await page.evaluate(() => {
-    const img = document.querySelector('section img');
-    return img ? img.naturalWidth > 0 : null;
-  });
+  // แกลเลอรีใช้ loading=lazy + รูปย่อ ?v=card → เลื่อนให้เห็นแล้วรอโหลดก่อนเช็ค
+  await page.locator('[data-testid=image-gallery] img').first().scrollIntoViewIfNeeded().catch(() => {});
+  const imgOk = await page
+    .waitForFunction(() => { const i = document.querySelector('[data-testid=image-gallery] img'); return i && i.complete && i.naturalWidth > 0; }, { timeout: 15000 })
+    .then(() => true)
+    .catch(() => false);
   r.C_imageLoads = imgOk;
 
-  // ── D. แก้ไขงาน → ต้องมี audit diff
+  // ── D. แก้ไขงาน (แอดมิน) → ต้องมี audit diff
   await page.goto(`${BASE}/activity/${newId}/edit`, { waitUntil: 'domcontentloaded' });
   await page.waitForSelector('#title', { timeout: 15000 });
   await page.fill('#title', 'QA ทดสอบระบบรอบใหญ่ (แก้ไข)');
@@ -82,7 +88,7 @@ export default async function run(page) {
   r.D_historyHasEdit = /แก้ไขรายการนี้/.test(body2);
   r.D_historyShowsStatusDiff = /สถานะ/.test(body2) && /เสร็จสิ้น/.test(body2);
 
-  // ── E. สิทธิ์: คนอื่นแก้ไม่ได้
+  // ── E. สิทธิ์: member แก้ไม่ได้
   await logout(page);
   await login(page, 'somying@test.sdn');
   const editRes = await page.goto(`${BASE}/activity/${newId}/edit`, { waitUntil: 'domcontentloaded' });
@@ -118,15 +124,16 @@ export default async function run(page) {
   await page.goto(`${BASE}/dashboard`, { waitUntil: 'domcontentloaded' });
   r.G_memberBlockedFromDashboard = page.url().includes('signin') || !page.url().includes('/dashboard');
 
-  // ── H. ลบงานทดสอบ (เจ้าของ)
+  // ── H. ลบงานทดสอบ (แอดมิน) → ลงถังขยะ แล้วลบถาวร ไม่ให้ค้างในถังขยะ
   await logout(page);
-  await login(page, 'somchai@test.sdn');
+  await login(page, 'admin@test.sdn');
   await page.goto(`${BASE}/activity/${newId}`, { waitUntil: 'domcontentloaded' });
   await page.locator('button:has-text("ลบงานนี้")').click();
   await page.waitForTimeout(400);
   await page.locator('button:has-text("ยืนยันลบ")').click();
   await page.waitForURL(/\/activity$/, { timeout: 20000 }).catch(() => {});
   r.H_deletedRedirect = /\/activity$/.test(page.url());
+  r.H_purged = await page.evaluate(async (id) => (await fetch(`/api/admin/trash/${id}`, { method: 'DELETE' })).status, newId);
 
   return r;
 }

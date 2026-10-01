@@ -49,3 +49,21 @@ Node.js ผ่าน Passenger + `server.js` (Express ห่อ Next.js) · DNS 
 ## ทำไมไม่รัน prisma migrate บนเซิร์ฟเวอร์
 env ที่ตั้งใน Plesk ถูกฉีดเฉพาะตอน Passenger สตาร์ทแอป — ไม่ถึง SSH/Run Node.js commands
 (`Environment variable not found: DATABASE_URL`) จึงแก้ฐานข้อมูลด้วย SQL ผ่าน phpMyAdmin (บทเรียนจาก activerun)
+
+## สำรองข้อมูลอัตโนมัติ (ยังไม่ได้ตั้ง — ตั้งครั้งเดียว)
+ข้อมูลจริงมี 2 ส่วน ต้องสำรองทั้งคู่: **ฐานข้อมูล `StopDrinkNetwork`** และ **โฟลเดอร์ `uploads/`** (รูป/เอกสาร/แบบสำรวจ
+ทั้งหมด — ไม่อยู่ใน git) ถ้าเสียอย่างใดอย่างหนึ่ง ข้อมูลอีกส่วนใช้ไม่ได้ครบ
+
+ใช้ **Plesk Backup Manager** (มีในตัว ไม่ต้องเขียนสคริปต์ — สคริปต์ cron เองไม่เหมาะเพราะ env ของ Plesk ไม่ถึง cron
+ต้องเขียนรหัสฐานข้อมูลลงไฟล์):
+1. Plesk → Websites & Domains → **sdnthailand.com** → **Backup & Restore** (Backup Manager)
+2. **Remote Storage Settings** → เลือก Google Drive (บัญชี sdnthailandbackup@gmail.com) หรือ FTP/S3 —
+   **ต้องเก็บนอกเซิร์ฟเวอร์** ถ้าเก็บในเครื่องเดียวกัน ดิสก์เสียก็หายพร้อมกัน
+3. **Schedule** → เปิด · ทุกวัน (ช่วงกลางคืน) · เก็บย้อนหลัง 14 ชุด · เนื้อหา = **Configuration and content**
+   (รวม mail/ไฟล์เว็บ/ฐานข้อมูล — `uploads/` อยู่ใน `/network.sdnthailand.com` จึงติดไปด้วย)
+   · เลือก "Store backups in: Remote storage" (หรือทั้งสองที่)
+4. กด **Back Up** ครั้งแรกด้วยมือ แล้วตรวจว่ามีไฟล์ใน Google Drive จริง
+5. ทดสอบกู้คืนอย่างน้อยปีละครั้ง: ดาวน์โหลดชุดสำรอง → เปิดดูว่ามี dump ของ `StopDrinkNetwork` และ `uploads/`
+
+ก่อนแก้ schema ทุกครั้ง (production-sql) ยัง Export ฐานข้อมูลจาก phpMyAdmin เก็บไว้เองเหมือนเดิม — ชุดสำรองรายวัน
+อาจเก่าถึง 24 ชม.

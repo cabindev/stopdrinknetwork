@@ -102,7 +102,9 @@ app/
 │                                 #   + OverlapSection
 │   ├── components/OverlapSection.tsx  # "เพื่อนร่วมพื้นที่": เทียบงานเรากับคนอื่น 3 ระดับ ตำบล>อำเภอ>จังหวัด
 │                                 #   (รับ myAreas จากงานทั้งหมด ไม่ใช่เฉพาะหน้าปัจจุบัน)
-│   ├── new/page.tsx              # ฟอร์มบันทึกงาน
+│   ├── new/page.tsx              # ฟอร์มบันทึกงาน · `?copy=<id>` = "คัดลอกงานนี้" (ปุ่มในหน้า detail) กรอกประเด็น/รายละเอียด/
+│                                 #   วันที่/ภาคี/ทีม(+ผู้เขียนเดิม)/ลิงก์ให้ — ไม่คัดลอกพื้นที่/หมุด/ไฟล์/นโยบาย/แบบสำรวจ/ผู้ประสานงาน
+│                                 #   (งานเดียวกันหลายพื้นที่ = หลายรายการ เช่น สงกรานต์ 5 ตำบล — ActivityForm prop `copy`)
 │   ├── [id]/page.tsx             # รายละเอียด: ประเด็น › ประเด็นย่อย, ผู้เข้าร่วม/ภาคี/ผู้ประสานงาน (เบอร์เฉพาะ
 │                                 #   แอดมิน+เจ้าของ), แกลเลอรี (ปกขึ้นก่อน+คำบรรยาย) + เอกสาร + ปุ่มแก้/ลบ
 │   ├── [id]/edit/page.tsx        # แก้ไข (ใช้ ActivityForm โหมด initial)
@@ -181,7 +183,9 @@ app/
 │   ├── activities/[id]/publish/  # POST แอดมินเผยแพร่/ร่าง/ยกเลิก + เลือก isPublic ของไฟล์ (audit log ทุกครั้ง)
 │   ├── public-files/[id]/        # ไฟล์สำหรับหน้าสาธารณะ ไม่ต้อง login — เฉพาะ isPublic + งาน isPublished (อ้างด้วย id)
 │   ├── public-logo/[kind]/[id]/  # โลโก้ประเด็น (category|sub) ไม่ต้อง login — ใช้แทนรูปปกกรณีศึกษาที่ยังไม่มีรูป
-│   └── files/[...path]/          # serve ไฟล์จาก uploads/ (ต้อง login, กัน path traversal)
+│   └── files/[...path]/          # serve ไฟล์จาก uploads/ (ต้อง login + isStaffRole, กัน path traversal)
+│                                 #   `?v=card|cover` = รูปย่อ 16:9 WebP (imageVariant) — การ์ด "งานของฉัน", แถบรูป, ไทล์ในฟอร์ม
+│                                 #   ต้นฉบับ ~1MB/รูป ห้ามใช้เป็นรูปย่อ (พรีวิวเต็มจอ/เปิดต้นฉบับยังใช้ไฟล์จริง)
 ├── components/
 │   ├── SessionProvider.tsx
 │   ├── ImageGallery.tsx          # แถบรูปเลื่อนซ้าย-ขวา (snap, ปุ่ม ‹ › จอใหญ่) + พรีวิวเต็มจอ (lightbox): ‹ › / ลูกศร / ปัด / รูปย่อ / Esc — หน้างาน + กรณีศึกษา
@@ -367,7 +371,14 @@ uploads/                          # ไฟล์แนบ runtime (gitignore) �
   เพื่อให้ชื่อ/รูปบน Navbar เปลี่ยนทันทีโดยไม่ต้อง login ใหม่
 
 ## Auth Rules (เหมือน buddhistlent)
-- Role: `member` (เจ้าหน้าที่) / `admin` / `superadmin` — dashboard เข้าได้ทั้ง admin และ superadmin
+- Role: `member` (เจ้าหน้าที่) / `admin` / `superadmin` / **`pending`** — dashboard เข้าได้ทั้ง admin และ superadmin
+- **สมัครใหม่ (ฟอร์ม + Google) = `pending` รอแอดมินอนุมัติ** (1 ต.ค. 2026 — เดิมได้ member ทันที คนนอกสมัครแล้วเห็นชื่อเจ้าหน้าที่/หมุดจริง)
+  · pending เห็นแค่ข้อมูลสาธารณะ: แผนที่โหมดสาธารณะ, /stories, โปรไฟล์ตัวเอง · `/activity/*` → `/auth/pending` (proxy.ts)
+  · API ภายในเช็ค `isStaffRole()` (activityMeta) ตอบ 403: activities/[id], export, files (ยกเว้น avatars/), geo/*, tiles
+  · **เพิ่ม API/หน้าภายในใหม่ต้องเช็ค `isStaffRole` ไม่ใช่แค่ `session?.user`**
+  · อนุมัติ = `/dashboard/setting/admin` แท็บ "รออนุมัติ" (เปิดให้เองถ้ามี) → member · แดชบอร์ดมีแถบเตือนจำนวนรออนุมัติ
+  · jwt callback อ่าน role จาก DB ใหม่ทุกครั้งที่ token ยังเป็น pending → อนุมัติแล้วใช้ได้ทันที (หน้า /auth/pending มีปุ่มรีเฟรช)
+  · pending ไม่อยู่ในรายชื่อเลือกทีมงาน (`teamPeople`) และรายชื่อเครือข่าย (/dashboard/people)
 - Session JWT มี `id, firstName, lastName, role, image` (ผ่าน callbacks ใน authOptions)
 - Password: bcrypt, ขั้นต่ำ 5 ตัวอักษร (เช็คทั้ง frontend/backend)
 - Reset token: crypto 32 bytes hex, หมดอายุ 1 ชั่วโมง
@@ -401,11 +412,12 @@ uploads/                          # ไฟล์แนบ runtime (gitignore) �
 ## แนวทางทดสอบ
 ทดสอบด้วยเบราว์เซอร์จริงเสมอก่อนบอกว่า "เสร็จ" (build ผ่าน ≠ ใช้งานได้)
 - คู่มือเต็ม + เช็กลิสต์: `.claude/skills/qa-e2e/SKILL.md` (เรียกด้วย skill `qa-e2e`)
-- สคริปต์พร้อมใช้: `scripts/qa/full-flow.mjs` (ครบวงจร), `scripts/qa/map-ui.mjs` (หน้าแผนที่),
+- สคริปต์พร้อมใช้ (ปรับตามสิทธิ์ ต.ค. 2026 แล้ว — แอดมินเป็นคนสร้างงาน, ลบงานทดสอบถาวรเองทุกสคริปต์):
+  `scripts/qa/full-flow.mjs` (ครบวงจร), `scripts/qa/map-ui.mjs` (หน้าแผนที่ ทีมงาน + โหมดสาธารณะ),
   `scripts/qa/team-policy-trash.mjs` (ทีมงาน + นโยบาย + ถังขยะ — ลบงานทดสอบถาวรเองตอนจบ)
   `scripts/qa/lightbox.mjs` (พรีวิวรูปเต็มจอ ใช้งาน #85 ที่มี 5 รูป),
   `scripts/qa/survey.mjs` (แบบสำรวจ ติ๊ก/แนบ/เลิกติ๊ก · ต้องตั้ง `SURVEY_PDF=<ไฟล์>` · ลบงานทดสอบถาวรเอง),
-  `scripts/qa/links.mjs` (แนบลิงก์ → แก้ → เผยแพร่ → หน้าสาธารณะ · ต้องลบงาน "QA " เองหลังรัน)
+  `scripts/qa/links.mjs` (แนบลิงก์ → แก้ → เผยแพร่ → หน้าสาธารณะ · ลบงานทดสอบถาวรเอง)
 ```bash
 mkdir -p /tmp/sdn-qa
 node ~/.claude/skills/browser-automation/browser.mjs http://localhost:3000/ --script scripts/qa/full-flow.mjs

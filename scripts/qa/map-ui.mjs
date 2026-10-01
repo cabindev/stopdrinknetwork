@@ -1,81 +1,95 @@
-// ทดสอบ layout ใหม่แบบ Google Maps: rail + sidebar หมวดหมู่ + ชิปสถานะ
+// QA: หน้าแผนที่ (layout ปัจจุบัน ต.ค. 2026) — แถบไอคอนซ้าย, แผงตัวกรอง, โหมดความหนาแน่น, popup หมุด, มือถือ
+// + โหมดสาธารณะ (ไม่ login): ไม่มีชื่อเจ้าหน้าที่/ปุ่มนำทาง/เกณฑ์จำนวนเจ้าหน้าที่
+// รัน: node ~/.claude/skills/browser-automation/browser.mjs http://localhost:3000/ --script scripts/qa/map-ui.mjs
+// หมุด = circleMarker (<path> ที่มีคำสั่ง arc) + หมุดโลโก้ (.sdn-logo-pin) — ดูกับดักข้อ 3 ใน CLAUDE.md
 const SHOT = '/tmp/sdn-qa';
-const markerColors = () =>
-  [...document.querySelectorAll('path.leaflet-interactive')]
-    .filter((p) => (p.getAttribute('d') || '').includes('a'))
-    .map((p) => p.getAttribute('fill'));
+const BASE = 'http://localhost:3000';
+const pinCount = () =>
+  [...document.querySelectorAll('path.leaflet-interactive')].filter((p) => /a/i.test(p.getAttribute('d') || '')).length +
+  document.querySelectorAll('.sdn-logo-pin').length;
 
-export default async function run(page, ui) {
+async function openMap(page) {
+  await page.goto(`${BASE}/map`, { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(pinCount, { timeout: 25000 }).catch(() => {});
+  await page.waitForTimeout(1200);
+}
+async function firstPopupText(page) {
+  await page.locator('.sdn-logo-pin, path.leaflet-interactive[d*="a"]').first().click({ force: true });
+  await page.waitForSelector('.leaflet-popup-content', { timeout: 5000 }).catch(() => {});
+  return (await page.locator('.leaflet-popup-content').last().innerText().catch(() => '')).replace(/\s+/g, ' ');
+}
+
+export default async function run(page) {
   const out = {};
-  await page.goto('http://localhost:3000/auth/signin', { waitUntil: 'domcontentloaded' });
+  await page.setViewportSize({ width: 1280, height: 860 });
+
+  // ── A. ทีมงาน (member ที่อนุมัติแล้ว) — ข้อมูลเต็ม
+  await page.goto(`${BASE}/auth/signin`, { waitUntil: 'domcontentloaded' });
   await page.fill('#email', 'somchai@test.sdn');
   await page.fill('#password', '12345');
   await page.click('button[type=submit]');
   await page.waitForURL((u) => !u.pathname.includes('signin'), { timeout: 25000 }).catch(() => {});
+  await openMap(page);
+  out.A1_pins = await page.evaluate(pinCount);
+  out.A2_searchBox = await page.locator('input[placeholder*="ค้นหางาน"]').isVisible();
+  const popup = await firstPopupText(page);
+  out.A3_popupHasAuthor = /โดย /.test(popup);
+  out.A3_popupHasDetailLink = /ดูรายละเอียดเต็ม/.test(popup);
+  await page.keyboard.press('Escape');
 
-  await page.goto('http://localhost:3000/map', { waitUntil: 'domcontentloaded' });
-  await page.waitForFunction(() => document.querySelectorAll('path.leaflet-interactive').length > 50, {
-    timeout: 25000,
-  });
-  await page.waitForTimeout(1200);
-
-  out['1_railButtons'] = await page.locator('nav button, nav a').count();
-  out['2_sidebarOpenByDefault'] = await page.locator('text=คลิกเพื่อกรองแผนที่').isVisible();
-  out['3_categoryRows'] = await page.locator('aside button:has(span.rounded-full)').count();
-  out['4_searchBoxVisible'] = await page.locator('input[placeholder*="ค้นหางาน"]').isVisible();
-  out['5_statusChips'] = await page.locator('button:has-text("กำลังดำเนินการ")').count();
-  out['6_markersDefault'] = (await page.evaluate(markerColors)).length;
-
-  // คลิกหมวดหมู่ใน sidebar → กรอง
-  const civic = page.locator('aside button', { hasText: 'Civic Space' }).first();
-  await civic.click();
+  // แผงตัวกรอง: เปิดจากแถบไอคอน → กรองประเด็นแรกที่มีงาน → หมุดลด/เท่า → ยกเลิก
+  await page.locator('button[title^="ตัวกรอง"]').click();
+  await page.waitForTimeout(500);
+  out.A4_filterPanel = await page.locator('h2', { hasText: 'ตัวกรอง' }).isVisible();
+  const cat = page.locator('aside button', { has: page.locator('span.rounded-full') }).first();
+  const catName = (await cat.innerText()).split('\n')[0];
+  await cat.click();
   await page.waitForTimeout(900);
-  const afterCat = await page.evaluate(markerColors);
-  out['7_markersAfterCategory'] = afterCat.length;
-  out['7_colorIsCivicYellow'] = [...new Set(afterCat)].every((c) => c === '#eab308');
-  await civic.click(); // ยกเลิกกรอง
+  out.A5_filterCategory = { name: catName, pins: await page.evaluate(pinCount) };
+  await cat.click();
   await page.waitForTimeout(700);
-
-  // ชิปสถานะ
-  await page.locator('button:has-text("เสร็จสิ้น")').first().click();
+  await page.locator('aside button', { hasText: 'เสร็จสิ้น' }).first().click();
   await page.waitForTimeout(900);
-  out['8_markersAfterStatusChip'] = (await page.evaluate(markerColors)).length;
-  await page.locator('button:has-text("ล้าง")').first().click().catch(() => {});
+  out.A6_pinsCompleted = await page.evaluate(pinCount);
+  await page.locator('aside button', { hasText: 'ทั้งหมด' }).first().click();
   await page.waitForTimeout(700);
-  out['8_markersAfterClear'] = (await page.evaluate(markerColors)).length;
+  out.A6_pinsAllAgain = (await page.evaluate(pinCount)) === out.A1_pins;
 
-  // ปุ่มโหมดความหนาแน่นบน rail
-  await page.locator('nav button', { hasText: 'ความหนาแน่น' }).first().click();
+  // โหมดความหนาแน่น (แผงตัวกรองเปิดอยู่ → เห็นเกณฑ์)
+  await page.locator('button[title="ดูความหนาแน่น"]').click();
   await page.waitForTimeout(1000);
-  out['9_heatSidebarShown'] = await page.locator('text=ตามจำนวนเจ้าหน้าที่').isVisible();
-  out['9_markersHidden'] = (await page.evaluate(markerColors)).length === 0;
-  await page.locator('nav button', { hasText: 'หมุด' }).first().click();
+  out.A7_heatStaffMetric = await page.locator('text=ตามจำนวนเจ้าหน้าที่').isVisible();
+  out.A7_heatPinsHidden = (await page.evaluate(pinCount)) === 0;
+  await page.locator('button[title="ดูหมุด"]').click();
   await page.waitForTimeout(900);
-  out['9_backToMarkers'] = (await page.evaluate(markerColors)).length > 0;
-
-  // ปิด/เปิด sidebar → แผนที่ต้องขยายและไม่พัง
-  const mapW1 = await page.evaluate(() => document.querySelector('.leaflet-container').clientWidth);
-  await page.locator('nav button', { hasText: 'หมวดหมู่' }).first().click();
-  await page.waitForTimeout(800);
-  const mapW2 = await page.evaluate(() => document.querySelector('.leaflet-container').clientWidth);
-  out['10_mapWidthGrew'] = mapW2 > mapW1;
-  out['10_widths'] = [mapW1, mapW2];
-  await page.locator('nav button', { hasText: 'หมวดหมู่' }).first().click();
-  await page.waitForTimeout(800);
-
-  // คลิกหมุด → panel
-  await page.locator('path[fill="#ea580c"]').first().click({ force: true });
-  await page.waitForTimeout(1400);
-  const t = await page.evaluate(() => document.body.innerText);
-  out['11_panelProvince'] = t.match(/จ\.([ก-๙]+)/)?.[1] ?? null;
-  await page.screenshot({ path: `${SHOT}/g-desktop.png` });
+  out.A7_backToPins = (await page.evaluate(pinCount)) > 0;
+  await page.screenshot({ path: `${SHOT}/map-desktop.png` });
 
   // มือถือ
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.waitForTimeout(1200);
-  out['12_railVisibleMobile'] = await page.locator('nav').first().isVisible();
-  out['12_searchVisibleMobile'] = await page.locator('input[placeholder*="ค้นหางาน"]').isVisible();
-  await page.screenshot({ path: `${SHOT}/g-mobile.png` });
+  await page.waitForTimeout(1000);
+  out.A8_mobile = {
+    rail: await page.locator('nav').first().isVisible(),
+    search: await page.locator('input[placeholder*="ค้นหางาน"]').isVisible(),
+    noHScroll: await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
+  };
+  await page.screenshot({ path: `${SHOT}/map-mobile.png` });
 
+  // ── B. สาธารณะ (ไม่ login) — ข้อมูลถูกกรอง
+  await page.setViewportSize({ width: 1280, height: 860 });
+  await page.context().clearCookies();
+  await openMap(page);
+  out.B1_pins = await page.evaluate(pinCount);
+  out.B2_noStaffNamesInPayload = !/"userName\\?":\\?"[^"\\]/.test(await page.content());
+  const pub = await firstPopupText(page);
+  out.B3_popupNoAuthor = !/โดย /.test(pub);
+  out.B3_popupNoNav = !/นำทาง/.test(pub);
+  out.B3_popupStoryOrNote = /อ่านกรณีศึกษา|ยังไม่มีกรณีศึกษา/.test(pub);
+  await page.keyboard.press('Escape');
+  out.B4_noExcelButton = (await page.locator('a[href^="/api/activities/export"]').count()) === 0;
+  await page.locator('button[title^="ตัวกรอง"]').click();
+  await page.locator('button[title="ดูความหนาแน่น"]').click();
+  await page.waitForTimeout(800);
+  out.B5_noStaffMetric = !(await page.locator('text=ตามจำนวนเจ้าหน้าที่').isVisible());
   return out;
 }

@@ -1,6 +1,7 @@
 'use client';
 
 // แกลเลอรีรูป + หน้าพรีวิวเต็มจอ (lightbox) — ใช้ทั้งหน้ารายละเอียดงานและหน้ากรณีศึกษาสาธารณะ
+// ในหน้า: แถบรูปเลื่อนซ้าย-ขวา (ปัด/ลากแทร็กแพด, ปุ่ม ‹ › บนจอใหญ่) snap ทีละรูป — รูปถัดไปโผล่ขอบให้รู้ว่าเลื่อนได้
 // เปิด: คลิกรูป · เลื่อน: ปุ่ม ‹ › / ลูกศรซ้าย-ขวา / ปัดบนมือถือ · ปิด: Esc / ปุ่ม × / คลิกพื้นหลัง
 // ไม่พึ่งไลบรารีเพิ่ม — รูปมีไม่เกิน 5 รูปต่องาน
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -17,7 +18,7 @@ export interface GalleryImage {
 
 export default function ImageGallery({
   images,
-  thumbClassName = 'w-full h-36 object-cover',
+  thumbClassName = 'w-full h-44 sm:h-48 object-cover',
 }: {
   images: GalleryImage[];
   thumbClassName?: string;
@@ -27,6 +28,27 @@ export default function ImageGallery({
   const closeBtnRef = useRef<HTMLButtonElement>(null);
   const lastFocus = useRef<HTMLElement | null>(null);
   const touchX = useRef<number | null>(null);
+  const stripRef = useRef<HTMLDivElement>(null);
+  const [canScroll, setCanScroll] = useState({ left: false, right: false });
+
+  // แสดงปุ่ม ‹ › เฉพาะฝั่งที่ยังเลื่อนไปได้
+  const updateScroll = useCallback(() => {
+    const el = stripRef.current;
+    if (!el) return;
+    setCanScroll({
+      left: el.scrollLeft > 4,
+      right: el.scrollLeft + el.clientWidth < el.scrollWidth - 4,
+    });
+  }, []);
+  useEffect(() => {
+    updateScroll();
+    window.addEventListener('resize', updateScroll);
+    return () => window.removeEventListener('resize', updateScroll);
+  }, [updateScroll, images.length]);
+  const scrollStrip = (dir: number) => {
+    const el = stripRef.current;
+    if (el) el.scrollBy({ left: dir * el.clientWidth * 0.8, behavior: 'smooth' });
+  };
 
   const go = useCallback(
     (delta: number) => setIndex((i) => (i === null ? i : (i + delta + images.length) % images.length)),
@@ -67,9 +89,15 @@ export default function ImageGallery({
 
   return (
     <>
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3" data-testid="image-gallery">
+      <div className="relative">
+      <div
+        ref={stripRef}
+        onScroll={updateScroll}
+        className="flex gap-3 overflow-x-auto snap-x snap-mandatory scroll-smooth pb-2 [scrollbar-width:thin]"
+        data-testid="image-gallery"
+      >
         {images.map((img, i) => (
-          <figure key={img.id}>
+          <figure key={img.id} className="shrink-0 snap-start w-[80%] sm:w-[calc((100%-1.5rem)/3)]">
             <button
               type="button"
               onClick={() => setIndex(i)}
@@ -88,6 +116,28 @@ export default function ImageGallery({
             {img.badge && <p className="mt-0.5 text-[10px] font-semibold text-orange-600">{img.badge}</p>}
           </figure>
         ))}
+      </div>
+      {/* ปุ่มเลื่อน — อยู่นอกแถบรูป (มือถือปัดเอา) */}
+      {canScroll.left && (
+        <button
+          type="button"
+          onClick={() => scrollStrip(-1)}
+          aria-label="เลื่อนดูรูปก่อนหน้า"
+          className="hidden sm:flex absolute left-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/95 border border-orange-100 shadow text-gray-800 hover:bg-orange-50"
+        >
+          <ChevronLeft className="w-5 h-5" />
+        </button>
+      )}
+      {canScroll.right && (
+        <button
+          type="button"
+          onClick={() => scrollStrip(1)}
+          aria-label="เลื่อนดูรูปถัดไป"
+          className="hidden sm:flex absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/95 border border-orange-100 shadow text-gray-800 hover:bg-orange-50"
+        >
+          <ChevronRight className="w-5 h-5" />
+        </button>
+      )}
       </div>
 
       {cur && index !== null && (

@@ -184,7 +184,7 @@ app/
 │   └── files/[...path]/          # serve ไฟล์จาก uploads/ (ต้อง login, กัน path traversal)
 ├── components/
 │   ├── SessionProvider.tsx
-│   ├── ImageGallery.tsx          # กริดรูป + พรีวิวเต็มจอ (lightbox): ‹ › / ลูกศร / ปัด / รูปย่อ / Esc — หน้างาน + กรณีศึกษา
+│   ├── ImageGallery.tsx          # แถบรูปเลื่อนซ้าย-ขวา (snap, ปุ่ม ‹ › จอใหญ่) + พรีวิวเต็มจอ (lightbox): ‹ › / ลูกศร / ปัด / รูปย่อ / Esc — หน้างาน + กรณีศึกษา
 │   ├── Pagination.tsx            # แบ่งหน้าแบบ server component (?page=) ใช้ซ้ำได้ทุกหน้า
 │   ├── ThaiDateField.tsx         # ปฏิทินป๊อปอัป ปี พ.ศ. (เลือกเดือน/ปี, ปุ่มวันนี้) — ใช้แทน
 │                                 #   <input type="date"> ที่บังคับให้แสดง พ.ศ. ไม่ได้ (ค่า in/out = 'YYYY-MM-DD' ค.ศ.)

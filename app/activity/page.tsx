@@ -260,12 +260,12 @@ export default async function MyActivitiesPage({
                           href={`/activity/${a.id}`}
                           className="group flex gap-4 p-3 sm:p-4 bg-white rounded-2xl border border-orange-100 hover:border-orange-300 hover:shadow-md hover:shadow-orange-100 transition-all"
                         >
-                          {/* ภาพประจำงาน: รูปปก → โลโก้ประเด็น → ตัวอักษรแรกบนสีประจำประเด็น */}
-                          <div className="relative shrink-0 w-24 sm:w-36 aspect-[4/3] rounded-xl overflow-hidden bg-orange-50 flex items-center justify-center">
+                          {/* ภาพประจำงาน 16:9 (ปกออกแบบเป็น 16:9 เห็นครบ): รูปปก → โลโก้ประเด็น → ตัวอักษรแรกบนสีประจำประเด็น */}
+                          <div className="relative shrink-0 self-start w-28 sm:w-40 aspect-video rounded-xl overflow-hidden bg-orange-50 flex items-center justify-center">
                             {cover ? (
                               // eslint-disable-next-line @next/next/no-img-element
                               <img
-                                src={`/api/files/${cover.filePath}`}
+                                src={`/api/files/${cover.filePath}?v=card`}
                                 alt=""
                                 loading="lazy"
                                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
@@ -276,7 +276,7 @@ export default async function MyActivitiesPage({
                                 src={`/api/files/${logo}`}
                                 alt=""
                                 loading="lazy"
-                                className="w-3/5 aspect-square object-contain rounded-full bg-white p-1.5"
+                                className="h-4/5 aspect-square object-contain rounded-full bg-white p-1.5"
                               />
                             ) : (
                               <span

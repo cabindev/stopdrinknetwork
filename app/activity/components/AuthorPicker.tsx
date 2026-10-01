@@ -93,7 +93,7 @@ export default function AuthorPicker({
         <span className="truncate">{author.name}</span>
         {saving && <Loader2 className="w-4 h-4 animate-spin" />}
       </button>
-      <span className="ml-auto hidden sm:block text-[11px] text-gray-400">เฉพาะ superadmin · งานจะย้ายไป "งานของฉัน" ของคนนั้น</span>
+      <span className="ml-auto hidden sm:block text-[11px] text-gray-400">เฉพาะ superadmin · งานจะย้ายไป “งานของฉัน” ของคนนั้น</span>
 
       {open && (
         <div className="absolute left-4 right-4 sm:left-24 sm:right-auto sm:w-80 top-full mt-1 z-30 bg-white rounded-xl border border-orange-200 shadow-xl">

@@ -574,7 +574,8 @@ export default function MapView({ activities, categories, categoryLogos, subCate
       const tracePath = (ring: number[][]) => {
         ring.forEach(([lng, lat], i) => {
           const { x, y } = pt(lat, lng);
-          i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
         });
         ctx.closePath();
       };
@@ -592,7 +593,8 @@ export default function MapView({ activities, categories, categoryLogos, subCate
         for (const ring of ringsOf(f.geometry)) {
           ring.forEach(([lng, lat], i) => {
             const { x, y } = pt(lat, lng);
-            i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
           });
           ctx.closePath();
         }
@@ -620,8 +622,6 @@ export default function MapView({ activities, categories, categoryLogos, subCate
       ctx.globalAlpha = 1;
 
       // หมุด — อ่านตำแหน่ง/สี/ขนาดจาก layer ที่อยู่บนแผนที่จริง (วงงานใหม่อ่านจาก options.sdn)
-      const font = (px: number, bold = false) =>
-        `${bold ? 'bold ' : ''}${px * k}px "Segoe UI", Tahoma, sans-serif`;
       for (const layer of markersRef.current) {
         const ll = (layer as CircleMarker).getLatLng?.();
         if (!ll) continue;

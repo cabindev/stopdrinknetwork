@@ -32,7 +32,6 @@ import {
   policyDetailText,
   formatStartDate,
   POLICY_LABEL,
-  AREA_SCOPE_LABEL,
 } from '@/app/lib/activityMeta';
 import type { HealthZone } from '@/app/utils/healthZones';
 import DeleteButton from './DeleteButton';

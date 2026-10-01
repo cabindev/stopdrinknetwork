@@ -1,5 +1,6 @@
 // app/dashboard/components/DashboardClient.tsx
 'use client'
+import type { Session } from 'next-auth';
 
 import { useDashboard } from '../context/DashboardContext'
 import Sidebar from './Sidebar'
@@ -8,7 +9,7 @@ import { cn } from '@/lib/utils'
 
 interface DashboardClientProps {
   children: React.ReactNode
-  user: any
+  user: Session['user']
 }
 
 export default function DashboardClient({ children, user }: DashboardClientProps) {

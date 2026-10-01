@@ -1013,7 +1013,7 @@ export default function ActivityForm({
             {/* PDF จาก "พิมพ์ → บันทึกเป็น PDF" เก็บรูปแบบไม่บีบอัด (เคยเจอ Word 2MB กลายเป็น PDF 28MB) */}
             <p className={`text-[11px] leading-relaxed ${surveyFiles.some((f) => f.size > 20 * 1024 * 1024) ? 'text-red-500' : 'text-gray-400'}`}>
               ไฟล์ละไม่เกิน 20MB · แนบไฟล์ Word ได้เลย หรือถ้าจะทำ PDF จาก Word ให้ใช้ <b>File → Save As → PDF</b>
-              (เลือกขนาดเล็ก/สำหรับออนไลน์) — อย่าใช้ "พิมพ์ → บันทึกเป็น PDF" ไฟล์จะใหญ่ขึ้นหลายเท่า
+              (เลือกขนาดเล็ก/สำหรับออนไลน์) — อย่าใช้ “พิมพ์ → บันทึกเป็น PDF” ไฟล์จะใหญ่ขึ้นหลายเท่า
             </p>
           </div>
         )}

@@ -1,5 +1,6 @@
 // app/dashboard/components/TopNav.tsx
 'use client'
+import type { Session } from 'next-auth';
 
 import { useDashboard } from '../context/DashboardContext';
 import { useTopNav } from '../context/TopNavContext';
@@ -11,7 +12,7 @@ import {
 } from 'lucide-react';
 
 interface TopNavProps {
-  user: any;
+  user: Session['user'];
 }
 
 export default function TopNav({ user }: TopNavProps) {
@@ -113,7 +114,7 @@ export default function TopNav({ user }: TopNavProps) {
             </span>
           )}
           <span className="text-sm text-gray-700 hidden lg:block font-normal">
-            {user?.firstName || user?.name || "User"}
+            {user?.firstName || "User"}
           </span>
         </div>
       </div>

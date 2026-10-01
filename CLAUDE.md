@@ -39,6 +39,8 @@ npx prisma generate  # Regenerate client หลังแก้ schema
 npx prisma migrate status   # ดูว่า migration ครบไหม
 npx prisma migrate deploy   # ใช้ migration (ทั้ง dev และ production) — **ห้ามใช้ db push แล้ว** (ดูกับดักข้อ 8)
 npx prisma studio    # GUI ดูข้อมูล
+npm run lint         # ESLint (eslint.config.mjs — Next 16 ถอด `next lint` แล้ว) ต้อง 0 error ก่อน commit
+                     #   กฎ React Compiler (set-state-in-effect/refs/purity/immutability) ตั้งเป็น warn: โค้ดเดิม — แก้เมื่อแตะไฟล์นั้น
 
 node scripts/seed-categories.mjs      # seed ประเด็นงาน 13 หมวด (ตอนติดตั้งใหม่)
 node scripts/seed-subcategories.mjs   # seed ประเด็นย่อยร่าง (ประเพณีปลอดเหล้า 12 รายการ) — รันซ้ำได้ ไม่สร้างซ้ำ
@@ -377,6 +379,9 @@ uploads/                          # ไฟล์แนบ runtime (gitignore) �
   · API ภายในเช็ค `isStaffRole()` (activityMeta) ตอบ 403: activities/[id], export, files (ยกเว้น avatars/), geo/*, tiles
   · **เพิ่ม API/หน้าภายในใหม่ต้องเช็ค `isStaffRole` ไม่ใช่แค่ `session?.user`**
   · อนุมัติ = `/dashboard/setting/admin` แท็บ "รออนุมัติ" (เปิดให้เองถ้ามี) → member · แดชบอร์ดมีแถบเตือนจำนวนรออนุมัติ
+  · **ปฏิเสธ** = ลบบัญชี (`DELETE /api/admin/users/[id]`) ได้เฉพาะ pending ที่ไม่มีงาน/ทีม/ประวัติ + ลบรูป avatars ตามไป
+  · สมัครใหม่ → อีเมลแจ้งแอดมินทุกคน (BCC, ข้าม @test.sdn) ผ่าน `notifyAdminsOfSignup()` ใน `lib/mailer.ts`
+    (transporter Gmail ใช้ร่วมกับลืมรหัสผ่าน · ไม่ await — ส่งพลาดไม่ทำให้สมัครล้ม · ไม่มี EMAIL_USER = ข้าม)
   · jwt callback อ่าน role จาก DB ใหม่ทุกครั้งที่ token ยังเป็น pending → อนุมัติแล้วใช้ได้ทันที (หน้า /auth/pending มีปุ่มรีเฟรช)
   · pending ไม่อยู่ในรายชื่อเลือกทีมงาน (`teamPeople`) และรายชื่อเครือข่าย (/dashboard/people)
 - Session JWT มี `id, firstName, lastName, role, image` (ผ่าน callbacks ใน authOptions)

@@ -87,7 +87,7 @@ export default function SignUpForm() {
         const error = await response.json()
         setError(error.error || 'เกิดข้อผิดพลาด')
       }
-    } catch (err) {
+    } catch {
       setError('เกิดข้อผิดพลาดในการเชื่อมต่อ')
     } finally {
       setIsLoading(false)

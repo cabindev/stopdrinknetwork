@@ -1,6 +1,7 @@
 // app/dashboard/components/Sidebar.tsx
 // Sidebar เมนูหลักของระบบ Stop Drink Network — โครงสร้างเดียวกับ buddhistlent
 'use client'
+import type { Session } from 'next-auth';
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -28,7 +29,7 @@ import {
 } from 'lucide-react';
 
 interface SidebarProps {
-  user: any;
+  user: Session['user'];
 }
 
 export default function Sidebar({ user }: SidebarProps) {
@@ -366,7 +367,7 @@ export default function Sidebar({ user }: SidebarProps) {
                   />
                 ) : (
                   <span className="text-xs font-medium text-orange-700">
-                    {user?.firstName?.charAt(0) || user?.name?.charAt(0) || "U"}
+                    {user?.firstName?.charAt(0) || "U"}
                   </span>
                 )}
               </div>
@@ -374,7 +375,7 @@ export default function Sidebar({ user }: SidebarProps) {
             {!sidebarCollapsed && (
               <div className="ml-2">
                 <p className="text-xs font-medium text-gray-900">
-                  {user?.firstName || user?.name || ""} {user?.lastName || ""}
+                  {user?.firstName || ""} {user?.lastName || ""}
                 </p>
                 <p className="text-xs text-gray-500">{user?.email || ""}</p>
                 <p className="text-xs mt-1 bg-orange-100 text-orange-700 inline-block px-2 py-0.5 rounded-full border border-orange-200">

@@ -15,7 +15,6 @@ import {
 import prisma from '@/app/lib/db';
 import { categoryColor } from '@/app/lib/categoryColors';
 import { getThaiZoneName, getAllHealthZones } from '@/app/utils/healthZones';
-import type { HealthZone } from '@/app/utils/healthZones';
 import { provinceAreaTotals, TOTAL_PROVINCES } from '@/app/lib/areaCoverage';
 const THAI_MONTHS = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
 
@@ -361,6 +360,7 @@ export default async function StatsOverview({ year }: { year?: number }) {
             >
               <MapIcon className="w-4 h-4" /> แผนที่รวม
             </Link>
+            {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- ดาวน์โหลดไฟล์จาก API ต้องเป็น <a> ไม่ใช่ <Link> */}
             <a
               href="/api/activities/export"
               className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-orange-200 text-orange-700 text-xs font-medium hover:bg-orange-50 transition-colors"

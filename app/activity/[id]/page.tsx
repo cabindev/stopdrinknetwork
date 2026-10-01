@@ -9,6 +9,7 @@ import {
   MapPin,
   CalendarDays,
   SquarePen,
+  Copy,
   FileText,
   User,
   Users,
@@ -146,6 +147,14 @@ export default async function ActivityDetailPage({
                   <Globe className="w-3.5 h-3.5" /> {activity.isPublished ? 'เผยแพร่แล้ว' : 'เผยแพร่เป็นกรณีศึกษา'}
                 </Link>
               )}
+              {/* งานเดียวกันหลายพื้นที่ → คัดลอกแล้วเลือกพื้นที่ใหม่ (1 รายการต่อ 1 พื้นที่) */}
+              <Link
+                href={`/activity/new?copy=${activity.id}`}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-orange-200 text-orange-700 text-xs font-medium hover:bg-orange-50 transition-colors"
+                title="สร้างงานใหม่จากงานนี้ — สำหรับงานเดียวกันในพื้นที่อื่น"
+              >
+                <Copy className="w-3.5 h-3.5" /> คัดลอกงานนี้
+              </Link>
               <Link
                 href={`/activity/${activity.id}/edit`}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-orange-600 text-white text-xs font-medium hover:bg-orange-700 transition-colors"
@@ -367,7 +376,7 @@ export default async function ActivityDetailPage({
             <ImageGallery
               images={images.map((img) => ({
                 id: img.id,
-                thumb: `/api/files/${img.filePath}`,
+                thumb: `/api/files/${img.filePath}?v=card`, // รูปย่อ 640×360 — พรีวิวเต็มจอใช้ full
                 full: `/api/files/${img.filePath}`,
                 alt: img.caption || img.fileName,
                 caption: img.caption,

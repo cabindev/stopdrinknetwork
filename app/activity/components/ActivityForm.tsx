@@ -114,22 +114,25 @@ const labelCls = 'block text-gray-700 text-sm font-medium mb-1';
 
 export default function ActivityForm({
   initial,
+  copy = false,
   people = [],
   currentUserId,
 }: {
   initial?: ActivityInitialData;
+  // คัดลอกงาน: ใช้ initial เป็นค่าตั้งต้นของ "งานใหม่" (POST) — หน้า new ล้างพื้นที่/ไฟล์/ช่องเฉพาะพื้นที่มาแล้ว
+  copy?: boolean;
   people?: TeamPerson[]; // รายชื่อให้เลือกทีมงาน
   currentUserId: number; // งานใหม่ = ผู้เขียน
 }) {
   const router = useRouter();
-  const isEdit = !!initial;
+  const isEdit = !!initial && !copy;
   const [memberIds, setMemberIds] = useState<number[]>(initial?.memberIds ?? []);
   const [links, setLinks] = useState<{ url: string; title: string }[]>(
     (initial?.links ?? []).map((l) => ({ url: l.url, title: l.title ?? '' }))
   );
   const [categories, setCategories] = useState<Category[]>([]);
   const [location, setLocation] = useState<RegionData | null>(
-    initial
+    initial && !copy
       ? {
           district: initial.district,
           amphoe: initial.amphoe,
@@ -142,10 +145,10 @@ export default function ActivityForm({
         }
       : null
   );
-  const [pin, setPin] = useState<PinValue | null>(initial?.pin ?? null);
+  const [pin, setPin] = useState<PinValue | null>(copy ? null : initial?.pin ?? null);
   const [images, setImages] = useState<NewImage[]>([]);
   const [documents, setDocuments] = useState<File[]>([]);
-  const [existingAttachments] = useState(initial?.attachments ?? []);
+  const [existingAttachments] = useState(copy ? [] : initial?.attachments ?? []);
   // ไฟล์นโยบายแยกออกจากรูป/เอกสารทั่วไป (ไม่นับเพดานรูปกิจกรรม)
   const existingImages = existingAttachments.filter((a) => a.kind === 'IMAGE' && !a.policyLevel && !a.isSurvey);
   const existingDocs = existingAttachments.filter((a) => a.kind === 'DOCUMENT' && !a.policyLevel && !a.isSurvey);
@@ -580,7 +583,7 @@ export default function ActivityForm({
       </section>
 
       {/* ทีมงานร่วม — งานเป็นงานทีม */}
-      <TeamField people={people} ownerId={initial?.ownerId ?? currentUserId} value={memberIds} onChange={setMemberIds} />
+      <TeamField people={people} ownerId={isEdit ? initial!.ownerId : currentUserId} value={memberIds} onChange={setMemberIds} />
 
       {/* ผลลัพธ์ + ภาคี + ผู้ประสานงาน — พับได้ ไม่บังคับ (ฟอร์มชั้น 2: เติมทีหลังได้) */}
       <details
@@ -1007,6 +1010,11 @@ export default function ActivityForm({
               <Plus className="w-3.5 h-3.5" />
               {existingSurvey.length + surveyFiles.length > 0 ? 'เพิ่มแบบสำรวจ' : 'แนบไฟล์แบบสำรวจ'}
             </button>
+            {/* PDF จาก "พิมพ์ → บันทึกเป็น PDF" เก็บรูปแบบไม่บีบอัด (เคยเจอ Word 2MB กลายเป็น PDF 28MB) */}
+            <p className={`text-[11px] leading-relaxed ${surveyFiles.some((f) => f.size > 20 * 1024 * 1024) ? 'text-red-500' : 'text-gray-400'}`}>
+              ไฟล์ละไม่เกิน 20MB · แนบไฟล์ Word ได้เลย หรือถ้าจะทำ PDF จาก Word ให้ใช้ <b>File → Save As → PDF</b>
+              (เลือกขนาดเล็ก/สำหรับออนไลน์) — อย่าใช้ "พิมพ์ → บันทึกเป็น PDF" ไฟล์จะใหญ่ขึ้นหลายเท่า
+            </p>
           </div>
         )}
         {!hasSurvey && existingSurvey.length > 0 && (
@@ -1172,7 +1180,7 @@ export default function ActivityForm({
                 return (
                   <ImageTile
                     key={key}
-                    src={`/api/files/${a.filePath}`}
+                    src={`/api/files/${a.filePath}?v=card`}
                     alt={a.fileName}
                     caption={existingCaptions[a.id] ?? ''}
                     onCaption={(v) => setExistingCaptions((prev) => ({ ...prev, [a.id]: v }))}

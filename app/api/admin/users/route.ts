@@ -38,6 +38,8 @@ export async function GET() {
         email: true,
         role: true,
         image: true,
+        organization: true, // ช่วยแอดมินตัดสินใจอนุมัติบัญชีใหม่
+        position: true,
         createdAt: true,
         updatedAt: true
       },
@@ -50,6 +52,7 @@ export async function GET() {
     const totalUsers = users.length;
     const totalAdmins = users.filter(user => user.role === 'admin').length;
     const totalMembers = users.filter(user => user.role === 'member').length;
+    const totalPending = users.filter(user => user.role === 'pending').length;
 
     // Recent users (last 7 days)
     const sevenDaysAgo = new Date();
@@ -62,6 +65,7 @@ export async function GET() {
       totalUsers,
       totalAdmins,
       totalMembers,
+      totalPending,
       recentUsers
     };
 

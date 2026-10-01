@@ -2,6 +2,7 @@
 // ผ่าน server เพื่อไม่ให้คีย์โผล่ใน URL ฝั่ง browser + เป็น same-origin (วาดลง canvas ได้ไม่โดน taint)
 import { NextRequest, NextResponse } from 'next/server';
 import { getToken } from 'next-auth/jwt';
+import { isStaffRole } from '@/app/lib/activityMeta';
 import { SPHERE_LAYERS, sphereKey, sphereTileUrl } from '@/app/lib/sphere';
 
 export async function GET(
@@ -9,7 +10,9 @@ export async function GET(
   { params }: { params: Promise<{ layer: string; z: string; x: string; y: string }> }
 ) {
   // getToken อ่าน JWT จาก cookie ตรง ๆ — เร็วกว่า getServerSession (tile ถูกเรียกทีละหลายสิบรูป)
-  if (!(await getToken({ req: request }))) return new NextResponse(null, { status: 401 });
+  const token = await getToken({ req: request });
+  if (!token) return new NextResponse(null, { status: 401 });
+  if (!isStaffRole(token.role as string)) return new NextResponse(null, { status: 403 }); // รออนุมัติ
   const { layer, z, x, y } = await params;
   const [zi, xi, yi] = [z, x, y.replace(/\.\w+$/, '')].map(Number);
   const max = 2 ** zi;

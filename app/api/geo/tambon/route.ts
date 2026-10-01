@@ -3,6 +3,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import authOptions from '@/app/lib/configs/auth/authOptions';
+import { isStaffRole } from '@/app/lib/activityMeta';
 import { getTambonCoords } from '@/app/lib/tambonCoords';
 import { isInProvince } from '@/app/lib/provinceGeo';
 import { reverseGeocode } from '@/app/lib/sphere';
@@ -11,6 +12,9 @@ export async function GET(request: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'กรุณาเข้าสู่ระบบ' }, { status: 401 });
+  }
+  if (!isStaffRole(session.user.role)) {
+    return NextResponse.json({ error: 'บัญชีรอผู้ดูแลระบบอนุมัติ' }, { status: 403 });
   }
   const q = request.nextUrl.searchParams;
   const district = q.get('district') ?? '';

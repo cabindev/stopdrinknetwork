@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import authOptions from '@/app/lib/configs/auth/authOptions';
+import { isStaffRole } from '@/app/lib/activityMeta';
 import prisma from '@/app/lib/db';
 import { provinceAt } from '@/app/lib/provinceGeo';
 import { getTambonCoords, nearestTambon } from '@/app/lib/tambonCoords';
@@ -82,6 +83,9 @@ export async function GET(request: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'กรุณาเข้าสู่ระบบ' }, { status: 401 });
+  }
+  if (!isStaffRole(session.user.role)) {
+    return NextResponse.json({ error: 'บัญชีรอผู้ดูแลระบบอนุมัติ' }, { status: 403 });
   }
   const sp = request.nextUrl.searchParams;
   const q = (sp.get('q') ?? '').trim().slice(0, 100);

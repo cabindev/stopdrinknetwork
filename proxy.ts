@@ -20,6 +20,12 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL(HOME_AFTER_LOGIN, request.url));
   }
 
+  // บัญชีรออนุมัติ: งานของทีม (/activity/*) เป็นข้อมูลภายใน → หน้าแจ้งรออนุมัติ
+  // (role ใน cookie อาจค้าง pending ชั่วครู่หลังอนุมัติ — หน้า /auth/pending เช็คจาก DB แล้วพากลับเอง)
+  if (user?.role === 'pending' && pathname.startsWith('/activity')) {
+    return NextResponse.redirect(new URL('/auth/pending', request.url));
+  }
+
   if (
     pathname.startsWith('/dashboard') &&
     (!user || !['admin', 'superadmin'].includes(user.role as string))
@@ -31,5 +37,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/', '/auth/signin', '/auth/signup', '/dashboard/:path*'],
+  matcher: ['/', '/auth/signin', '/auth/signup', '/dashboard/:path*', '/activity/:path*'],
 };

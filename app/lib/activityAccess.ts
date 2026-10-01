@@ -25,6 +25,7 @@ export async function purgeExpiredTrash() {
 // รายชื่อสำหรับเลือกทีมงาน — ชื่อ/หน่วยงาน/รูปเท่านั้น (ไม่ส่งอีเมล/เบอร์ให้ member ทั่วไป)
 export async function teamPeople() {
   const users = await prisma.user.findMany({
+    where: { role: { not: 'pending' } }, // บัญชีรออนุมัติยังไม่ใช่ทีมงาน
     select: { id: true, firstName: true, lastName: true, organization: true, image: true },
     orderBy: [{ firstName: 'asc' }],
   });

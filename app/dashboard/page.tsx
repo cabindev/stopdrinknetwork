@@ -4,6 +4,9 @@ import { redirect } from 'next/navigation';
 import authOptions from '../lib/configs/auth/authOptions';
 import QuickActions from './components/QuickActions';
 import StatsOverview from './components/StatsOverview';
+import Link from 'next/link';
+import { Clock } from 'lucide-react';
+import prisma from '../lib/db';
 
 export default async function DashboardPage({
   searchParams,
@@ -21,6 +24,8 @@ export default async function DashboardPage({
   const isAdmin = ['admin', 'superadmin'].includes(session.user.role);
   const user = session.user;
   const buddhistYear = new Date().getFullYear() + 543;
+  // บัญชีสมัครใหม่ที่รออนุมัติ — แจ้งเตือนบนแดชบอร์ดให้แอดมินเห็นทันที
+  const pendingCount = isAdmin ? await prisma.user.count({ where: { role: 'pending' } }) : 0;
 
   const today = new Date().toLocaleDateString('th-TH', {
     year: 'numeric', month: 'long', day: 'numeric', weekday: 'long',
@@ -55,6 +60,19 @@ export default async function DashboardPage({
             </div>
           </div>
         </div>
+
+        {pendingCount > 0 && (
+          <Link
+            href="/dashboard/setting/admin"
+            className="flex items-center gap-3 px-4 py-3 rounded-2xl border border-orange-200 bg-orange-50 text-sm text-gray-800 hover:bg-orange-100 transition-colors"
+          >
+            <Clock className="w-5 h-5 text-orange-600 shrink-0" />
+            <span className="flex-1">
+              มีบัญชีสมัครใหม่ <b>{pendingCount}</b> บัญชีรออนุมัติ — ยังเห็นแค่ข้อมูลสาธารณะจนกว่าจะอนุมัติ
+            </span>
+            <span className="text-orange-700 font-medium">ตรวจสอบ →</span>
+          </Link>
+        )}
 
         {/* สถิติภาพรวมทั้งเครือข่าย */}
         <StatsOverview year={yearNum} />

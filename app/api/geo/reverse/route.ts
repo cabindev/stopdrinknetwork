@@ -3,6 +3,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import authOptions from '@/app/lib/configs/auth/authOptions';
+import { isStaffRole } from '@/app/lib/activityMeta';
 import { isInThailandBox } from '@/app/lib/geoLink';
 import { reverseGeocode, nearbyPlaces } from '@/app/lib/sphere';
 import { provinceAt } from '@/app/lib/provinceGeo';
@@ -13,6 +14,9 @@ export async function GET(request: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'กรุณาเข้าสู่ระบบ' }, { status: 401 });
+  }
+  if (!isStaffRole(session.user.role)) {
+    return NextResponse.json({ error: 'บัญชีรอผู้ดูแลระบบอนุมัติ' }, { status: 403 });
   }
   const sp = request.nextUrl.searchParams;
   const lat = Number(sp.get('lat'));

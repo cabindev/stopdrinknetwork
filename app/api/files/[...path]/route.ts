@@ -5,12 +5,16 @@ import { getServerSession } from 'next-auth';
 import path from 'path';
 import fs from 'fs/promises';
 import authOptions from '@/app/lib/configs/auth/authOptions';
+import { isStaffRole } from '@/app/lib/activityMeta';
 import { NO_STORE } from '@/app/lib/activityFiles';
+import prisma from '@/app/lib/db';
+import { imageVariant, VARIANTS } from '@/app/lib/imageVariant';
+import type { Variant } from '@/app/lib/imageVariant';
 
 const UPLOAD_ROOT = path.join(process.cwd(), 'uploads');
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ path: string[] }> }
 ) {
   const session = await getServerSession(authOptions);
@@ -19,6 +23,10 @@ export async function GET(
   }
 
   const { path: segments } = await params;
+  // บัญชีรออนุมัติ: เปิดได้แค่รูปโปรไฟล์ (avatars/) — ไฟล์แนบของงานเป็นข้อมูลภายใน
+  if (!isStaffRole(session.user.role) && segments[0] !== 'avatars') {
+    return NextResponse.json({ error: 'บัญชีรอผู้ดูแลระบบอนุมัติ' }, { status: 403, headers: NO_STORE });
+  }
   const filePath = path.join(UPLOAD_ROOT, ...segments);
 
   // กัน path traversal — ไฟล์ที่ resolve แล้วต้องอยู่ใต้ uploads/ เท่านั้น
@@ -27,6 +35,19 @@ export async function GET(
   }
 
   try {
+    // ?v=card|cover → รูปย่อ 16:9 WebP (lib/imageVariant.ts, cache uploads/.cache/) สำหรับการ์ด/แถบรูป —
+    // ต้นฉบับ ~1MB ต่อรูป ไม่ต้องโหลดมาแสดงแค่ 160px · ต้องเป็นรูปของงาน (หา id จาก filePath เป็นชื่อ cache)
+    const v = request.nextUrl.searchParams.get('v') as Variant | null;
+    if (v && v in VARIANTS && segments[0] === 'activities') {
+      const rel = segments.join('/');
+      const att = await prisma.activityAttachment.findFirst({ where: { filePath: rel, kind: 'IMAGE' }, select: { id: true } });
+      if (att) {
+        const out = await imageVariant(filePath, att.id, v);
+        return new NextResponse(new Uint8Array(out), {
+          headers: { 'Content-Type': 'image/webp', 'Cache-Control': 'private, max-age=86400', 'X-Content-Type-Options': 'nosniff' },
+        });
+      }
+    }
     const buffer = await fs.readFile(filePath);
     const ext = path.extname(filePath).toLowerCase();
     const mime: Record<string, string> = {

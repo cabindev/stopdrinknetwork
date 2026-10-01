@@ -10,7 +10,8 @@ import {
   X,
   Calendar,
   Mail,
-  ArrowLeft
+  ArrowLeft,
+  Clock
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -21,6 +22,8 @@ interface UserItem {
   email: string;
   role: string;
   image?: string;
+  organization?: string | null;
+  position?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -29,6 +32,7 @@ interface AdminStats {
   totalUsers: number;
   totalAdmins: number;
   totalMembers: number;
+  totalPending: number;
   recentUsers: number;
 }
 
@@ -38,7 +42,7 @@ const AdminManagementPage: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterRole, setFilterRole] = useState<'all' | 'admin' | 'member'>('all');
+  const [filterRole, setFilterRole] = useState<'all' | 'pending' | 'admin' | 'member'>('all');
   const [updatingUsers, setUpdatingUsers] = useState<Set<number>>(new Set());
 
   useEffect(() => {
@@ -56,6 +60,8 @@ const AdminManagementPage: React.FC = () => {
       const data = await response.json();
       setUsers(data.users);
       setStats(data.stats);
+      // มีบัญชีรออนุมัติ → เปิดแท็บนั้นให้ก่อน
+      if (data.stats?.totalPending > 0) setFilterRole('pending');
     } catch (error) {
       console.error('Error fetching users:', error);
       setError('เกิดข้อผิดพลาดในการดึงข้อมูลผู้ใช้');
@@ -64,8 +70,9 @@ const AdminManagementPage: React.FC = () => {
     }
   };
 
+  // pending → member = อนุมัติบัญชี · member ↔ admin = สลับสิทธิ์แอดมิน
   const toggleUserRole = async (userId: number, currentRole: string) => {
-    const newRole = currentRole === 'admin' ? 'member' : 'admin';
+    const newRole = currentRole === 'admin' || currentRole === 'pending' ? 'member' : 'admin';
 
     setUpdatingUsers(prev => new Set(prev).add(userId));
 
@@ -93,12 +100,12 @@ const AdminManagementPage: React.FC = () => {
 
       // Update stats
       if (stats) {
-        const adminChange = newRole === 'admin' ? 1 : -1;
-        setStats(prev => prev ? {
-          ...prev,
-          totalAdmins: prev.totalAdmins + adminChange,
-          totalMembers: prev.totalMembers - adminChange
-        } : null);
+        setStats(prev => {
+          if (!prev) return null;
+          if (currentRole === 'pending') return { ...prev, totalPending: prev.totalPending - 1, totalMembers: prev.totalMembers + 1 };
+          const adminChange = newRole === 'admin' ? 1 : -1;
+          return { ...prev, totalAdmins: prev.totalAdmins + adminChange, totalMembers: prev.totalMembers - adminChange };
+        });
       }
 
     } catch (error) {
@@ -124,9 +131,10 @@ const AdminManagementPage: React.FC = () => {
 
       return matchesSearch && matchesRole;
     })
-    // เรียงผู้ดูแลระบบขึ้นบนสุดเสมอ แล้วตามด้วยผู้ใช้ใหม่สุด
+    // เรียง: รออนุมัติ → ผู้ดูแลระบบ → ผู้ใช้ทั่วไป แล้วตามด้วยผู้ใช้ใหม่สุด
     .sort((a, b) => {
-      if (a.role !== b.role) return a.role === 'admin' ? -1 : 1;
+      const rank = (r: string) => (r === 'pending' ? 0 : r === 'admin' ? 1 : 2);
+      if (rank(a.role) !== rank(b.role)) return rank(a.role) - rank(b.role);
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     });
 
@@ -255,6 +263,7 @@ const AdminManagementPage: React.FC = () => {
           <div className="flex items-center gap-1 border-b border-orange-100 mb-6">
             {([
               { key: 'all', label: 'ทั้งหมด', count: stats?.totalUsers ?? users.length },
+              { key: 'pending', label: 'รออนุมัติ', count: stats?.totalPending ?? users.filter(u => u.role === 'pending').length },
               { key: 'admin', label: 'ผู้ดูแลระบบ', count: stats?.totalAdmins ?? users.filter(u => u.role === 'admin').length },
               { key: 'member', label: 'ผู้ใช้ทั่วไป', count: stats?.totalMembers ?? users.filter(u => u.role === 'member').length },
             ] as const).map(tab => (
@@ -338,7 +347,7 @@ const AdminManagementPage: React.FC = () => {
                               {user.firstName} {user.lastName}
                             </div>
                             <div className="text-xs text-gray-500">
-                              ID: {user.id}
+                              {[user.position, user.organization].filter(Boolean).join(' · ') || `ID: ${user.id}`}
                             </div>
                           </div>
                         </div>
@@ -351,11 +360,18 @@ const AdminManagementPage: React.FC = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          user.role === 'admin'
+                          user.role === 'pending'
+                            ? 'bg-white text-orange-700 border border-dashed border-orange-400'
+                            : user.role === 'admin'
                             ? 'bg-orange-100 text-orange-800'
                             : 'bg-orange-50 text-orange-700'
                         }`}>
-                          {user.role === 'admin' ? (
+                          {user.role === 'pending' ? (
+                            <>
+                              <Clock className="w-3 h-3 mr-1" />
+                              รออนุมัติ
+                            </>
+                          ) : user.role === 'admin' ? (
                             <>
                               <ShieldCheck className="w-3 h-3 mr-1" />
                               ผู้ดูแลระบบ
@@ -380,7 +396,9 @@ const AdminManagementPage: React.FC = () => {
                           onClick={() => toggleUserRole(user.id, user.role)}
                           disabled={updatingUsers.has(user.id)}
                           className={`inline-flex items-center px-3 py-1 border rounded-lg text-xs font-medium transition-colors ${
-                            user.role === 'admin'
+                            user.role === 'pending'
+                              ? 'border-orange-600 text-white bg-orange-600 hover:bg-orange-700'
+                              : user.role === 'admin'
                               ? 'border-red-200 text-red-600 bg-red-50 hover:bg-red-100'
                               : 'border-orange-200 text-orange-700 bg-orange-50 hover:bg-orange-100'
                           } ${
@@ -396,7 +414,7 @@ const AdminManagementPage: React.FC = () => {
                           ) : (
                             <Check className="w-3 h-3 mr-1" />
                           )}
-                          {user.role === 'admin' ? 'ยกเลิกสิทธิ์ admin' : 'ตั้งเป็น admin'}
+                          {user.role === 'pending' ? 'อนุมัติ' : user.role === 'admin' ? 'ยกเลิกสิทธิ์ admin' : 'ตั้งเป็น admin'}
                         </button>
                       </td>
                     </tr>

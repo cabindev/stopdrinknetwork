@@ -1,5 +1,5 @@
 // app/map/page.tsx — แผนที่รวมการดำเนินงานทั้งองค์กร
-// ล็อกอิน = ข้อมูลเต็ม · ไม่ล็อกอิน = โหมดสาธารณะ (ผู้ใช้ตัดสินใจ ต.ค. 2026): ทุกงานแต่กรองฝั่ง server —
+// ทีมงานที่อนุมัติแล้ว = ข้อมูลเต็ม · ไม่ล็อกอิน/รออนุมัติ (pending) = โหมดสาธารณะ (ผู้ใช้ตัดสินใจ ต.ค. 2026): ทุกงานแต่กรองฝั่ง server —
 //   ไม่มีชื่อเจ้าหน้าที่/ชื่อสถานที่/หมุดจริง (ใช้จุดกลางตำบล) · คลิกหมุดงานที่เผยแพร่แล้ว → /stories/[id]
 import { getServerSession } from 'next-auth/next';
 import authOptions from '@/app/lib/configs/auth/authOptions';
@@ -7,12 +7,13 @@ import prisma from '@/app/lib/db';
 import MapView from './components/MapView';
 import type { MapActivity } from './components/MapView';
 import { getTambonCoords } from '@/app/lib/tambonCoords';
+import { isStaffRole } from '@/app/lib/activityMeta';
 
 export const metadata = { title: 'แผนที่รวม — Stop Drink Network' };
 
 export default async function MapPage() {
   const session = await getServerSession(authOptions);
-  const isPublic = !session?.user;
+  const isPublic = !isStaffRole(session?.user?.role);
   const myId = Number(session?.user?.id ?? 0);
   const [rows, categories, subLogoRows] = await Promise.all([
     prisma.activity.findMany({

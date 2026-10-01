@@ -6,6 +6,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import ExcelJS from 'exceljs';
 import authOptions from '@/app/lib/configs/auth/authOptions';
+import { isStaffRole } from '@/app/lib/activityMeta';
 import { involvedWhere } from '@/app/lib/activityAccess';
 import prisma from '@/app/lib/db';
 import { getThaiZoneName } from '@/app/utils/healthZones';
@@ -40,6 +41,9 @@ export async function GET(request: NextRequest) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'กรุณาเข้าสู่ระบบ' }, { status: 401 });
+    }
+    if (!isStaffRole(session.user.role)) {
+      return NextResponse.json({ error: 'บัญชีรอผู้ดูแลระบบอนุมัติ' }, { status: 403 });
     }
 
     const params = request.nextUrl.searchParams;

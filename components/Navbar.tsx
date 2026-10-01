@@ -5,7 +5,7 @@ import React, { useState, useEffect } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { Home, User, LogOut, Menu, BarChart3, X, ClipboardList, Map as MapIcon, BookOpen } from 'lucide-react';
+import { Home, User, LogOut, Menu, BarChart3, X, ClipboardList, Map as MapIcon, BookOpen, Clock } from 'lucide-react';
 
 const PILL =
   'inline-flex items-center gap-1.5 h-9 px-3 rounded-full bg-white/95 backdrop-blur border border-gray-200 shadow-sm text-xs font-medium text-gray-700 hover:bg-white hover:text-orange-700 transition-colors';
@@ -28,6 +28,7 @@ export default function Navbar() {
   }, []);
 
   const isAdmin = session?.user?.role === 'admin' || session?.user?.role === 'superadmin';
+  const isPending = session?.user?.role === 'pending'; // สมัครใหม่ รออนุมัติ — ไม่มีเมนูงานของทีม
 
   if (pathname?.startsWith('/dashboard')) return null;
 
@@ -56,10 +57,16 @@ export default function Navbar() {
                 <BookOpen className="w-4 h-4 text-gray-400" />
                 กรณีศึกษา
               </Link>
-              {session?.user && (
+              {session?.user && !isPending && (
                 <Link href="/activity" className={PILL} title="งานของฉัน">
                   <ClipboardList className="w-4 h-4 text-gray-400" />
                   งานของฉัน
+                </Link>
+              )}
+              {isPending && (
+                <Link href="/auth/pending" className={PILL} title="บัญชีรอผู้ดูแลระบบอนุมัติ">
+                  <Clock className="w-4 h-4 text-orange-500" />
+                  รออนุมัติ
                 </Link>
               )}
               {/* แผนที่เปิดสาธารณะ — ไม่ login เห็นแบบกรองข้อมูล (app/map/page.tsx) */}
@@ -158,13 +165,22 @@ export default function Navbar() {
           >
             <BookOpen className="w-4 h-4 text-gray-400" /> กรณีศึกษา
           </Link>
-          {session?.user && (
+          {session?.user && !isPending && (
             <Link
               href="/activity"
               className="flex items-center gap-2 px-3 py-2.5 text-xs rounded-xl text-gray-600 hover:bg-orange-50 hover:text-orange-700"
               onClick={() => setIsMenuOpen(false)}
             >
               <ClipboardList className="w-4 h-4 text-gray-400" /> งานของฉัน
+            </Link>
+          )}
+          {isPending && (
+            <Link
+              href="/auth/pending"
+              className="flex items-center gap-2 px-3 py-2.5 text-xs rounded-xl text-gray-600 hover:bg-orange-50 hover:text-orange-700"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              <Clock className="w-4 h-4 text-orange-500" /> รออนุมัติ
             </Link>
           )}
           <Link

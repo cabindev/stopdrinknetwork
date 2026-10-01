@@ -29,6 +29,8 @@ export type TeamRef = { userId: number; members?: { userId: number }[] };
 export const isTeamMember = (a: TeamRef, uid: number) =>
   a.userId === uid || !!a.members?.some((m) => m.userId === uid);
 export const isAdminRole = (role: string | undefined) => role === 'admin' || role === 'superadmin';
+// ทีมงานที่อนุมัติแล้ว — เห็นข้อมูลภายใน (ชื่อเจ้าหน้าที่/หมุดจริง/ไฟล์) · `pending` (สมัครใหม่รออนุมัติ) เห็นแค่ข้อมูลสาธารณะ
+export const isStaffRole = (role: string | undefined) => role === 'member' || isAdminRole(role);
 // เพิ่ม/แก้ไข/ลบงาน: admin/superadmin เท่านั้น (ผู้ใช้ตัดสินใจ ต.ค. 2026 — สมาชิกดูได้อย่างเดียว)
 // uid/a คงไว้ในลายเซ็นเผื่อกลับไปให้ทีมงานแก้ได้อีก
 export const canCreateActivity = (role: string | undefined) => isAdminRole(role);

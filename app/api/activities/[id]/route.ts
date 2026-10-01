@@ -19,6 +19,7 @@ import { parseActivityExtras, imageLimitError, applyImageMeta, policyFilesFrom, 
 import {
   canSeeCoordinatorContact,
   canEditActivity,
+  isStaffRole,
   descriptionError,
   parsePolicyLevels,
   policyShape,
@@ -82,6 +83,9 @@ export async function GET(
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'กรุณาเข้าสู่ระบบ' }, { status: 401 });
+  }
+  if (!isStaffRole(session.user.role)) {
+    return NextResponse.json({ error: 'บัญชีรอผู้ดูแลระบบอนุมัติ' }, { status: 403 });
   }
   const { id } = await params;
   const activity = await findActivity(id);

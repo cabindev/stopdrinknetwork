@@ -55,6 +55,7 @@ export async function POST(request: NextRequest) {
         email,
         password: hashedPassword,
         image: imagePath || null,
+        role: 'pending', // รอแอดมินอนุมัติก่อนเห็นข้อมูลภายใน
       },
     });
 

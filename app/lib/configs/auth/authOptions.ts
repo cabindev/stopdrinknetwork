@@ -92,7 +92,7 @@ const authOptions: NextAuthOptions = {
   },
   callbacks: {
     // Google ยืนยันอีเมลมาแล้ว → อีเมลตรงกับบัญชีเดิม = เข้าบัญชีเดิม (ไม่แตะรหัสผ่าน/role/โปรไฟล์ที่แก้ไว้)
-    // อีเมลใหม่ = สร้างบัญชี role member เสมอ (ไม่มีอีเมลไหนได้ admin อัตโนมัติ)
+    // อีเมลใหม่ = สร้างบัญชี role pending (รอแอดมินอนุมัติ — ต.ค. 2026) ไม่มีอีเมลไหนได้สิทธิ์อัตโนมัติ
     signIn: async ({ user, account, profile }) => {
       if (account?.provider !== 'google') return true;
 
@@ -117,7 +117,7 @@ const authOptions: NextAuthOptions = {
               firstName: g?.given_name || first,
               lastName: g?.family_name || rest.join(' '),
               image: user.image ?? null,
-              role: 'member',
+              role: 'pending',
               emailVerified: new Date(),
             },
           });
@@ -139,6 +139,12 @@ const authOptions: NextAuthOptions = {
         token.lastName = (user as PrismaUser).lastName;
         token.role = (user as PrismaUser).role;
         token.picture = user.image ?? undefined;
+      }
+      // รออนุมัติอยู่ → อ่าน role ล่าสุดจาก DB ทุกครั้ง แอดมินกดอนุมัติแล้วใช้ได้ทันทีไม่ต้อง login ใหม่
+      // (เฉพาะ pending — ผู้ใช้ปกติไม่ต้อง query เพิ่ม)
+      if (token.role === 'pending' && token.id) {
+        const fresh = await prisma.user.findUnique({ where: { id: Number(token.id) }, select: { role: true } });
+        if (fresh) token.role = fresh.role;
       }
       // ผู้ใช้แก้โปรไฟล์แล้วเรียก update() — อัปเดต token ให้ Navbar เปลี่ยนตามทันที
       if (trigger === 'update' && session) {

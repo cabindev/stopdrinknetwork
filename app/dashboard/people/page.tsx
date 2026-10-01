@@ -13,6 +13,7 @@ export default async function PeoplePage() {
   if (!admin) redirect('/dashboard');
 
   const users = await prisma.user.findMany({
+    where: { role: { not: 'pending' } }, // รายชื่อเครือข่าย = บัญชีที่อนุมัติแล้ว
     select: {
       id: true,
       firstName: true,

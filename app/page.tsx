@@ -32,6 +32,10 @@ export default function HomePage() {
           อยากเห็นตัวอย่างพื้นที่ที่ทำสำเร็จ?{' '}
           <Link href="/stories" className="font-medium text-orange-700 underline">
             อ่านกรณีศึกษา
+          </Link>{' '}
+          หรือ{' '}
+          <Link href="/map" className="font-medium text-orange-700 underline">
+            ดูแผนที่งานทั่วประเทศ
           </Link>
         </p>
       </section>

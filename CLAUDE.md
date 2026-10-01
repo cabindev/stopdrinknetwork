@@ -116,8 +116,8 @@ app/
 │   └── components/LocationPicker.tsx  # แผนที่ใน LocationField: คลิก/ลากหมุด, ภาพดาวเทียม, เตือนตำบลไม่ตรง
 ├── stories/                      # ★ กรณีศึกษาสาธารณะ (ไม่ต้อง login) — page.tsx รายการ (?sub=&province=),
 │                                 #   [id]/page.tsx เรื่องแบบ "ทำตามได้" + og:image, ShareButtons (FB/LINE/คัดลอก)
-├── map/                          # ★ แผนที่รวมทั้งองค์กร (ต้อง login)
-│   ├── page.tsx                  # server: ดึง Activity ทุกคน + categories ส่งเข้า MapView
+├── map/                          # ★ แผนที่รวมทั้งองค์กร (ไม่ login = โหมดสาธารณะ ดู Map Rules)
+│   ├── page.tsx                  # server: ดึง Activity ทุกคน + categories ส่งเข้า MapView (กรองข้อมูลถ้าไม่ login)
 │   └── components/MapView.tsx    # Leaflet ล้วน (import ใน useEffect กัน SSR) — polygon 77 จว.,
 │                                 #   คลิกหมุดงาน = popup บนแผนที่ (ไม่เปลี่ยนหน้า) — คลิกในแผงขวา = ไปหน้า detail,
 │                                 #   ปุ่มบันทึกภาพแผนที่ PNG 2x (วาด tile/polygon/หมุดลง canvas เอง —
@@ -311,6 +311,10 @@ uploads/                          # ไฟล์แนบ runtime (gitignore) �
 
 ## Map Rules (`/map`)
 - แผนที่เต็มจอ (`h-screen`) — UI ลอยทับทั้งหมด, Leaflet โหลดใน `useEffect` เท่านั้น (กัน SSR)
+- **โหมดสาธารณะ (ไม่ login, ผู้ใช้ตัดสินใจ ต.ค. 2026)**: แสดงทุกงาน แต่**กรองฝั่ง server ใน `map/page.tsx`** (ห้ามส่งไปซ่อนที่ client)
+  — userName ว่าง, areaName null, หมุดจริง → จุดกลางตำบล (`getTambonCoords`), locationSource = TAMBON, โลโก้ผ่าน `/api/public-logo`
+  · `MapView publicView`: คลิกหมุด/การ์ดงานที่ `published` → `/stories/[id]`, ยังไม่เผยแพร่ = "ยังไม่มีกรณีศึกษาเผยแพร่" (ไม่มีลิงก์)
+  · ซ่อน: "โดย…", ปุ่มนำทาง, เกณฑ์จำนวนเจ้าหน้าที่, ป้าย "ใหม่", ปุ่ม Excel · สิทธิ์เพิ่ม/แก้งานคงเดิม (สมาชิกที่ login)
 - **หมุด = 1 งาน 1 หมุด ตามตำแหน่งจริงทุกระดับซูม สีตามประเด็น** (ผู้ใช้ขอ ก.ย. 2026: ไม่ซ่อนงานรวมในหมุดจังหวัด)
   ปักตำแหน่งจริง = ทึบขอบขาว · จุดกลางตำบล (TAMBON) = จาง 0.6 ขอบประ · พิกัดซ้ำกระจายเป็นวง
   · **ลำดับโลโก้ของหมุด: ประเด็นย่อย (`WorkSubCategory.logo`, เช่น งานศพปลอดเหล้า = rip) → ประเด็นหลัก → หมุดสี**

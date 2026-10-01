@@ -57,17 +57,16 @@ export default function Navbar() {
                 กรณีศึกษา
               </Link>
               {session?.user && (
-                <>
-                  <Link href="/activity" className={PILL} title="งานของฉัน">
-                    <ClipboardList className="w-4 h-4 text-gray-400" />
-                    งานของฉัน
-                  </Link>
-                  <Link href="/map" className={PILL} title="แผนที่รวม">
-                    <MapIcon className="w-4 h-4 text-gray-400" />
-                    แผนที่รวม
-                  </Link>
-                </>
+                <Link href="/activity" className={PILL} title="งานของฉัน">
+                  <ClipboardList className="w-4 h-4 text-gray-400" />
+                  งานของฉัน
+                </Link>
               )}
+              {/* แผนที่เปิดสาธารณะ — ไม่ login เห็นแบบกรองข้อมูล (app/map/page.tsx) */}
+              <Link href="/map" className={PILL} title="แผนที่รวม">
+                <MapIcon className="w-4 h-4 text-gray-400" />
+                แผนที่รวม
+              </Link>
               {isAdmin && (
                 <Link href="/dashboard" className={PILL} title="Dashboard">
                   <BarChart3 className="w-4 h-4 text-gray-400" />
@@ -160,23 +159,21 @@ export default function Navbar() {
             <BookOpen className="w-4 h-4 text-gray-400" /> กรณีศึกษา
           </Link>
           {session?.user && (
-            <>
-              <Link
-                href="/activity"
-                className="flex items-center gap-2 px-3 py-2.5 text-xs rounded-xl text-gray-600 hover:bg-orange-50 hover:text-orange-700"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                <ClipboardList className="w-4 h-4 text-gray-400" /> งานของฉัน
-              </Link>
-              <Link
-                href="/map"
-                className="flex items-center gap-2 px-3 py-2.5 text-xs rounded-xl text-gray-600 hover:bg-orange-50 hover:text-orange-700"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                <MapIcon className="w-4 h-4 text-gray-400" /> แผนที่รวม
-              </Link>
-            </>
+            <Link
+              href="/activity"
+              className="flex items-center gap-2 px-3 py-2.5 text-xs rounded-xl text-gray-600 hover:bg-orange-50 hover:text-orange-700"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              <ClipboardList className="w-4 h-4 text-gray-400" /> งานของฉัน
+            </Link>
           )}
+          <Link
+            href="/map"
+            className="flex items-center gap-2 px-3 py-2.5 text-xs rounded-xl text-gray-600 hover:bg-orange-50 hover:text-orange-700"
+            onClick={() => setIsMenuOpen(false)}
+          >
+            <MapIcon className="w-4 h-4 text-gray-400" /> แผนที่รวม
+          </Link>
           {isAdmin && (
             <Link
               href="/dashboard"

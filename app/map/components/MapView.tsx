@@ -4,6 +4,7 @@
 // ใช้ Leaflet ล้วน (โหลดใน useEffect เพื่อเลี่ยง SSR)
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import type { ReactNode } from 'react';
 import type {
   Map as LeafletMap,
   GeoJSON as GeoJSONLayer,
@@ -52,6 +53,7 @@ export interface MapActivity {
   locationSource: string; // TAMBON = จุดกลางตำบล (โดยประมาณ)
   createdAt: string; // ISO
   mine: boolean; // งานของผู้ที่กำลังดู — ไม่นับเป็น "งานใหม่"
+  published: boolean; // เผยแพร่เป็นกรณีศึกษาแล้ว → มีหน้า /stories/[id]
 }
 
 interface MapViewProps {
@@ -59,6 +61,9 @@ interface MapViewProps {
   categories: string[];
   categoryLogos: Record<string, string>; // ชื่อหมวด → URL โลโก้ (เฉพาะหมวดที่มี)
   subCategoryLogos: Record<string, string>; // "หมวด|ประเด็นย่อย" → URL โลโก้ (ใช้ก่อนโลโก้หมวด)
+  // ไม่ได้ล็อกอิน: ข้อมูลถูกกรองจาก server แล้ว (ไม่มีชื่อคน/หมุดจริง) — ซ่อน UI ที่อิงข้อมูลเหล่านั้น
+  // + คลิกงาน → กรณีศึกษา (ไม่มีหน้า /activity ให้คนทั่วไป)
+  publicView?: boolean;
 }
 
 const STATUS_LABEL: Record<string, string> = {
@@ -137,7 +142,7 @@ const esc = (v: unknown) =>
   );
 
 // เนื้อหา popup ของหมุดรายงาน
-function activityPopupHtml(a: MapActivity, color: string, isNew: boolean) {
+function activityPopupHtml(a: MapActivity, color: string, isNew: boolean, publicView: boolean) {
   const area = a.areaName ? `${esc(a.areaName)} · ` : '';
   const newBadge = isNew
     ? '<span style="font-size:10px;font-weight:700;color:#fff;background:#ea580c;border-radius:9999px;padding:1px 7px">ใหม่</span>'
@@ -156,7 +161,8 @@ function activityPopupHtml(a: MapActivity, color: string, isNew: boolean) {
       <div style="font-size:11px;color:#6b7280;margin-top:5px">${area}ต.${esc(a.district)} อ.${esc(
         a.amphoe
       )} จ.${esc(a.province)}</div>
-      <div style="font-size:11px;color:#9ca3af;margin-top:2px">โดย ${esc(a.userName)}</div>
+      ${publicView ? '' : `<div style="font-size:11px;color:#9ca3af;margin-top:2px">โดย ${esc(a.userName)}</div>`}
+      ${publicView ? publicPopupFooter(a) : `
       <div style="display:flex;align-items:center;gap:12px;margin-top:8px">
         <a href="/activity/${a.id}"
            style="font-size:11px;font-weight:600;color:#c2410c;text-decoration:none">
@@ -166,11 +172,21 @@ function activityPopupHtml(a: MapActivity, color: string, isNew: boolean) {
            style="margin-left:auto;font-size:11px;font-weight:600;color:#ffffff;background:#ea580c;padding:3px 9px;border-radius:9999px;text-decoration:none">
           นำทาง
         </a>
-      </div>
+      </div>`}
     </div>`;
 }
 
-export default function MapView({ activities, categories, categoryLogos, subCategoryLogos }: MapViewProps) {
+// สาธารณะ: งานที่เผยแพร่แล้วมีปุ่มไปกรณีศึกษา · ยังไม่เผยแพร่ = บอกตรง ๆ ว่ายังไม่มีเรื่องเล่า
+function publicPopupFooter(a: MapActivity) {
+  return a.published
+    ? `<a href="/stories/${a.id}"
+         style="display:inline-block;margin-top:8px;font-size:11px;font-weight:600;color:#ffffff;background:#ea580c;padding:4px 11px;border-radius:9999px;text-decoration:none">
+        อ่านกรณีศึกษา →
+      </a>`
+    : '<div style="font-size:11px;color:#9ca3af;margin-top:6px">ยังไม่มีกรณีศึกษาเผยแพร่</div>';
+}
+
+export default function MapView({ activities, categories, categoryLogos, subCategoryLogos, publicView = false }: MapViewProps) {
   // โลโก้ของงาน: ประเด็นย่อย → ประเด็นหลัก → ไม่มี (ใช้หมุดสี)
   const logoOf = (a: MapActivity) =>
     (a.subCategory && subCategoryLogos[`${a.category}|${a.subCategory}`]) || categoryLogos[a.category];
@@ -193,7 +209,10 @@ export default function MapView({ activities, categories, categoryLogos, subCate
   const [newOnly, setNewOnly] = useState(false);
   // null = ยังไม่รู้ (ก่อน mount อ่าน storage ไม่ได้) — ระหว่างนั้นไม่ไฮไลต์อะไร
   const [newBaseline, setNewBaseline] = useState<number | null>(null);
-  useEffect(() => setNewBaseline(readNewBaseline()), []);
+  // สาธารณะไม่มีป้าย "ใหม่" (ฟีเจอร์ไว้ให้ทีมงานตามงานของเพื่อน)
+  useEffect(() => {
+    if (!publicView) setNewBaseline(readNewBaseline());
+  }, [publicView]);
   const newIds = useMemo(() => {
     const ids = new Set<number>();
     if (newBaseline == null) return ids;
@@ -385,7 +404,7 @@ export default function MapView({ activities, categories, categoryLogos, subCate
               }
               marker.bindTooltip(`${isNew ? '🆕 ' : ''}${esc(a.title)}`, { direction: 'top' });
               // คลิกหมุด = เปิด popup ตรงจุดนั้น (ไม่เด้งออกจากหน้าแผนที่)
-              marker.bindPopup(activityPopupHtml(a, color, isNew), {
+              marker.bindPopup(activityPopupHtml(a, color, isNew, publicView), {
                 closeButton: true,
                 autoPanPadding: [24, 24],
                 maxWidth: 260,
@@ -430,7 +449,7 @@ export default function MapView({ activities, categories, categoryLogos, subCate
             .getTooltip()
             ?.setContent(
               v
-                ? `${name} — ${v.activities} งาน · เจ้าหน้าที่ ${v.people} คน`
+                ? `${name} — ${v.activities} งาน${publicView ? '' : ` · เจ้าหน้าที่ ${v.people} คน`}`
                 : `${name} — ยังไม่มีงาน`
             );
         } else {
@@ -438,7 +457,7 @@ export default function MapView({ activities, categories, categoryLogos, subCate
         }
       });
     })();
-  }, [mapReady, byProvince, selectedProvince, categoryFilter, colorOf, mapMode, heatMetric, heatData, heatMax, newIds, categoryLogos, subCategoryLogos]);
+  }, [mapReady, byProvince, selectedProvince, categoryFilter, colorOf, mapMode, heatMetric, heatData, heatMax, newIds, categoryLogos, subCategoryLogos, publicView]);
 
   // เปิด/ปิด sidebar ทำให้ container กว้างเปลี่ยน — ต้องบอก Leaflet ให้คำนวณขนาดใหม่
   useEffect(() => {
@@ -818,18 +837,21 @@ export default function MapView({ activities, categories, categoryLogos, subCate
           </span>
         </button>
 
-        <a
-          href={`/api/activities/export?${new URLSearchParams({
-            ...(categoryFilter ? { category: categoryFilter } : {}),
-            ...(statusFilter ? { status: statusFilter } : {}),
-            ...(search ? { q: search } : {}),
-          }).toString()}`}
-          title={`ส่งออก Excel (${filtered.length} งาน)`}
-          className={railBtnCls(false)}
-        >
-          <FileSpreadsheet className="w-5 h-5" />
-          <span className="text-[9px] leading-tight text-center px-0.5">Excel</span>
-        </a>
+        {/* Excel ต้องล็อกอิน (API ตอบ 401) — สาธารณะไม่แสดงปุ่ม */}
+        {!publicView && (
+          <a
+            href={`/api/activities/export?${new URLSearchParams({
+              ...(categoryFilter ? { category: categoryFilter } : {}),
+              ...(statusFilter ? { status: statusFilter } : {}),
+              ...(search ? { q: search } : {}),
+            }).toString()}`}
+            title={`ส่งออก Excel (${filtered.length} งาน)`}
+            className={railBtnCls(false)}
+          >
+            <FileSpreadsheet className="w-5 h-5" />
+            <span className="text-[9px] leading-tight text-center px-0.5">Excel</span>
+          </a>
+        )}
       </nav>
 
       {/* แผงหมวดหมู่ — ลอยถัดจากแถบไอคอน */}
@@ -882,7 +904,7 @@ export default function MapView({ activities, categories, categoryLogos, subCate
             </p>
             {mapMode === 'heat' ? (
               <div>
-                <div className="space-y-1.5">
+                <div className={publicView ? 'hidden' : 'space-y-1.5'}>
                   {(
                     [
                       ['activities', 'ตามจำนวนงาน'],
@@ -917,7 +939,7 @@ export default function MapView({ activities, categories, categoryLogos, subCate
                   <span>ไม่มีงาน</span>
                   <span>มาก ({heatMax})</span>
                 </div>
-                <p className="mt-4 text-[11px] text-gray-400 leading-relaxed">
+                <p className={publicView ? 'hidden' : 'mt-4 text-[11px] text-gray-400 leading-relaxed'}>
                   เกณฑ์ &quot;จำนวนเจ้าหน้าที่&quot; ช่วยให้เห็นพื้นที่ที่หลายคนลงทำงานทับกัน
                 </p>
               </div>
@@ -992,7 +1014,7 @@ export default function MapView({ activities, categories, categoryLogos, subCate
                     );
                   })}
                 </ul>
-                <MapLegend />
+                <MapLegend publicView={publicView} />
                 {hasFilter && (
                   <button
                     onClick={clearFilters}
@@ -1015,7 +1037,7 @@ export default function MapView({ activities, categories, categoryLogos, subCate
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="ค้นหางาน พื้นที่ หรือชื่อคน"
+            placeholder={publicView ? "ค้นหางาน หรือพื้นที่" : "ค้นหางาน พื้นที่ หรือชื่อคน"}
             className="flex-1 min-w-0 text-sm text-gray-800 bg-transparent focus:outline-none placeholder:text-gray-400"
           />
           {search && (
@@ -1080,7 +1102,7 @@ export default function MapView({ activities, categories, categoryLogos, subCate
         </div>
 
         <div className="p-4 pt-3">
-          {selectedUserCount > 1 && (
+          {!publicView && selectedUserCount > 1 && (
             <div className="mb-3 flex items-center gap-2 text-xs bg-orange-50 border border-orange-100 text-orange-700 rounded-lg px-3 py-2">
               <Users className="w-4 h-4 shrink-0" />
               จังหวัดนี้มีเพื่อนร่วมงานหลายคน — ต้นทุนเครือข่ายที่ต่อยอดร่วมกันได้
@@ -1095,9 +1117,8 @@ export default function MapView({ activities, categories, categoryLogos, subCate
             <ul className="space-y-3">
               {panelActivities.map((a) => (
                 <li key={a.id}>
-                  <a
-                    href={`/activity/${a.id}`}
-                    className="block border border-orange-100 rounded-xl p-3 hover:border-orange-300 hover:bg-orange-50/40 transition-colors"
+                  <PanelItem
+                    href={publicView ? (a.published ? `/stories/${a.id}` : null) : `/activity/${a.id}`}
                   >
                     <div className="flex items-center justify-between gap-2">
                       <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-gray-50 text-gray-700 text-[11px] font-medium">
@@ -1121,11 +1142,17 @@ export default function MapView({ activities, categories, categoryLogos, subCate
                       <MapPin className="inline w-3 h-3 mr-0.5 text-orange-500" />
                       {a.areaName ? `${a.areaName} · ` : ''}ต.{a.district} อ.{a.amphoe}
                     </p>
-                    <p className="mt-0.5 text-xs text-gray-400">
-                      โดย {a.userName}
-                      {a.locationSource === 'TAMBON' && ' · ตำแหน่งโดยประมาณ'}
-                    </p>
-                  </a>
+                    {publicView ? (
+                      a.published && (
+                        <p className="mt-1.5 text-xs font-semibold text-orange-600">อ่านกรณีศึกษา →</p>
+                      )
+                    ) : (
+                      <p className="mt-0.5 text-xs text-gray-400">
+                        โดย {a.userName}
+                        {a.locationSource === 'TAMBON' && ' · ตำแหน่งโดยประมาณ'}
+                      </p>
+                    )}
+                  </PanelItem>
                 </li>
               ))}
             </ul>
@@ -1137,8 +1164,12 @@ export default function MapView({ activities, categories, categoryLogos, subCate
       {/* คำอธิบายสัญลักษณ์ (เดสก์ท็อป) — โหมดหมุดเท่านั้น, โหมดความหนาแน่นมีสเกลสีในแผงหมวดหมู่ */}
       {mapMode === 'markers' && !sidebarOpen && (
         <div className="absolute bottom-4 left-3 z-[1000] hidden sm:flex items-center gap-3 bg-white/95 backdrop-blur rounded-full border border-gray-200 shadow-lg px-4 py-2 text-[11px] text-gray-600">
-          <LegendDot solid /> ตำแหน่งจริง
-          <LegendDot /> โดยประมาณ
+          {!publicView && (
+            <>
+              <LegendDot solid /> ตำแหน่งจริง
+            </>
+          )}
+          <LegendDot /> {publicView ? 'ตำแหน่งระดับตำบล' : 'โดยประมาณ'}
           <span className="text-gray-400">· สีตามประเด็น — คลิกหมุดดูรายละเอียด</span>
           {newIds.size > 0 && (
             <>
@@ -1165,11 +1196,11 @@ function LegendDot({ solid = false }: { solid?: boolean }) {
   );
 }
 
-function MapLegend() {
+function MapLegend({ publicView }: { publicView: boolean }) {
   return (
     <div className="mt-4 pt-3 border-t border-gray-100 space-y-2 text-[11px] text-gray-500 leading-snug">
       <p>หมุดสีตามประเด็นงาน — คลิกหมุดดูรายละเอียด คลิกจังหวัดดูรายการทั้งหมด</p>
-      <p className="flex items-center gap-2">
+      <p className={publicView ? 'hidden' : 'flex items-center gap-2'}>
         <LegendDot solid />
         <span>ปักหมุดตำแหน่งจริง</span>
       </p>
@@ -1185,5 +1216,17 @@ function MapLegend() {
         <span>งานใหม่ตั้งแต่เข้าชมครั้งก่อน</span>
       </p>
     </div>
+  );
+}
+
+// การ์ดงานในแผงจังหวัด — มีที่ไป = ลิงก์ · สาธารณะที่ยังไม่มีกรณีศึกษา = การ์ดเฉย ๆ
+function PanelItem({ href, children }: { href: string | null; children: ReactNode }) {
+  const cls = 'block border border-orange-100 rounded-xl p-3';
+  return href ? (
+    <a href={href} className={`${cls} hover:border-orange-300 hover:bg-orange-50/40 transition-colors`}>
+      {children}
+    </a>
+  ) : (
+    <div className={cls}>{children}</div>
   );
 }

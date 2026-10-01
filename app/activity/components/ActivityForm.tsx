@@ -146,7 +146,7 @@ export default function ActivityForm({
   const [images, setImages] = useState<NewImage[]>([]);
   const [documents, setDocuments] = useState<File[]>([]);
   const [existingAttachments] = useState(initial?.attachments ?? []);
-  // ไฟล์นโยบายแยกออกจากรูป/เอกสารทั่วไป (ไม่นับเพดาน 5 รูป)
+  // ไฟล์นโยบายแยกออกจากรูป/เอกสารทั่วไป (ไม่นับเพดานรูปกิจกรรม)
   const existingImages = existingAttachments.filter((a) => a.kind === 'IMAGE' && !a.policyLevel && !a.isSurvey);
   const existingDocs = existingAttachments.filter((a) => a.kind === 'DOCUMENT' && !a.policyLevel && !a.isSurvey);
   const existingPolicy = existingAttachments.filter((a) => a.policyLevel);

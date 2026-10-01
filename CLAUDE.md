@@ -109,7 +109,7 @@ app/
 │   ├── [id]/publish/             # แอดมินจัดหน้ากรณีศึกษา: บริบท/กระบวนการ/บทเรียน + ติ๊กไฟล์ที่เปิดเผย → เผยแพร่/ร่าง/ยกเลิก
 │   ├── components/ActivityForm.tsx  # ฟอร์ม create/edit: ประเด็นย่อย (แถวเล็กสีจาง └ ใต้ประเด็น), LocationField + ขอบเขต,
 │                                 #   วันเริ่ม/"รู้แค่ปี", ส่วนพับ "ผลลัพธ์ ภาคี และ
-│                                 #   ผู้ประสานงาน", รูป ≤5 (ImageTile: ดาว=ปก + คำบรรยาย), เอกสาร, toast
+│                                 #   ผู้ประสานงาน", รูป ≤10 (ImageTile: ดาว=ปก + คำบรรยาย), เอกสาร, toast
 │   ├── components/LocationField.tsx # ★ ช่องเดียวจบเรื่องพื้นที่: ค้นหา (ที่เคยใช้/เครือข่ายเคยบันทึก/GISTDA/ตำบล)
 │   │                             #   · วางลิงก์/พิกัด · ปุ่ม GPS · แตะแผนที่ → เติม ต./อ./จ./โซน/ชื่อ/หมุด → การ์ดสรุป
 │   │                             #   Enter = เลือกรายการแรก (กดก่อนผลมาก็ได้) · ↑↓ · หลังได้พิกัด เสนอชิป "สถานที่ใกล้หมุด"
@@ -197,7 +197,7 @@ app/
     ├── adminAuth.ts              # getAdminUser() — ตรวจสิทธิ์ admin/superadmin สำหรับ API
     ├── audit.ts                  # writeAuditLog()/diffFields() — audit trail (ไม่ throw ถ้าเขียน log พลาด)
     ├── story.ts                  # STORY_SELECT (ช่องที่ปลอดภัยสำหรับหน้าสาธารณะ), storyCover/Excerpt/Place, publicFileUrl
-    ├── activityMeta.ts           # MAX_IMAGES=5, PARTNER_OPTIONS, canSeeCoordinatorContact() — ใช้ได้ทั้ง client/server
+    ├── activityMeta.ts           # MAX_IMAGES=10, PARTNER_OPTIONS, canSeeCoordinatorContact() — ใช้ได้ทั้ง client/server
     ├── activityInput.ts          # parseActivityExtras() (ประเด็นย่อย/ผู้เข้าร่วม/ภาคี/ผู้ประสานงาน+ยินยอม),
     │                             #   imageLimitError(), applyImageMeta() (คำบรรยาย+ปก) — ใช้ร่วม POST/PATCH
     ├── logoStorage.ts            # saveLogo()/removeLogoFile() ใช้ร่วมโลโก้ประเด็น + ประเด็นย่อย (uploads/category-logos/)
@@ -276,7 +276,7 @@ uploads/                          # ไฟล์แนบ runtime (gitignore) �
   ติ๊กแล้วมีแถวไฟล์ของระดับนั้นใต้ชิป): ติ๊กได้หลายระดับ หมู่บ้าน/ตำบล/อำเภอ/จังหวัด/ประเทศ
   (**ตาราง `ActivityPolicy`** 1 แถว/ระดับ: level, name, type, year — ย้ายจาก JSON เมื่อ 27 ก.ย. 2026 เพื่อให้นับ/กรองด้วย SQL ได้;
   โค้ดแปลงเป็นรูป {levels, details} ด้วย `policyShape()`) · ไฟล์ของแต่ละระดับ = `ActivityAttachment.policyLevel`
-  (formData `policy_<LEVEL>`, PDF/Office/รูปถ่ายเอกสาร) · ติ๊กโดยไม่แนบไฟล์ได้ · **ไม่นับเพดาน 5 รูป และไม่ขึ้นใน
+  (formData `policy_<LEVEL>`, PDF/Office/รูปถ่ายเอกสาร) · ติ๊กโดยไม่แนบไฟล์ได้ · **ไม่นับเพดานรูป และไม่ขึ้นใน
   แกลเลอรี/รายการเอกสารทั่วไป** (กรอง `policyLevel: null`) · เลิกติ๊กระดับ = ไฟล์ระดับนั้นถูกลบตอนบันทึก ·
   server ปฏิเสธไฟล์ในระดับที่ไม่ได้ติ๊ก · Excel มีคอลัมน์ "นโยบาย/ข้อตกลง (ระดับ)"
 - **แบบสำรวจ** (1 ต.ค. 2026, ส่วนถัดจาก "มีนโยบายระดับ"): ชิปติ๊ก "มีแบบสำรวจ" (`Activity.hasSurvey`) + แนบไฟล์ได้ (formData `survey`,
@@ -298,7 +298,7 @@ uploads/                          # ไฟล์แนบ runtime (gitignore) �
 - **รายละเอียดการดำเนินงาน ≤ 20,000 ตัวอักษร** (DB = TEXT 65,535 ไบต์, ไทย 3 ไบต์/ตัว) — `descriptionError()` ใน
   activityMeta ตรวจทั้ง client/server (+ เพดานไบต์กันอีโมจิ) · ตัวนับใต้ช่อง เทา→ส้ม (18,000)→แดง · เกิน 3,000 ตัว
   แนะนำแนบรายงานฉบับเต็มเป็นไฟล์ · **ห้ามใส่ maxLength ใน textarea** (วางข้อความยาวแล้ว browser ตัดท้ายเงียบ ๆ)
-- **รูปไม่เกิน 5 รูปต่องาน** (รวมรูปเดิม — เช็คทั้ง client และ server) · รูปปก `isCover` ได้ 1 รูป (ไม่เลือก = รูปแรก) ·
+- **รูปไม่เกิน 10 รูปต่องาน** (`MAX_IMAGES` — เดิม 5, เพิ่มเป็น 10 เมื่อ 1 ต.ค. 2026 · รวมรูปเดิม — เช็คทั้ง client และ server) · รูปปก `isCover` ได้ 1 รูป (ไม่เลือก = รูปแรก) ·
   คำบรรยาย `caption` · ภาคี `partners` = Json string[] จาก PARTNER_OPTIONS · แผนเฟส 2-3 ดู memory activity-data-roadmap
 - **ฟอร์มห้าม fade-in จาก opacity 0** — HTML จาก server ต้องมองเห็นทันที (เดิมจอว่างจนกว่า JS โหลด) และ
   ActivityForm ครอบด้วย `<fieldset disabled={!hydrated}>`: พิมพ์ก่อน hydrate เสร็จ React ล้างค่าช่อง controlled ทิ้งเงียบ ๆ

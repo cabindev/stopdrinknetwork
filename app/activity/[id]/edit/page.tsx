@@ -10,9 +10,9 @@ import AuthorPicker from '../../components/AuthorPicker';
 import { teamPeople } from '@/app/lib/activityAccess';
 import { canEditActivity } from '@/app/lib/activityMeta';
 import type { ActivityInitialData } from '../../components/ActivityForm';
-import { parsePartners, policyShape } from '@/app/lib/activityMeta';
+import { parsePartners, policyShape, toThaiDateInput } from '@/app/lib/activityMeta';
 
-const toDateInput = (d: Date | null) => (d ? d.toISOString().slice(0, 10) : null);
+const toDateInput = toThaiDateInput;
 
 export default async function EditActivityPage({
   params,

@@ -137,6 +137,12 @@ export type AreaScopeValue = (typeof AREA_SCOPES)[number]['value'];
 export const AREA_SCOPE_LABEL: Record<string, string> = Object.fromEntries(AREA_SCOPES.map((a) => [a.value, a.label]));
 
 // วันเริ่ม: precision YEAR = รู้แค่ปี (เก็บ 1 ม.ค.) → แสดง "ปี 2562" ไม่ใช่ "1 ม.ค. 2562"
+// วันที่ → 'YYYY-MM-DD' ตามเวลาไทย (UTC+7) — ห้ามใช้ toISOString().slice(0, 10) ตรง ๆ:
+// งานที่นำเข้าด้วยสคริปต์เก็บเที่ยงคืนเวลาไทย (= 17:00 UTC วันก่อน) → อ่านแบบ UTC ได้วันก่อนหน้า 1 วัน
+// (หน้าแก้ไขเคยโชว์วันถอยหลัง แล้วกดบันทึกก็เซฟวันผิดทับ) · ค่าที่ฟอร์มบันทึก (เที่ยงคืน UTC) +7 ชม. ยังเป็นวันเดิม
+export const toThaiDateInput = (d: Date | null) =>
+  d ? new Date(d.getTime() + 7 * 60 * 60 * 1000).toISOString().slice(0, 10) : null;
+
 export function formatStartDate(d: Date | string | null, precision: string = 'DAY'): string | null {
   if (!d) return null;
   const date = typeof d === 'string' ? new Date(d) : d;

@@ -1,5 +1,6 @@
 // app/lib/audit.ts — บันทึก audit log ของ Activity (ใคร แก้อะไร เมื่อไหร่)
 import prisma from '@/app/lib/db';
+import { toThaiDateInput } from '@/app/lib/activityMeta';
 
 export interface FieldChange {
   field: string;
@@ -44,7 +45,7 @@ export const STATUS_LABEL: Record<string, string> = {
 
 const asText = (v: unknown): string => {
   if (v === null || v === undefined || v === '') return '—';
-  if (v instanceof Date) return v.toISOString().slice(0, 10);
+  if (v instanceof Date) return toThaiDateInput(v)!;
   return String(v);
 };
 

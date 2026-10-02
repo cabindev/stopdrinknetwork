@@ -341,3 +341,31 @@ model ActivityAttachment {
 
   @@index([activityId])
 }
+
+// สถิติการใช้ "ส่งด้วยใจ" (/farewell) แบบไม่ระบุตัวตน — แอดมินดูที่ /dashboard/farewell (ผู้ใช้ตัดสินใจ 2 ต.ค. 2026)
+// เก็บแค่ชนิดเหตุการณ์ + จังหวัด/ภาค + ตัวเลือกในแผน (รหัสตัวเลือก) — ห้ามเก็บชื่อผู้วายชนม์/ตำบล/ราคา/IP/อุปกรณ์
+enum FarewellEventType {
+  VISIT // เปิดหน้า /farewell (1 ครั้งต่อแท็บ)
+  JOURNEY_VIEW // เปิดหน้า 3D เส้นทางสุดท้าย
+  PLAN_START // ผ่านขั้นแรกของแผน
+  PLAN_COMPLETE // ถึงหน้าสรุปแผน (1 ครั้งต่อแผน)
+  PRINT // พิมพ์สรุปแผน
+  SHARE // แชร์ผ่านเมนูมือถือ
+  LINE // ส่งทาง LINE
+  COPY // คัดลอกข้อความ
+  SIGN_DOWNLOAD // ดาวน์โหลดป้ายหน้างาน
+  SIGN_PRINT // พิมพ์ป้าย
+  LOCAL_LOOKUP // ค้นข้อตกลงในพื้นที่ (found = พบข้อตกลงครอบคลุมตำบลนั้น)
+}
+
+model FarewellEvent {
+  id        Int               @id @default(autoincrement())
+  type      FarewellEventType
+  province  String?           @db.VarChar(100)
+  region    String?           @db.VarChar(40) // HealthZone slug — server คำนวณจากจังหวัด
+  answers   Json? // PLAN_COMPLETE: { days: '1', alcohol: 'none', ... } เฉพาะรหัสตัวเลือกที่มีจริง
+  found     Boolean? // LOCAL_LOOKUP
+  createdAt DateTime          @default(now())
+
+  @@index([type, createdAt])
+}

@@ -6,6 +6,7 @@ import { useSession, signOut } from 'next-auth/react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { Home, User, LogOut, Menu, BarChart3, X, ClipboardList, Map as MapIcon, BookOpen, Clock } from 'lucide-react';
+import ChanFlowerIcon from '@/app/farewell/components/ChanFlowerIcon';
 
 const PILL =
   'inline-flex items-center gap-1.5 h-9 px-3 rounded-full bg-white/95 backdrop-blur border border-gray-200 shadow-sm text-xs font-medium text-gray-700 hover:bg-white hover:text-orange-700 transition-colors';
@@ -33,7 +34,7 @@ export default function Navbar() {
   if (pathname?.startsWith('/dashboard')) return null;
 
   return (
-    <nav className="fixed top-0 inset-x-0 z-[2000] pointer-events-none">
+    <nav className="fixed top-0 inset-x-0 z-[2000] pointer-events-none print:hidden">
       <div className="flex items-center justify-between gap-3 px-3 py-2.5">
         {/* แบรนด์ */}
         <Link
@@ -56,6 +57,11 @@ export default function Navbar() {
               <Link href="/stories" className={PILL} title="กรณีศึกษา">
                 <BookOpen className="w-4 h-4 text-gray-400" />
                 กรณีศึกษา
+              </Link>
+              {/* ส่งด้วยใจ = เครื่องมือวางแผนงานศพสำหรับประชาชน (สาธารณะ) */}
+              <Link href="/farewell" className={PILL} title="ส่งด้วยใจ วางแผนงานศพ">
+                <ChanFlowerIcon className="w-4 h-4 text-gray-400" />
+                ส่งด้วยใจ
               </Link>
               {session?.user && !isPending && (
                 <Link href="/activity" className={PILL} title="งานของฉัน">
@@ -164,6 +170,13 @@ export default function Navbar() {
             onClick={() => setIsMenuOpen(false)}
           >
             <BookOpen className="w-4 h-4 text-gray-400" /> กรณีศึกษา
+          </Link>
+          <Link
+            href="/farewell"
+            className="flex items-center gap-2 px-3 py-2.5 text-xs rounded-xl text-gray-600 hover:bg-orange-50 hover:text-orange-700"
+            onClick={() => setIsMenuOpen(false)}
+          >
+            <ChanFlowerIcon className="w-4 h-4 text-gray-400" /> ส่งด้วยใจ วางแผนงานศพ
           </Link>
           {session?.user && !isPending && (
             <Link

@@ -2,6 +2,7 @@
 // Sidebar เมนูหลักของระบบ Stop Drink Network — โครงสร้างเดียวกับ buddhistlent
 'use client'
 import type { Session } from 'next-auth';
+import ChanFlowerIcon from '@/app/farewell/components/ChanFlowerIcon';
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -213,6 +214,35 @@ export default function Sidebar({ user }: SidebarProps) {
                   </div>
                   {!sidebarCollapsed && (
                     <span className="ml-2 font-medium text-sm">งานทั้งหมด</span>
+                  )}
+                </Link>
+              </div>
+            )}
+
+            {/* สถิติส่งด้วยใจ (ไม่ระบุตัวตน) */}
+            {isAdmin && (
+              <div className="px-2 mb-2">
+                <Link
+                  href="/dashboard/farewell"
+                  className={cn(
+                    "group flex items-center w-full p-2 rounded-lg text-sm transition-colors focus:outline-none",
+                    pathname?.startsWith("/dashboard/farewell")
+                      ? "bg-orange-50 text-orange-700"
+                      : "text-gray-700 hover:bg-orange-50/60",
+                    sidebarCollapsed && "justify-center"
+                  )}
+                  title={sidebarCollapsed ? "สถิติส่งด้วยใจ" : ""}
+                >
+                  <div
+                    className={cn(
+                      "flex items-center justify-center",
+                      sidebarCollapsed ? "h-8 w-8" : "h-4 w-4"
+                    )}
+                  >
+                    <ChanFlowerIcon className={sidebarCollapsed ? "w-5 h-5" : "w-4 h-4"} />
+                  </div>
+                  {!sidebarCollapsed && (
+                    <span className="ml-2 font-medium text-sm">สถิติส่งด้วยใจ</span>
                   )}
                 </Link>
               </div>

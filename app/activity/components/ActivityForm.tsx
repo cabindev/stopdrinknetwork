@@ -102,7 +102,9 @@ export interface ActivityInitialData {
     isCover: boolean;
     policyLevel: string | null; // ไฟล์นโยบายระดับไหน (null = ไฟล์แนบทั่วไป)
     isSurvey: boolean; // ไฟล์แบบสำรวจ
+    isPublic?: boolean; // เปิดเผยบนหน้ากรณีศึกษาแล้ว (ตั้งที่หน้าเผยแพร่)
   }[];
+  isPublished?: boolean; // งานนี้เผยแพร่เป็นกรณีศึกษาแล้ว
 }
 
 const STATUS_OPTIONS = [
@@ -1180,6 +1182,13 @@ export default function ActivityForm({
             <p className="text-xs text-gray-400 mb-2">
               ⭐ = รูปปก (ใช้แสดงบนการ์ดและหน้าเผยแพร่) · ไม่เลือก ระบบใช้รูปแรก
             </p>
+            {/* หน้ากรณีศึกษาใช้เฉพาะรูปที่เปิดเผย — ปกใหม่ที่ยังไม่เปิดเผยจะไม่ขึ้นบนหน้าสาธารณะ (เคยเกิดกับ #151) */}
+            {isEdit && initial?.isPublished && cover &&
+              (cover.startsWith('new:') || !existingImages.find((a) => `existing:${a.id}` === cover)?.isPublic) && (
+                <p role="note" className="mb-2 text-xs text-orange-700 bg-orange-50 border border-orange-200 rounded-lg px-3 py-2">
+                  รูปปกที่เลือกยังไม่เปิดเผยบนหน้ากรณีศึกษา — บันทึกแล้วไปติ๊ก &quot;เปิดเผย&quot; ที่หน้าเผยแพร่ด้วย ไม่งั้นหน้าสาธารณะยังใช้รูปปกเดิม
+                </p>
+              )}
             <ul className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {existingImages.map((a) => {
                 const marked = removeIds.includes(a.id);

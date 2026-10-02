@@ -4,8 +4,8 @@ import { redirect, notFound } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import authOptions from '@/app/lib/configs/auth/authOptions';
-import prisma from '@/app/lib/db';
-import { POLICY_LABEL } from '@/app/lib/activityMeta';
+import prisma, { ACTIVE_ACTIVITY } from '@/app/lib/db';
+import { POLICY_LABEL, GALLERY_GROUP } from '@/app/lib/activityMeta';
 import PublishForm from './PublishForm';
 
 export default async function PublishStoryPage({ params }: { params: Promise<{ id: string }> }) {
@@ -23,6 +23,12 @@ export default async function PublishStoryPage({ params }: { params: Promise<{ i
     },
   });
   if (!activity) notFound();
+  // ชุดกรณีศึกษาทั้งหมด (ให้เลือก) + จำนวนเรื่องในแต่ละชุด
+  const seriesRows = await prisma.storySeries.findMany({
+    select: { id: true, title: true, description: true, _count: { select: { activities: { where: ACTIVE_ACTIVITY } } } },
+    orderBy: { updatedAt: 'desc' },
+  });
+  const currentSeries = seriesRows.find((x) => x.id === activity.seriesId);
 
   return (
     <main className="min-h-screen bg-white pt-20 pb-10 px-4">
@@ -54,11 +60,17 @@ export default async function PublishStoryPage({ params }: { params: Promise<{ i
             caption: a.caption,
             isCover: a.isCover,
             isPublic: a.isPublic,
-            group: a.policyLevel ? `ไฟล์นโยบายระดับ${POLICY_LABEL[a.policyLevel]}` : a.isSurvey ? 'แบบสำรวจ' : a.kind === 'IMAGE' ? 'รูปกิจกรรม' : 'เอกสาร',
+            group: a.policyLevel ? `ไฟล์นโยบายระดับ${POLICY_LABEL[a.policyLevel]}` : a.isSurvey ? 'แบบสำรวจ' : a.kind === 'IMAGE' ? GALLERY_GROUP : 'เอกสาร',
             isSurvey: a.isSurvey,
             src: `/api/files/${a.filePath}`,
           }))}
           links={activity.links.map((l) => ({ id: l.id, url: l.url, title: l.title, kind: l.kind, isPublic: l.isPublic }))}
+          seriesOptions={seriesRows.map((x) => ({ id: x.id, title: x.title, description: x.description, count: x._count.activities }))}
+          initialSeries={
+            currentSeries
+              ? { id: currentSeries.id, title: currentSeries.title, description: currentSeries.description ?? '', order: activity.seriesOrder || 1 }
+              : null
+          }
         />
       </div>
     </main>

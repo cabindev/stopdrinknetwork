@@ -2,10 +2,11 @@
 // กรองตามประเด็นย่อย/จังหวัด ผ่าน ?sub=&province= (URL แชร์ได้) — ข้อมูลจาก STORY_SELECT เท่านั้น
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { BookOpen, MapPin } from 'lucide-react';
+import { BookOpen, Layers } from 'lucide-react';
 import prisma from '@/app/lib/db';
-import { STORY_SELECT, storyCover, storyExcerpt, storyPlace, publicFileUrl, storyLogoUrl } from '@/app/lib/story';
-import { formatStartDate } from '@/app/lib/activityMeta';
+import { STORY_SELECT } from '@/app/lib/story';
+import { ACTIVE_ACTIVITY } from '@/app/lib/db';
+import StoryCard from './StoryCard';
 
 export const metadata: Metadata = {
   title: 'กรณีศึกษา — Stop Drink Network',
@@ -37,6 +38,12 @@ export default async function StoriesPage({
       select: { province: true, areas: { select: { province: true } }, subCategory: { select: { name: true } } },
     }),
   ]);
+  // ชุดกรณีศึกษาที่มีเรื่องเผยแพร่แล้ว — ชิปลิงก์ไปหน้าชุด
+  const seriesList = await prisma.storySeries.findMany({
+    where: { activities: { some: { isPublished: true, ...ACTIVE_ACTIVITY } } },
+    select: { id: true, title: true, _count: { select: { activities: { where: { isPublished: true, ...ACTIVE_ACTIVITY } } } } },
+    orderBy: { updatedAt: 'desc' },
+  });
   const count = <T,>(list: T[]) => [...list.reduce((m, k) => m.set(k, (m.get(k) ?? 0) + 1), new Map<T, number>())];
   const subs = count(facets.map((f) => f.subCategory?.name).filter((x): x is string => !!x)).sort((a, b) => b[1] - a[1]);
   // เรื่องเดียวนับครั้งเดียวต่อจังหวัด แม้จะมีหลายพื้นที่ในจังหวัดเดียวกัน
@@ -64,6 +71,22 @@ export default async function StoriesPage({
           </div>
         </div>
 
+        {seriesList.length > 0 && (
+          <div className="mt-6 flex items-center gap-2 overflow-x-auto pb-1">
+            <span className="shrink-0 inline-flex items-center gap-1 text-xs font-medium text-gray-500">
+              <Layers className="w-3.5 h-3.5 text-orange-600" /> ชุดกรณีศึกษา
+            </span>
+            {seriesList.map((x) => (
+              <Link
+                key={x.id}
+                href={`/stories/series/${x.id}`}
+                className="px-3 py-1 rounded-full border border-orange-300 bg-orange-50 text-xs text-orange-800 whitespace-nowrap hover:bg-orange-100"
+              >
+                {x.title} <span className="opacity-70">{x._count.activities}</span>
+              </Link>
+            ))}
+          </div>
+        )}
         {subs.length > 0 && (
           <div className="mt-6 flex gap-2 overflow-x-auto pb-1">
             <Link href={qs({ sub: '' })} className={chip(!sub)}>ทุกประเด็น</Link>
@@ -92,51 +115,9 @@ export default async function StoriesPage({
           </div>
         ) : (
           <div className="mt-3 grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {stories.map((s) => {
-              const cover = storyCover(s);
-              const started = formatStartDate(s.startDate, s.startDatePrecision);
-              return (
-                <Link
-                  key={s.id}
-                  href={`/stories/${s.id}`}
-                  className="group flex flex-col rounded-2xl border border-orange-100 overflow-hidden hover:border-orange-300 hover:shadow-sm transition"
-                >
-                  {cover ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={publicFileUrl(cover.id, 'card')}
-                      alt={cover.caption || s.title}
-                      className="w-full aspect-video object-cover bg-orange-50"
-                      loading="lazy"
-                    />
-                  ) : (
-                    // ยังไม่มีรูปเปิดเผย → โลโก้ประเด็นกลางกรอบ 16:9 (จนกว่าแอดมินจะติ๊กรูป)
-                    <div className="w-full aspect-video bg-orange-50 flex items-center justify-center">
-                      {storyLogoUrl(s) ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={storyLogoUrl(s)!}
-                          alt={s.subCategory?.name ?? s.category.name}
-                          className="w-1/3 max-w-[140px] aspect-square object-contain rounded-full bg-white p-3 shadow-sm"
-                          loading="lazy"
-                        />
-                      ) : (
-                        <BookOpen className="w-8 h-8 text-orange-300" />
-                      )}
-                    </div>
-                  )}
-                  <div className="p-4 flex-1 flex flex-col">
-                    <p className="text-[11px] font-medium text-orange-700">{s.subCategory?.name ?? s.category.name}</p>
-                    <h2 className="mt-1 text-sm font-semibold text-gray-800 line-clamp-2 group-hover:text-orange-700">{s.title}</h2>
-                    <p className="mt-2 text-xs text-gray-500 line-clamp-3">{storyExcerpt(s, 140)}</p>
-                    <p className="mt-auto pt-3 flex items-center gap-1 text-[11px] text-gray-400">
-                      <MapPin className="w-3 h-3" /> {storyPlace(s)}
-                      {started && <> · เริ่ม{started}</>}
-                    </p>
-                  </div>
-                </Link>
-              );
-            })}
+            {stories.map((s) => (
+              <StoryCard key={s.id} story={s} />
+            ))}
           </div>
         )}
       </div>

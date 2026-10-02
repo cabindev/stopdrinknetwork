@@ -11,6 +11,9 @@ export const STORY_SELECT = {
   storyProcess: true,
   storyLessons: true,
   publishedAt: true,
+  // ชุดกรณีศึกษา (ไม่บังคับ) — ชื่อชุด + ลำดับในชุด
+  series: { select: { id: true, title: true } },
+  seriesOrder: true,
   areaName: true,
   district: true,
   amphoe: true,
@@ -71,3 +74,7 @@ export const storyPlace = (s: Pick<StoryRow, 'areaName' | 'district' | 'amphoe' 
     : s.areaScope === 'DISTRICT'
       ? `ทั้ง อ.${s.amphoe} จ.${s.province}`
       : [s.areaName, `ต.${s.district} อ.${s.amphoe} จ.${s.province}`].filter(Boolean).join(' · ');
+
+// เรื่องที่เผยแพร่แล้วในชุดเดียวกัน เรียงตามลำดับในชุด (ใช้ทั้งหน้าชุดและกล่อง "อ่านต่อในชุดนี้")
+export const seriesStoriesWhere = (seriesId: number) => ({ seriesId, isPublished: true }) satisfies Prisma.ActivityWhereInput;
+export const SERIES_ORDER = [{ seriesOrder: 'asc' }, { id: 'asc' }] satisfies Prisma.ActivityOrderByWithRelationInput[];

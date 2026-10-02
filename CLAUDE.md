@@ -121,6 +121,7 @@ app/
 │   └── components/LocationPicker.tsx  # แผนที่ใน LocationField: คลิก/ลากหมุด, ภาพดาวเทียม, เตือนตำบลไม่ตรง
 ├── stories/                      # ★ กรณีศึกษาสาธารณะ (ไม่ต้อง login) — page.tsx รายการ (?sub=&province=),
 │                                 #   [id]/page.tsx เรื่องแบบ "ทำตามได้" + og:image, ShareButtons (FB/LINE/คัดลอก)
+│                                 #   series/[id]/page.tsx หน้าชุดกรณีศึกษา · StoryCard.tsx การ์ดใช้ร่วม (มี badge)
 ├── map/                          # ★ แผนที่รวมทั้งองค์กร (ไม่ login = โหมดสาธารณะ ดู Map Rules)
 │   ├── page.tsx                  # server: ดึง Activity ทุกคน + categories ส่งเข้า MapView (กรองข้อมูลถ้าไม่ login)
 │   └── components/MapView.tsx    # Leaflet ล้วน (import ใน useEffect กัน SSR) — polygon 77 จว.,
@@ -225,6 +226,7 @@ server.js                         # Express ห่อ Next สำหรับ Pl
 proxy.ts                          # (Next 16 เปลี่ยนชื่อจาก middleware.ts) /dashboard/* ต้อง role admin|superadmin ไม่งั้น → /auth/signin
                                   #   ล็อกอินแล้วเข้า / , /auth/signin, /auth/signup → redirect /map (หน้าแรกหลังล็อกอิน)
 prisma/schema.prisma              # User, WorkCategory, WorkSubCategory, Activity, ActivityArea, ActivityPolicy, ActivityMember,
+                                  #   StorySeries,
                                   #   ActivityAttachment, AuditLog · migrations/ = ประวัติ schema (ใช้ migrate deploy)
 scripts/seed-categories.mjs       # seed ประเด็นงาน 13 หมวด (node scripts/seed-categories.mjs)
 uploads/                          # ไฟล์แนบ runtime (gitignore) — ห้ามเก็บใน public/ เพราะ prod ไม่ serve ไฟล์หลัง build
@@ -365,6 +367,14 @@ uploads/                          # ไฟล์แนบ runtime (gitignore) �
   (หรือ "ทั้งอำเภอ/จังหวัด") · ไม่มีหมุดจริง · ไม่มีชื่อเจ้าหน้าที่
 - **ไฟล์เปิดเผยเฉพาะที่ติ๊ก `isPublic`** ผ่าน `/api/public-files/[id]` (ต้อง isPublished ด้วย) — `/api/files` ยังต้อง login
   · ค่าเริ่มต้นครั้งแรก: เอกสาร/นโยบายติ๊ก, **รูปไม่ติ๊ก** (ต้องได้รับอนุญาตจากคนในภาพก่อน โดยเฉพาะเด็ก)
+  · **รูปปกที่ไม่ได้ติ๊กเปิดเผย = หน้าสาธารณะข้ามไปใช้รูปเปิดเผยรูปแรกแทน** (`storyCover`) — ต้นเหตุ "เปลี่ยนปกแล้วไม่เปลี่ยน"
+    (งานศพ #151, 2 ต.ค. 2026) · หน้าเผยแพร่เตือน + ปุ่ม "เปิดเผยรูปปก" · ฟอร์มแก้ไขงานที่เผยแพร่แล้วเตือนเมื่อปกใหม่ยังไม่เปิดเผย
+- **ชุดกรณีศึกษา** (`StorySeries`, 2 ต.ค. 2026): หลายเรื่องที่อ่านต่อกัน (เช่น สงกรานต์ 6 พื้นที่) · `Activity.seriesId` + `seriesOrder`
+  · ตั้งในหน้าเผยแพร่ (`SeriesField`: ไม่อยู่ในชุด/เลือกชุด/สร้างใหม่ + ลำดับ + แก้ชื่อ/บทนำชุด) → body `series`
+    (ไม่ส่ง = ไม่แตะ, null = ออกจากชุด, id null = สร้างใหม่) · ชุดที่ไม่เหลือเรื่อง = ลบทิ้ง · audit "เข้า/ออกชุด"
+  · สาธารณะนับเฉพาะเรื่องที่เผยแพร่ (`seriesStoriesWhere`, เรียง `SERIES_ORDER`) · ชิปใต้ชื่อเรื่อง "เรื่องที่ k/n" +
+    กล่อง "อ่านต่อในชุดนี้" ท้ายเรื่อง (เรื่องในชุดไม่ซ้ำในเรื่องที่เกี่ยวข้อง) · ชิปชุดบน /stories · `/stories/series/[id]` ไม่มีเรื่องเผยแพร่ = 404
+  · ชุด ≠ พื้นที่ที่เกี่ยวข้อง: ชุด = หลายเรื่องแยกกันแต่อ่านต่อกัน, ActivityArea = เรื่องเดียวที่ยกหลายพื้นที่
 - ยังไม่เผยแพร่: แอดมินดูตัวอย่างที่ `/stories/[id]` ได้ (แถบเหลือง, รูปผ่าน /api/files) คนอื่น 404
 - **รูปบนหน้าสาธารณะเป็น 16:9 เต็มกรอบเสมอ** — `/api/public-files/[id]?v=card` (640×360) / `?v=cover` (1280×720, ใช้กับ
   รูปปก/แกลเลอรี/og:image) ผ่าน `lib/imageVariant.ts` (sharp: ตัดขอบพื้นเรียบ → ครอบ 16:9 position attention → WebP,

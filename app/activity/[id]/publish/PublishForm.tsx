@@ -6,9 +6,12 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
-import { Globe, EyeOff, Save, ExternalLink, Loader2, FileText } from 'lucide-react';
+import { Globe, EyeOff, Save, ExternalLink, Loader2, FileText, AlertTriangle } from 'lucide-react';
 import LinkKindIcon from '@/app/components/LinkKindIcon';
 import { linkDisplayName } from '@/app/lib/activityLinks';
+import { GALLERY_GROUP } from '@/app/lib/activityMeta';
+import SeriesField from './SeriesField';
+import type { SeriesOption, SeriesValue } from './SeriesField';
 
 interface LinkItem {
   id: number;
@@ -39,12 +42,16 @@ export default function PublishForm({
   initial,
   files,
   links = [],
+  seriesOptions = [],
+  initialSeries = null,
 }: {
   activityId: number;
   isPublished: boolean;
   initial: { storyLead: string; storyProcess: string; storyLessons: string };
   files: FileItem[];
   links?: LinkItem[];
+  seriesOptions?: SeriesOption[];
+  initialSeries?: SeriesValue | null;
 }) {
   const router = useRouter();
   const [form, setForm] = useState(initial);
@@ -58,14 +65,20 @@ export default function PublishForm({
     new Set(links.filter((l) => (firstLinks ? l.kind !== 'DRIVE' : l.isPublic)).map((l) => l.id))
   );
   const [busy, setBusy] = useState<string | null>(null);
+  const [series, setSeries] = useState<SeriesValue | null>(initialSeries);
 
   const save = async (publish: boolean, label: string) => {
+    if (series && !series.title.trim()) {
+      toast.error('กรุณาตั้งชื่อชุดกรณีศึกษา (หรือเลือก "ไม่อยู่ในชุด")');
+      document.getElementById('seriesTitle')?.focus();
+      return;
+    }
     setBusy(label);
     try {
       const res = await fetch(`/api/activities/${activityId}/publish`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, publicAttachmentIds: [...picked], publicLinkIds: [...pickedLinks], publish }),
+        body: JSON.stringify({ ...form, publicAttachmentIds: [...picked], publicLinkIds: [...pickedLinks], publish, series }),
       });
       const d = await res.json();
       if (!res.ok) throw new Error(d.error);
@@ -80,6 +93,12 @@ export default function PublishForm({
   };
 
   const groups = [...new Set(files.map((f) => f.group))];
+  // รูปปกที่ตั้งในหน้าแก้ไขต้อง "เปิดเผย" ด้วย ไม่งั้นหน้าสาธารณะใช้รูปเปิดเผยรูปแรกแทนเงียบ ๆ (storyCover ใน lib/story.ts)
+  // — เคยเกิดกับงานศพ #151: เปลี่ยนปกแล้วหน้ากรณีศึกษาไม่เปลี่ยน เพราะรูปใหม่ยังไม่ติ๊กเปิดเผย
+  const gallery = files.filter((f) => f.kind === 'IMAGE' && f.group === GALLERY_GROUP);
+  const coverFile = gallery.find((f) => f.isCover) ?? null;
+  const coverHidden = coverFile !== null && !picked.has(coverFile.id);
+  const fallbackCover = coverHidden ? gallery.find((f) => picked.has(f.id)) ?? null : null;
   const sections = [
     ['storyLead', 'บริบทและที่มา', 'ปัญหาในพื้นที่ เช่น ค่าใช้จ่ายงานศพ การดื่มในงาน — ทำไมถึงเริ่มทำ (เติมจากรายละเอียดงานให้แล้ว แก้ได้)'],
     ['storyProcess', 'กระบวนการ (ทำอย่างไร)', 'ขั้นตอนที่ทำจริง เช่น 1) ประชุมผู้นำ 2) ร่างกติกา 3) ประชาคมหมู่บ้าน 4) ติดป้าย/ประกาศ'],
@@ -113,6 +132,22 @@ export default function PublishForm({
         <p className="text-xs text-gray-400 mt-1 mb-4">
           ติ๊กเฉพาะรูปที่ได้รับอนุญาตจากคนในภาพแล้ว (ระวังรูปเด็ก/หน้าบุคคลชัด ๆ) · ไฟล์นโยบายคือกติกาที่คนอื่นดาวน์โหลดไปปรับใช้ได้
         </p>
+        {coverHidden && coverFile && (
+          <div role="alert" className="mb-4 flex flex-wrap items-start gap-2 rounded-xl border border-orange-300 bg-orange-50 p-3 text-sm text-gray-700">
+            <AlertTriangle className="w-4 h-4 mt-0.5 text-orange-600 shrink-0" />
+            <p className="flex-1 min-w-0">
+              รูปปก &quot;{coverFile.caption || coverFile.fileName}&quot; ยังไม่เปิดเผย — หน้ากรณีศึกษาจะ
+              {fallbackCover ? <>ใช้ &quot;{fallbackCover.caption || fallbackCover.fileName}&quot; เป็นปกแทน</> : 'ไม่มีรูปปก (ใช้โลโก้ประเด็นแทน)'}
+            </p>
+            <button
+              type="button"
+              onClick={() => setPicked((prev) => new Set(prev).add(coverFile.id))}
+              className="px-3 py-1 rounded-lg bg-orange-600 text-white text-xs font-medium hover:bg-orange-700"
+            >
+              เปิดเผยรูปปก
+            </button>
+          </div>
+        )}
         {files.length === 0 ? (
           <p className="text-sm text-gray-400">งานนี้ยังไม่มีไฟล์แนบ</p>
         ) : (
@@ -208,6 +243,8 @@ export default function PublishForm({
           </ul>
         </section>
       )}
+
+      <SeriesField options={seriesOptions} value={series} onChange={setSeries} />
 
       <div className="flex flex-wrap items-center gap-2">
         <button

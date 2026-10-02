@@ -17,6 +17,7 @@
 | `2026-10-01_activity-survey.sql` | ช่อง "มีแบบสำรวจ" (`Activity.hasSurvey`) + ไฟล์แบบสำรวจ (`ActivityAttachment.isSurvey`) | ✅ รันแล้ว 1 ต.ค. 2026 (ตรวจแล้ว: Activity.hasSurvey + ActivityAttachment.isSurvey มีครบ) |
 | `2026-10-01_role-pending.sql` | role `pending` สำหรับบัญชีสมัครใหม่รออนุมัติ (**รันก่อน deploy**) | ✅ รันแล้ว 1 ต.ค. 2026 (ตรวจแล้ว: enum มี pending, ผู้ใช้เดิม 5 คน role คงเดิม) |
 | `2026-10-02_activity-areas.sql` | ตาราง ActivityArea — งานเดียวปักได้หลายพื้นที่ (หมุดรองบนแผนที่) (**รันก่อน deploy**) | ✅ รันแล้ว 2 ต.ค. 2026 (ตรวจแล้ว: 14 คอลัมน์ + foreign key) |
+| `2026-10-02_story-series.sql` | ชุดกรณีศึกษา: ตาราง StorySeries + Activity.seriesId/seriesOrder (**รันก่อน deploy**) | ⏳ ยังไม่รัน |
 
 ไฟล์นี้ทดสอบแล้วกับสำเนาฐานข้อมูล ณ 27 ก.ย. 2026 (ก่อนปรับ) — ผลตรงกับ `schema.prisma` ทุกคอลัมน์
 ถ้าฐานข้อมูล production เก่ากว่านั้น (เช่น ยังไม่มีตาราง WorkSubCategory หรือคอลัมน์ policyLevels) ห้ามรัน —

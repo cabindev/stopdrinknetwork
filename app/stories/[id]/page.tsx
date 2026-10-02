@@ -8,10 +8,10 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { getServerSession } from 'next-auth/next';
-import { ArrowLeft, MapPin, CalendarDays, FileText, Download, Users, Home, UserRound, Handshake, EyeOff, Link2 } from 'lucide-react';
+import { ArrowLeft, MapPin, CalendarDays, FileText, Download, Users, Home, UserRound, Handshake, EyeOff, Link2, Layers } from 'lucide-react';
 import authOptions from '@/app/lib/configs/auth/authOptions';
 import prisma from '@/app/lib/db';
-import { STORY_SELECT, storyCover, storyExcerpt, storyPlace, publicFileUrl, storyLogoUrl } from '@/app/lib/story';
+import { STORY_SELECT, storyCover, storyExcerpt, storyPlace, publicFileUrl, storyLogoUrl, seriesStoriesWhere, SERIES_ORDER } from '@/app/lib/story';
 import {
   parsePartners,
   policyShape,
@@ -83,10 +83,21 @@ export default async function StoryPage({ params }: { params: Promise<{ id: stri
   ].filter(Boolean) as { icon: typeof Home; value: string; label: string }[];
   const started = formatStartDate(story.startDate, story.startDatePrecision);
 
+  // ชุดกรณีศึกษา: เรื่องที่เผยแพร่แล้วในชุดเดียวกัน (รวมเรื่องนี้) ตามลำดับในชุด
+  const seriesItems = story.series
+    ? await prisma.activity.findMany({
+        where: seriesStoriesWhere(story.series.id),
+        select: { id: true, title: true, province: true },
+        orderBy: SERIES_ORDER,
+      })
+    : [];
+  const seriesPos = seriesItems.findIndex((x) => x.id === story.id);
+
   const related = await prisma.activity.findMany({
     where: {
       isPublished: true,
-      id: { not: story.id },
+      // เรื่องในชุดเดียวกันขึ้นในกล่องชุดแล้ว ไม่ซ้ำใน "ใกล้เคียง"
+      id: { notIn: [story.id, ...seriesItems.map((x) => x.id)] },
       ...(story.subCategory ? { subCategory: { name: story.subCategory.name } } : { category: { name: story.category.name } }),
     },
     select: STORY_SELECT,
@@ -131,6 +142,15 @@ export default async function StoryPage({ params }: { params: Promise<{ id: stri
             </span>
           )}
         </p>
+        {story.series && seriesItems.length > 1 && (
+          <Link
+            href={`/stories/series/${story.series.id}`}
+            className="mt-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-orange-200 bg-orange-50 text-xs text-orange-800 hover:bg-orange-100"
+          >
+            <Layers className="w-3.5 h-3.5" /> ชุดกรณีศึกษา: {story.series.title}
+            {seriesPos >= 0 && <span className="text-orange-600">· เรื่องที่ {seriesPos + 1}/{seriesItems.length}</span>}
+          </Link>
+        )}
 
         {coverSrc ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -266,6 +286,36 @@ export default async function StoryPage({ params }: { params: Promise<{ id: stri
                 caption: img.caption,
               }))}
             />
+          </section>
+        )}
+
+        {/* อ่านต่อในชุดนี้ — ทุกเรื่องในชุด เรื่องปัจจุบันเน้นสี */}
+        {story.series && seriesItems.length > 1 && (
+          <section className={`${section} rounded-2xl border border-orange-200 p-5`} aria-label="อ่านต่อในชุดนี้">
+            <p className="text-xs font-medium text-orange-700 flex items-center gap-1.5">
+              <Layers className="w-4 h-4" /> ชุดกรณีศึกษา · {seriesItems.length} เรื่อง
+            </p>
+            <h2 className="mt-1 text-base font-bold text-gray-800">{story.series.title}</h2>
+            <ol className="mt-3 space-y-1.5">
+              {seriesItems.map((x, i) => (
+                <li key={x.id}>
+                  {x.id === story.id ? (
+                    <span className="flex items-start gap-2 rounded-lg bg-orange-50 px-2 py-1.5 text-sm font-semibold text-orange-800" aria-current="page">
+                      <span className="w-5 shrink-0 text-right">{i + 1}.</span> {x.title}
+                    </span>
+                  ) : (
+                    <Link href={`/stories/${x.id}`} className="flex items-start gap-2 rounded-lg px-2 py-1.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-800">
+                      <span className="w-5 shrink-0 text-right text-gray-400">{i + 1}.</span>
+                      <span className="flex-1">{x.title}</span>
+                      <span className="shrink-0 text-xs text-gray-400">จ.{x.province}</span>
+                    </Link>
+                  )}
+                </li>
+              ))}
+            </ol>
+            <Link href={`/stories/series/${story.series.id}`} className="mt-3 inline-block text-sm font-medium text-orange-700 underline">
+              ดูทั้งชุด
+            </Link>
           </section>
         )}
 

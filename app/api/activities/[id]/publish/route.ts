@@ -1,5 +1,6 @@
 // app/api/activities/[id]/publish/route.ts — แอดมินเผยแพร่/แก้เนื้อหา/ยกเลิกเผยแพร่กรณีศึกษา
-// body: { storyLead, storyProcess, storyLessons, publicAttachmentIds: number[], publicLinkIds?: number[], publish: boolean }
+// body: { storyLead, storyProcess, storyLessons, publicAttachmentIds: number[], publicLinkIds?: number[], publish: boolean,
+//         series?: null | { id: number | null, title, description, order } }  (ไม่ส่ง series = ไม่แตะชุดเดิม)
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/app/lib/db';
 import { getAdminUser } from '@/app/lib/adminAuth';
@@ -17,7 +18,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const activity = Number.isInteger(id)
       ? await prisma.activity.findUnique({
           where: { id },
-          include: { attachments: { select: { id: true } }, links: { select: { id: true } } },
+          include: { attachments: { select: { id: true } }, links: { select: { id: true } }, series: { select: { id: true, title: true } } },
         })
       : null;
     if (!activity) return NextResponse.json({ error: 'ไม่พบงาน' }, { status: 404 });
@@ -34,6 +35,34 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       ? body.publicLinkIds.map(Number).filter((x: number) => ownLinks.has(x))
       : null;
 
+    // ชุดกรณีศึกษา: null = ออกจากชุด · id null = สร้างชุดใหม่ · id = เข้าชุดนั้น (แก้ชื่อ/บทนำของชุดได้)
+    let seriesData: { seriesId: number | null; seriesOrder: number } | null = null;
+    let seriesNote: string | null = null;
+    if (body.series !== undefined) {
+      if (body.series === null) {
+        seriesData = { seriesId: null, seriesOrder: 0 };
+        if (activity.series) seriesNote = `ออกจากชุดกรณีศึกษา "${activity.series.title}"`;
+      } else {
+        const sTitle = typeof body.series.title === 'string' ? body.series.title.trim().slice(0, 200) : '';
+        if (!sTitle) return NextResponse.json({ error: 'กรุณาตั้งชื่อชุดกรณีศึกษา' }, { status: 400 });
+        const sDesc = text(body.series.description);
+        const order = Math.min(999, Math.max(1, Math.round(Number(body.series.order)) || 1));
+        let seriesId: number;
+        if (body.series.id == null) {
+          seriesId = (await prisma.storySeries.create({ data: { title: sTitle, description: sDesc } })).id;
+        } else {
+          const found = await prisma.storySeries.findUnique({ where: { id: Number(body.series.id) } });
+          if (!found) return NextResponse.json({ error: 'ไม่พบชุดกรณีศึกษาที่เลือก' }, { status: 400 });
+          seriesId = found.id;
+          if (found.title !== sTitle || (found.description ?? null) !== sDesc) {
+            await prisma.storySeries.update({ where: { id: seriesId }, data: { title: sTitle, description: sDesc } });
+          }
+        }
+        seriesData = { seriesId, seriesOrder: order };
+        if (activity.series?.id !== seriesId) seriesNote = `เข้าชุดกรณีศึกษา "${sTitle}" (ลำดับ ${order})`;
+      }
+    }
+
     await prisma.$transaction([
       prisma.activityAttachment.updateMany({ where: { activityId: id }, data: { isPublic: false } }),
       prisma.activityAttachment.updateMany({ where: { id: { in: publicIds } }, data: { isPublic: true } }),
@@ -49,6 +78,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           storyLead: text(body.storyLead),
           storyProcess: text(body.storyProcess),
           storyLessons: text(body.storyLessons),
+          ...(seriesData ?? {}),
           isPublished: publish,
           // เผยแพร่ครั้งแรกเก็บวันที่ไว้ (แก้เนื้อหาทีหลังวันที่ไม่เปลี่ยน) · ยกเลิกเผยแพร่ = ล้าง
           publishedAt: publish ? activity.publishedAt ?? new Date() : null,
@@ -56,6 +86,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         },
       }),
     ]);
+
+    // ชุดที่ไม่เหลือเรื่อง (รวมเรื่องในถังขยะ — กู้คืนแล้วยังอยู่ในชุด) ลบทิ้ง
+    if (seriesData) await prisma.storySeries.deleteMany({ where: { activities: { none: {} } } });
 
     const changed = activity.isPublished !== publish;
     await writeAuditLog({
@@ -69,6 +102,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
             ? `เผยแพร่เป็นกรณีศึกษาสาธารณะ (ไฟล์สาธารณะ ${publicIds.length} ไฟล์)`
             : 'ยกเลิกการเผยแพร่กรณีศึกษา'
           : `แก้เนื้อหากรณีศึกษา (ไฟล์สาธารณะ ${publicIds.length} ไฟล์)`,
+        ...(seriesNote ? [seriesNote] : []),
       ],
     });
 

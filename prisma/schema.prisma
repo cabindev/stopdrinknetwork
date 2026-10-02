@@ -183,6 +183,10 @@ model Activity {
   storyLead     String?   @db.Text // บริบท/ปัญหา (ว่าง = ใช้ description)
   storyProcess  String?   @db.Text // กระบวนการทีละขั้น
   storyLessons  String?   @db.Text // ปัจจัยสำเร็จ / ข้อควรระวัง
+  // ชุดกรณีศึกษา (ไม่บังคับ) — หลายเรื่องที่อ่านต่อกันได้ เช่น "สงกรานต์ 6 พื้นที่ต้นแบบ 2569" · 1 เรื่องอยู่ได้ 1 ชุด
+  seriesId      Int?
+  series        StorySeries? @relation(fields: [seriesId], references: [id], onDelete: SetNull)
+  seriesOrder   Int          @default(0) // ลำดับในชุด (น้อย = ก่อน)
 
   status    ActivityStatus @default(ACTIVE)
   startDate DateTime?
@@ -210,6 +214,7 @@ model Activity {
   @@index([categoryId])
   @@index([subCategoryId])
   @@index([isPublished])
+  @@index([seriesId])
   @@index([province])
   @@index([province, amphoe, district])
   @@index([region])
@@ -258,7 +263,17 @@ enum LinkKind {
   WEB // ข่าว/เว็บทั่วไป
 }
 
-// ลิงก์ที่เกี่ยวข้องกับงาน — สูงสุด 10 ลิงก์ต่องาน, รับเฉพาะ http(s)
+// ชุดกรณีศึกษา — แอดมินจัดที่หน้าเผยแพร่ · หน้า /stories/series/[id] + กล่อง "อ่านต่อในชุดนี้" ท้ายแต่ละเรื่อง
+// ชุดที่ไม่เหลือเรื่องถูกลบอัตโนมัติตอนบันทึกหน้าเผยแพร่
+model StorySeries {
+  id          Int        @id @default(autoincrement())
+  title       String     @db.VarChar(200)
+  description String?    @db.Text // บทนำสั้น ๆ ของทั้งชุด
+  activities  Activity[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
 // พื้นที่ที่เกี่ยวข้องของงาน (นอกเหนือพื้นที่หลักใน Activity) — ฟิลด์ตำแหน่งชุดเดียวกับ Activity
 // server ตรวจตำบลกับ regions.ts + หมุดต้องอยู่ในจังหวัด เหมือนพื้นที่หลัก · ลบงาน = ลบตาม (cascade)
 model ActivityArea {
@@ -282,6 +297,7 @@ model ActivityArea {
   @@index([province, amphoe, district])
 }
 
+// ลิงก์ที่เกี่ยวข้องกับงาน — สูงสุด 10 ลิงก์ต่องาน, รับเฉพาะ http(s)
 model ActivityLink {
   id         Int      @id @default(autoincrement())
   activityId Int

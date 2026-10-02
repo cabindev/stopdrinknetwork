@@ -15,6 +15,7 @@ import {
 import { resolveActivityCoords } from '@/app/lib/provinceGeo';
 import { purgeExpiredTrash, TRASH_DAYS } from '@/app/lib/activityAccess';
 import { writeAuditLog, diffFields, STATUS_LABEL } from '@/app/lib/audit';
+import { parseExtraAreas, areasText } from '@/app/lib/activityAreas';
 import { parseActivityExtras, imageLimitError, applyImageMeta, policyFilesFrom, surveyFilesFrom, parseMemberIds, parseLinksField } from '@/app/lib/activityInput';
 import {
   canSeeCoordinatorContact,
@@ -43,6 +44,7 @@ async function findActivity(id: string) {
       attachments: true,
       policies: true,
       links: { orderBy: { sortOrder: 'asc' } },
+      areas: { orderBy: { sortOrder: 'asc' } },
       members: { select: { userId: true, user: { select: { firstName: true, lastName: true } } } },
     },
   });
@@ -213,6 +215,10 @@ export async function PATCH(
     if ('error' in coords) {
       return NextResponse.json({ error: coords.error }, { status: 400 });
     }
+    const extraAreas = parseExtraAreas(formData);
+    if ('error' in extraAreas) {
+      return NextResponse.json({ error: extraAreas.error }, { status: 400 });
+    }
 
     // ไฟล์นโยบายรายระดับ (รับเฉพาะระดับที่ติ๊ก) — รวมขนาดกับไฟล์อื่นไม่เกินเพดานต่อครั้ง
     const policy = policyFilesFrom(formData, extras.policyLevels);
@@ -254,6 +260,8 @@ export async function PATCH(
         // นโยบาย: แทนทั้งชุดตามที่ติ๊กในฟอร์ม
         policies: { deleteMany: {}, create: extras.policies },
         ...(team.ids && { members: { deleteMany: {}, create: team.ids.map((userId) => ({ userId })) } }),
+        // พื้นที่ที่เกี่ยวข้อง: แทนทั้งชุดตามฟอร์ม (ไม่ส่งมา = ไม่แตะ)
+        ...(extraAreas.areas && { areas: { deleteMany: {}, create: extraAreas.areas } }),
         ...(linkField.links && {
           links: {
             deleteMany: {},
@@ -302,6 +310,7 @@ export async function PATCH(
         surveyText: activity.hasSurvey ? 'มี' : null,
         teamText: teamText(activity.members),
         linksText: linksText(activity.links),
+        areasText: areasText(activity.areas),
         areaScopeLabel: AREA_SCOPE_LABEL[activity.areaScope],
         coverageText: coverageText(activity.coverageVillages, activity.coverageHouseholds, activity.coveragePopulation),
         coordinatorName: activity.coordinatorName,
@@ -331,6 +340,7 @@ export async function PATCH(
           ? teamText((await prisma.user.findMany({ where: { id: { in: team.ids } }, select: { firstName: true, lastName: true } })).map((user) => ({ user })))
           : teamText(activity.members),
         linksText: linkField.links ? linksText(linkField.links) : linksText(activity.links),
+        areasText: extraAreas.areas ? areasText(extraAreas.areas) : areasText(activity.areas),
         areaScopeLabel: AREA_SCOPE_LABEL[extras.data.areaScope],
         coverageText: coverageText(extras.data.coverageVillages, extras.data.coverageHouseholds, extras.data.coveragePopulation),
         coordinatorName: extras.data.coordinatorName,

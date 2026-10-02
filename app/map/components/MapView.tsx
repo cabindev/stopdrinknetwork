@@ -54,6 +54,28 @@ export interface MapActivity {
   createdAt: string; // ISO
   mine: boolean; // งานของผู้ที่กำลังดู — ไม่นับเป็น "งานใหม่"
   published: boolean; // เผยแพร่เป็นกรณีศึกษาแล้ว → มีหน้า /stories/[id]
+  // พื้นที่ที่เกี่ยวข้อง (ActivityArea) — หมุดรองของงานเดียวกัน ไม่นับในสถิติ/ความหนาแน่น/แผงจังหวัด
+  extraAreas: MapArea[];
+}
+
+export interface MapArea {
+  areaName: string | null;
+  district: string;
+  amphoe: string;
+  province: string;
+  latitude: number | null;
+  longitude: number | null;
+  locationSource: string;
+  note: string | null;
+}
+
+// จุดที่วาดหมุด 1 จุด: พื้นที่หลักของงาน หรือพื้นที่ที่เกี่ยวข้อง (extra)
+interface MapSite {
+  a: MapActivity;
+  latitude: number | null;
+  longitude: number | null;
+  locationSource: string;
+  extra: MapArea | null;
 }
 
 interface MapViewProps {
@@ -142,8 +164,15 @@ const esc = (v: unknown) =>
   );
 
 // เนื้อหา popup ของหมุดรายงาน
-function activityPopupHtml(a: MapActivity, color: string, isNew: boolean, publicView: boolean) {
-  const area = a.areaName ? `${esc(a.areaName)} · ` : '';
+function activityPopupHtml(a: MapActivity, color: string, isNew: boolean, publicView: boolean, extra: MapArea | null = null) {
+  // หมุดรอง: บอกตำแหน่งของพื้นที่นั้น + บทบาท แล้วลิงก์ไปงานเดียวกัน
+  const place = extra ?? a;
+  const area = place.areaName ? `${esc(place.areaName)} · ` : '';
+  const extraLine = extra
+    ? `<div style="font-size:11px;color:#c2410c;margin-top:4px">พื้นที่ที่เกี่ยวข้องของงานนี้${extra.note ? ` · ${esc(extra.note)}` : ''}</div>`
+    : a.extraAreas.length > 0
+      ? `<div style="font-size:11px;color:#c2410c;margin-top:4px">และพื้นที่ที่เกี่ยวข้องอีก ${a.extraAreas.length} แห่ง</div>`
+      : '';
   const newBadge = isNew
     ? '<span style="font-size:10px;font-weight:700;color:#fff;background:#ea580c;border-radius:9999px;padding:1px 7px">ใหม่</span>'
     : '';
@@ -158,9 +187,10 @@ function activityPopupHtml(a: MapActivity, color: string, isNew: boolean, public
         )}</span>
       </div>
       <div style="font-size:13px;font-weight:600;color:#1f2937;line-height:1.4">${esc(a.title)}</div>
-      <div style="font-size:11px;color:#6b7280;margin-top:5px">${area}ต.${esc(a.district)} อ.${esc(
-        a.amphoe
-      )} จ.${esc(a.province)}</div>
+      <div style="font-size:11px;color:#6b7280;margin-top:5px">${area}ต.${esc(place.district)} อ.${esc(
+        place.amphoe
+      )} จ.${esc(place.province)}</div>
+      ${extraLine}
       ${publicView ? '' : `<div style="font-size:11px;color:#9ca3af;margin-top:2px">โดย ${esc(a.userName)}</div>`}
       ${publicView ? publicPopupFooter(a) : `
       <div style="display:flex;align-items:center;gap:12px;margin-top:8px">
@@ -168,7 +198,7 @@ function activityPopupHtml(a: MapActivity, color: string, isNew: boolean, public
            style="font-size:11px;font-weight:600;color:#c2410c;text-decoration:none">
           ดูรายละเอียดเต็ม →
         </a>
-        <a href="${esc(navigationUrl(a))}" target="_blank" rel="noopener noreferrer"
+        <a href="${esc(navigationUrl(place))}" target="_blank" rel="noopener noreferrer"
            style="margin-left:auto;font-size:11px;font-weight:600;color:#ffffff;background:#ea580c;padding:3px 9px;border-radius:9999px;text-decoration:none">
           นำทาง
         </a>
@@ -229,7 +259,9 @@ export default function MapView({ activities, categories, categoryLogos, subCate
         if (statusFilter && a.status !== statusFilter) return false;
         if (search) {
           const hay =
-            `${a.title} ${a.province} ${a.amphoe} ${a.district} ${a.areaName ?? ''} ${a.userName} ${a.category} ${a.subCategory ?? ''}`.toLowerCase();
+            `${a.title} ${a.province} ${a.amphoe} ${a.district} ${a.areaName ?? ''} ${a.userName} ${a.category} ${a.subCategory ?? ''} ${a.extraAreas
+              .map((x) => `${x.province} ${x.amphoe} ${x.district} ${x.areaName ?? ''}`)
+              .join(' ')}`.toLowerCase();
           if (!hay.includes(search.toLowerCase())) return false;
         }
         return true;
@@ -243,6 +275,19 @@ export default function MapView({ activities, categories, categoryLogos, subCate
       const list = m.get(a.province) ?? [];
       list.push(a);
       m.set(a.province, list);
+    }
+    return m;
+  }, [filtered]);
+
+  // จุดที่วาดหมุด: พื้นที่หลัก + พื้นที่ที่เกี่ยวข้อง (หมุดรอง) จัดกลุ่มตามจังหวัดของจุดนั้น
+  const sitesByProvince = useMemo(() => {
+    const m = new Map<string, MapSite[]>();
+    const push = (province: string, site: MapSite) => m.set(province, [...(m.get(province) ?? []), site]);
+    for (const a of filtered) {
+      push(a.province, { a, latitude: a.latitude, longitude: a.longitude, locationSource: a.locationSource, extra: null });
+      for (const x of a.extraAreas) {
+        push(x.province, { a, latitude: x.latitude, longitude: x.longitude, locationSource: x.locationSource, extra: x });
+      }
     }
     return m;
   }, [filtered]);
@@ -329,25 +374,25 @@ export default function MapView({ activities, categories, categoryLogos, subCate
       markersRef.current.forEach((m) => m.remove());
       markersRef.current = [];
 
-      byProvince.forEach((list, province) => {
+      sitesByProvince.forEach((list, province) => {
         const center = centersRef.current.get(province);
         if (!center) return;
 
         // ทุกงานเป็นหมุดของตัวเองตามตำแหน่งจริง สีตามประเด็น (ไม่รวมเป็นวงรายจังหวัด — ผู้ใช้อยากเห็นพื้นที่จริง)
         // งานที่พิกัดเดียวกันกระจายรอบจุดเล็กน้อยให้เห็นครบ · โหมดความหนาแน่นแสดงหมุดเฉพาะจังหวัดที่เลือก
         if (mapMode === 'markers' || province === selectedProvince) {
-          const byLocation = new Map<string, MapActivity[]>();
-          for (const a of list) {
+          const byLocation = new Map<string, MapSite[]>();
+          for (const site of list) {
             // หมุดที่ปักตำแหน่งจริงแยกกลุ่มกันเอง (ละเอียด ~1 ม.) ไม่ปนกับจุดกลางตำบล
-            const precise = a.locationSource !== 'TAMBON';
+            const precise = site.locationSource !== 'TAMBON';
             const key =
-              a.latitude != null && a.longitude != null
+              site.latitude != null && site.longitude != null
                 ? precise
-                  ? `pin:${a.latitude.toFixed(5)},${a.longitude.toFixed(5)}`
-                  : `${a.latitude.toFixed(3)},${a.longitude.toFixed(3)}`
+                  ? `pin:${site.latitude.toFixed(5)},${site.longitude.toFixed(5)}`
+                  : `${site.latitude.toFixed(3)},${site.longitude.toFixed(3)}`
                 : 'province-center';
             const group = byLocation.get(key) ?? [];
-            group.push(a);
+            group.push(site);
             byLocation.set(key, group);
           }
           byLocation.forEach((group, key) => {
@@ -355,7 +400,8 @@ export default function MapView({ activities, categories, categoryLogos, subCate
               key === 'province-center'
                 ? center
                 : [group[0].latitude!, group[0].longitude!];
-            group.forEach((a, i) => {
+            group.forEach((site, i) => {
+              const a = site.a;
               // กระจายหมุดที่จุดเดียวกันเป็นวงรอบ ๆ ให้เห็นครบทุกงาน
               // (หมุดตำแหน่งจริงกระจายวงเล็ก ~50 ม. ไม่ให้หลุดจากที่ตั้งจริงไกล)
               const offset = group.length > 1 ? (key.startsWith('pin:') ? 0.0005 : 0.012) : 0;
@@ -364,7 +410,7 @@ export default function MapView({ activities, categories, categoryLogos, subCate
                 base[0] + offset * Math.sin(angle),
                 base[1] + offset * Math.cos(angle),
               ];
-              const isNew = newIds.has(a.id);
+              const isNew = newIds.has(a.id) && !site.extra; // วงกระเพื่อมเฉพาะหมุดหลัก
               // งานใหม่: วงกระเพื่อมสีส้มรอบหมุด (divIcon อยู่ marker pane เหนือหมุด — pointer-events ปิดไว้)
               if (isNew) {
                 const pulse = L.marker(pos, {
@@ -377,7 +423,7 @@ export default function MapView({ activities, categories, categoryLogos, subCate
               }
               // ปักตำแหน่งจริง = สีทึบขอบขาว · จุดกลางตำบล (โดยประมาณ) = สีจางขอบประ (0.6 — จางกว่านี้มองไม่เห็นในมุมทั้งประเทศ)
               const color = colorOf(a.category);
-              const precise = a.locationSource !== 'TAMBON' && a.latitude != null;
+              const precise = site.locationSource !== 'TAMBON' && site.latitude != null;
               const logo = logoOf(a);
               let marker: CircleMarker | Marker;
               if (logo) {
@@ -395,16 +441,18 @@ export default function MapView({ activities, categories, categoryLogos, subCate
                 }).addTo(map);
                 (marker.options as { sdn?: LogoSpec }).sdn = { kind: 'logo', color, approx: !precise };
               } else {
+                // หมุดรอง (พื้นที่ที่เกี่ยวข้อง) เล็กกว่าหมุดหลักเล็กน้อย
+                const r = site.extra ? 2 : 0;
                 marker = L.circleMarker(
                   pos,
                   precise
-                    ? { radius: 8, color: '#ffffff', weight: 2, fillColor: color, fillOpacity: 1 }
-                    : { radius: 7, color, weight: 2, dashArray: '3 3', fillColor: color, fillOpacity: 0.6 }
+                    ? { radius: 8 - r, color: '#ffffff', weight: 2, fillColor: color, fillOpacity: 1 }
+                    : { radius: 7 - r, color, weight: 2, dashArray: '3 3', fillColor: color, fillOpacity: 0.6 }
                 ).addTo(map);
               }
-              marker.bindTooltip(`${isNew ? '🆕 ' : ''}${esc(a.title)}`, { direction: 'top' });
+              marker.bindTooltip(`${isNew ? '🆕 ' : ''}${site.extra ? 'พื้นที่ที่เกี่ยวข้อง: ' : ''}${esc(a.title)}`, { direction: 'top' });
               // คลิกหมุด = เปิด popup ตรงจุดนั้น (ไม่เด้งออกจากหน้าแผนที่)
-              marker.bindPopup(activityPopupHtml(a, color, isNew, publicView), {
+              marker.bindPopup(activityPopupHtml(a, color, isNew, publicView, site.extra), {
                 closeButton: true,
                 autoPanPadding: [24, 24],
                 maxWidth: 260,
@@ -457,7 +505,7 @@ export default function MapView({ activities, categories, categoryLogos, subCate
         }
       });
     })();
-  }, [mapReady, byProvince, selectedProvince, categoryFilter, colorOf, mapMode, heatMetric, heatData, heatMax, newIds, categoryLogos, subCategoryLogos, publicView]);
+  }, [mapReady, byProvince, sitesByProvince, selectedProvince, categoryFilter, colorOf, mapMode, heatMetric, heatData, heatMax, newIds, categoryLogos, subCategoryLogos, publicView]);
 
   // เปิด/ปิด sidebar ทำให้ container กว้างเปลี่ยน — ต้องบอก Leaflet ให้คำนวณขนาดใหม่
   useEffect(() => {
@@ -483,9 +531,9 @@ export default function MapView({ activities, categories, categoryLogos, subCate
       return;
     }
 
-    // รวมขอบเขตของทุกจังหวัดที่มีผลลัพธ์ แล้วซูมให้เห็นครบ
+    // รวมขอบเขตของทุกจังหวัดที่มีผลลัพธ์ (รวมจังหวัดของพื้นที่ที่เกี่ยวข้อง) แล้วซูมให้เห็นครบ
     const corners: [number, number][] = [];
-    for (const province of byProvince.keys()) {
+    for (const province of sitesByProvince.keys()) {
       const b = boundsRef.current.get(province);
       if (!b) continue;
       corners.push([b.getSouth(), b.getWest()], [b.getNorth(), b.getEast()]);

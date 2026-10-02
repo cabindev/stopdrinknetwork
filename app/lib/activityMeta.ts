@@ -2,6 +2,8 @@
 // (ห้าม import prisma/fs ในไฟล์นี้ — ActivityForm ฝั่ง browser ใช้ด้วย)
 
 export const MAX_IMAGES = 10; // รูปต่องาน (รวมรูปเดิม) — 5 (ก.ย. 2026) → 10 (ผู้ใช้ขอ 1 ต.ค. 2026)
+// พื้นที่ที่เกี่ยวข้อง (ActivityArea) ต่องาน — ใช้ทั้งฟอร์มและ server (lib/activityAreas.ts)
+export const MAX_EXTRA_AREAS = 20;
 
 // ภาคีที่ร่วมงาน — รายการให้เลือก ไม่พิมพ์อิสระ เพื่อสรุปได้ว่าพื้นที่ไหนภาคีครบ/ขาดใคร
 export const PARTNER_OPTIONS = [

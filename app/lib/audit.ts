@@ -28,6 +28,7 @@ const TRACKED: { field: string; label: string }[] = [
   { field: 'surveyText', label: 'แบบสำรวจ' },
   { field: 'teamText', label: 'ทีมงานร่วม' },
   { field: 'linksText', label: 'ลิงก์ที่เกี่ยวข้อง' },
+  { field: 'areasText', label: 'พื้นที่ที่เกี่ยวข้อง' },
   { field: 'areaScopeLabel', label: 'ขอบเขตพื้นที่' },
   { field: 'coverageText', label: 'ความครอบคลุม' },
   { field: 'coordinatorName', label: 'ผู้ประสานงาน' },

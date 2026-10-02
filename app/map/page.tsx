@@ -22,6 +22,7 @@ export default async function MapPage() {
         subCategory: { select: { name: true } },
         user: { select: { firstName: true, lastName: true } },
         members: { where: { userId: myId }, select: { userId: true } },
+        areas: { orderBy: { sortOrder: 'asc' } },
       },
       orderBy: { createdAt: 'desc' },
     }),
@@ -49,6 +50,37 @@ export default async function MapPage() {
       region: a.region,
       createdAt: a.createdAt.toISOString(),
       published: a.isPublished,
+      // พื้นที่ที่เกี่ยวข้อง → หมุดรอง · สาธารณะ: จุดกลางตำบล ไม่มีชื่อสถานที่ (กติกาเดียวกับพื้นที่หลัก)
+      extraAreas: a.areas.map((x) => {
+        if (!isPublic) {
+          return {
+            areaName: x.areaName,
+            district: x.district,
+            amphoe: x.amphoe,
+            province: x.province,
+            latitude: x.latitude,
+            longitude: x.longitude,
+            locationSource: x.locationSource,
+            note: x.note,
+          };
+        }
+        const c =
+          x.locationSource === 'TAMBON'
+            ? x.latitude != null && x.longitude != null
+              ? { lat: x.latitude, lng: x.longitude }
+              : null
+            : getTambonCoords(x.district, x.amphoe, x.province);
+        return {
+          areaName: null,
+          district: x.district,
+          amphoe: x.amphoe,
+          province: x.province,
+          latitude: c?.lat ?? null,
+          longitude: c?.lng ?? null,
+          locationSource: 'TAMBON',
+          note: a.isPublished ? x.note : null,
+        };
+      }),
     };
     if (isPublic) {
       // หมุดจริงอาจเป็นบ้านคน/ที่ทำงานผู้ประสานงาน → สาธารณะเห็นแค่จุดกลางตำบล (กติกาเดียวกับ /stories)

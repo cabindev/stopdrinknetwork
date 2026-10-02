@@ -192,6 +192,9 @@ model Activity {
   attachments ActivityAttachment[]
   // ลิงก์ภายนอก (โพสต์ FB, คลิป YouTube, ไฟล์ใน Drive, ข่าว) — แทนการอัปไฟล์ใหญ่/เนื้อหาที่อยู่ที่อื่นแล้ว
   links       ActivityLink[]
+  // พื้นที่ที่เกี่ยวข้อง (ไม่บังคับ) — งานเดียวที่ยกหลายพื้นที่ เช่น งานสื่อสารประเด็นงานศพที่เล่าต้นแบบหลายจังหวัด
+  // เป็นหมุดรองบนแผนที่ + รายการในหน้า detail/กรณีศึกษา แต่สถิติ/ภาค/พื้นที่ทับซ้อนยังนับจากพื้นที่หลักด้านบน
+  areas       ActivityArea[]
   // ทีมงานร่วม (งานเป็นงานทีม — ผู้ใช้ตัดสินใจ ก.ย. 2026) — userId ด้านบน = ผู้เขียน/หัวหน้างาน
   members     ActivityMember[]
 
@@ -256,6 +259,29 @@ enum LinkKind {
 }
 
 // ลิงก์ที่เกี่ยวข้องกับงาน — สูงสุด 10 ลิงก์ต่องาน, รับเฉพาะ http(s)
+// พื้นที่ที่เกี่ยวข้องของงาน (นอกเหนือพื้นที่หลักใน Activity) — ฟิลด์ตำแหน่งชุดเดียวกับ Activity
+// server ตรวจตำบลกับ regions.ts + หมุดต้องอยู่ในจังหวัด เหมือนพื้นที่หลัก · ลบงาน = ลบตาม (cascade)
+model ActivityArea {
+  id             Int            @id @default(autoincrement())
+  activityId     Int
+  activity       Activity       @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  areaName       String?        @db.VarChar(200)
+  district       String
+  amphoe         String
+  province       String
+  region         String // HealthZone slug จากจังหวัด (server คำนวณ)
+  zipcode        String?
+  latitude       Float?
+  longitude      Float?
+  locationSource LocationSource @default(TAMBON)
+  note           String?        @db.VarChar(200) // บทบาทของพื้นที่ในงานนี้ เช่น "พื้นที่ต้นแบบ ประหยัด 990,000 บาท"
+  sortOrder      Int            @default(0)
+  createdAt      DateTime       @default(now())
+
+  @@index([activityId])
+  @@index([province, amphoe, district])
+}
+
 model ActivityLink {
   id         Int      @id @default(autoincrement())
   activityId Int

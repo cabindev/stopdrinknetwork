@@ -68,6 +68,7 @@ export async function GET(request: NextRequest) {
         attachments: { select: { kind: true } },
         policies: true,
         links: { select: { url: true, title: true }, orderBy: { sortOrder: 'asc' } },
+        areas: { select: { areaName: true, district: true, amphoe: true, province: true, note: true }, orderBy: { sortOrder: 'asc' } },
       },
       orderBy: [{ province: 'asc' }, { createdAt: 'desc' }],
     });
@@ -99,6 +100,7 @@ export async function GET(request: NextRequest) {
       { header: 'อำเภอ', key: 'amphoe', width: 16 },
       { header: 'จังหวัด', key: 'province', width: 16 },
       { header: 'ภาค', key: 'region', width: 12 },
+      { header: 'พื้นที่ที่เกี่ยวข้อง', key: 'extraAreas', width: 44 },
       { header: 'วันเริ่ม', key: 'startDate', width: 14 },
       { header: 'วันสิ้นสุด', key: 'endDate', width: 14 },
       { header: 'ผู้เข้าร่วม (คน)', key: 'participants', width: 12 },
@@ -158,12 +160,16 @@ export async function GET(request: NextRequest) {
         docs: a.attachments.filter((x) => x.kind === 'DOCUMENT').length,
         // หนึ่งบรรทัดต่อลิงก์ "ชื่อ — url" (ใน cell เดียว)
         links: a.links.map((l) => (l.title ? `${l.title} — ${l.url}` : l.url)).join('\n'),
+        extraAreas: a.areas
+          .map((x) => [x.areaName, `ต.${x.district} อ.${x.amphoe} จ.${x.province}`, x.note && `(${x.note})`].filter(Boolean).join(' '))
+          .join('\n'),
         description: a.description,
         createdAt: fmtDate(a.createdAt),
       });
     });
     ws.getColumn('description').alignment = { wrapText: true, vertical: 'top' };
     ws.getColumn('links').alignment = { wrapText: true, vertical: 'top' };
+    ws.getColumn('extraAreas').alignment = { wrapText: true, vertical: 'top' };
 
     // ── ชีต 2: สรุป ──
     const sum = wb.addWorksheet('สรุป');

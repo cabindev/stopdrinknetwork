@@ -70,6 +70,7 @@ export default async function ActivityDetailPage({
       attachments: { orderBy: { id: 'asc' } },
       policies: true,
       links: { orderBy: { sortOrder: 'asc' } },
+      areas: { orderBy: { sortOrder: 'asc' } },
       members: {
         select: { userId: true, user: { select: { firstName: true, lastName: true } } },
         orderBy: { addedAt: 'asc' },
@@ -226,6 +227,39 @@ export default async function ActivityDetailPage({
                 : 'ยังไม่ได้ปักหมุด — นำทางไปจุดกลางตำบลโดยประมาณ'}
           </span>
         </div>
+
+        {/* พื้นที่ที่เกี่ยวข้อง (ActivityArea) — หมุดรองบนแผนที่ สถิติยังนับจากพื้นที่หลัก */}
+        {activity.areas.length > 0 && (
+          <section className="mt-3 bg-white rounded-xl border border-orange-100 p-3">
+            <p className="flex items-center gap-1.5 text-xs text-gray-400 mb-2">
+              <MapPin className="w-3.5 h-3.5 text-orange-500" /> พื้นที่ที่เกี่ยวข้อง ({activity.areas.length} แห่ง)
+            </p>
+            <ul className="space-y-2 text-sm">
+              {activity.areas.map((a, i) => (
+                <li key={a.id} className="flex items-start gap-2">
+                  <span className="mt-0.5 w-5 h-5 shrink-0 rounded-full bg-orange-100 text-orange-700 text-[11px] font-semibold flex items-center justify-center">
+                    {i + 1}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-gray-800">
+                      {a.areaName && <>{a.areaName} · </>}ต.{a.district} อ.{a.amphoe} จ.{a.province}
+                    </p>
+                    {a.note && <p className="text-xs text-gray-500">{a.note}</p>}
+                  </div>
+                  <a
+                    href={navigationUrl(a)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="shrink-0 inline-flex items-center gap-1 text-xs text-orange-700 hover:text-orange-800"
+                    aria-label={`นำทางไป ${a.areaName || `ต.${a.district}`}`}
+                  >
+                    <Navigation className="w-3.5 h-3.5" /> นำทาง
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
 
         {/* รายละเอียด */}
         <section className="mt-6 bg-white rounded-2xl border border-orange-100 p-5">

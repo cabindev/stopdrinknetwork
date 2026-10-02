@@ -28,6 +28,8 @@ export const STORY_SELECT = {
   coveragePopulation: true,
   category: { select: { id: true, name: true, logo: true } },
   subCategory: { select: { id: true, name: true, logo: true } },
+  // พื้นที่ที่เกี่ยวข้อง — ระดับตำบล + ชื่อสถานที่ + บทบาท เท่านั้น (ไม่มีพิกัด เหมือนพื้นที่หลัก)
+  areas: { select: { id: true, areaName: true, district: true, amphoe: true, province: true, note: true }, orderBy: { sortOrder: 'asc' } },
   // ลิงก์เฉพาะที่แอดมินติ๊กให้เปิดเผย
   links: { where: { isPublic: true }, select: { id: true, url: true, title: true, kind: true }, orderBy: { sortOrder: 'asc' } },
   attachments: {

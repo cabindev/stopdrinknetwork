@@ -9,6 +9,7 @@ import ActivityForm from '../../components/ActivityForm';
 import AuthorPicker from '../../components/AuthorPicker';
 import { teamPeople } from '@/app/lib/activityAccess';
 import { canEditActivity } from '@/app/lib/activityMeta';
+import { toExtraAreaInput } from '@/app/lib/activityAreas';
 import type { ActivityInitialData } from '../../components/ActivityForm';
 import { parsePartners, policyShape, toThaiDateInput } from '@/app/lib/activityMeta';
 
@@ -32,6 +33,7 @@ export default async function EditActivityPage({
       attachments: { orderBy: { id: 'asc' } },
       policies: true,
       links: { select: { url: true, title: true }, orderBy: { sortOrder: 'asc' } },
+      areas: { orderBy: { sortOrder: 'asc' } },
       members: { select: { userId: true }, orderBy: { addedAt: 'asc' } },
     },
   });
@@ -100,6 +102,7 @@ export default async function EditActivityPage({
     coordinatorLine: activity.coordinatorLine,
     coordinatorConsent: activity.coordinatorConsent,
     links: activity.links,
+    extraAreas: activity.areas.map(toExtraAreaInput),
     ownerId: activity.userId,
     memberIds: activity.members.map((m) => m.userId),
   };

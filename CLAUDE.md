@@ -114,6 +114,7 @@ app/
 │   ├── components/ActivityForm.tsx  # ฟอร์ม create/edit: ประเด็นย่อย (แถวเล็กสีจาง └ ใต้ประเด็น), LocationField + ขอบเขต,
 │                                 #   วันเริ่ม/"รู้แค่ปี", ส่วนพับ "ผลลัพธ์ ภาคี และ
 │                                 #   ผู้ประสานงาน", รูป ≤10 (ImageTile: ดาว=ปก + คำบรรยาย), เอกสาร, toast
+│   ├── components/ExtraAreasField.tsx # พื้นที่ที่เกี่ยวข้อง (ActivityArea) — ใช้ LocationField ตัวเดียวกันต่อแห่ง + บทบาท (note)
 │   ├── components/LocationField.tsx # ★ ช่องเดียวจบเรื่องพื้นที่: ค้นหา (ที่เคยใช้/เครือข่ายเคยบันทึก/GISTDA/ตำบล)
 │   │                             #   · วางลิงก์/พิกัด · ปุ่ม GPS · แตะแผนที่ → เติม ต./อ./จ./โซน/ชื่อ/หมุด → การ์ดสรุป
 │   │                             #   Enter = เลือกรายการแรก (กดก่อนผลมาก็ได้) · ↑↓ · หลังได้พิกัด เสนอชิป "สถานที่ใกล้หมุด"
@@ -223,14 +224,23 @@ server.js                         # Express ห่อ Next สำหรับ Pl
                                   #   ขั้นตอน deploy: docs/deploy-plesk.md
 proxy.ts                          # (Next 16 เปลี่ยนชื่อจาก middleware.ts) /dashboard/* ต้อง role admin|superadmin ไม่งั้น → /auth/signin
                                   #   ล็อกอินแล้วเข้า / , /auth/signin, /auth/signup → redirect /map (หน้าแรกหลังล็อกอิน)
-prisma/schema.prisma              # User, WorkCategory, WorkSubCategory, Activity, ActivityPolicy, ActivityMember,
+prisma/schema.prisma              # User, WorkCategory, WorkSubCategory, Activity, ActivityArea, ActivityPolicy, ActivityMember,
                                   #   ActivityAttachment, AuditLog · migrations/ = ประวัติ schema (ใช้ migrate deploy)
 scripts/seed-categories.mjs       # seed ประเด็นงาน 13 หมวด (node scripts/seed-categories.mjs)
 uploads/                          # ไฟล์แนบ runtime (gitignore) — ห้ามเก็บใน public/ เพราะ prod ไม่ serve ไฟล์หลัง build
 ```
 
 ## Activity Module Rules
-- 1 Activity = งาน 1 ประเด็นใน 1 พื้นที่ (กิจกรรมต่อเนื่อง: endDate null = ยังดำเนินการอยู่)
+- 1 Activity = งาน 1 ประเด็นใน 1 พื้นที่หลัก (กิจกรรมต่อเนื่อง: endDate null = ยังดำเนินการอยู่)
+- **พื้นที่ที่เกี่ยวข้อง** (`ActivityArea`, 2 ต.ค. 2026 — ผู้ใช้เลือก "ระบบปักหลายพื้นที่" แทนการแยกรายการ): งานเดียวที่ยกหลายพื้นที่
+  (เช่น งานสื่อสารประเด็นงานศพที่เล่าต้นแบบ 4 จังหวัด) · ≤`MAX_EXTRA_AREAS` (20) แห่ง · ฟิลด์ตำแหน่งชุดเดียวกับ Activity + `note` (บทบาทของพื้นที่)
+  · formData `extraAreas` = JSON (ไม่ส่ง = ไม่แตะ, ส่ง = แทนทั้งชุด) ตรวจใน `lib/activityAreas.ts`: ตำบลต้องมีใน regions.ts (`findRegion`),
+    หมุดต้องอยู่ในจังหวัด (`resolveCoords` แกนเดียวกับพื้นที่หลัก), ซ้ำตัดทิ้ง · audit "พื้นที่ที่เกี่ยวข้อง" · คัดลอกงานไม่พาไปด้วย · ลบงาน = cascade
+  · **สถิติ/ภาค/ความหนาแน่น/พื้นที่ทับซ้อน/แผงจังหวัดบนแผนที่ ยังนับจากพื้นที่หลักเท่านั้น** (ไม่ให้งานสื่อสารหนึ่งชิ้นนับเป็นหลายงาน)
+  · แสดงที่: หน้า detail (รายการ + นำทาง), /stories/[id] (ระดับตำบล ไม่มีพิกัด — อยู่ใน STORY_SELECT), ตัวกรองจังหวัดของ /stories
+    (OR กับ areas), แผนที่ = หมุดรอง (`MapView` `sitesByProvince` — วงเล็กกว่า 2px, tooltip/popup บอก "พื้นที่ที่เกี่ยวข้อง", ไม่มีวงงานใหม่)
+    · สาธารณะ: จุดกลางตำบล ไม่มีชื่อสถานที่ และ note เฉพาะงานที่เผยแพร่แล้ว · Excel คอลัมน์ "พื้นที่ที่เกี่ยวข้อง"
+  · ถ้าแต่ละพื้นที่มีกิจกรรมของตัวเอง (เจ้าภาพ/ข้อมูล/รูปของตัวเอง) ให้บันทึกแยกรายการ (ปุ่มคัดลอกงาน) ไม่ใช่ใส่เป็นพื้นที่ที่เกี่ยวข้อง
 - พื้นที่เลือกผ่าน LocationField เท่านั้น (ตำบลต้องมาจาก regions.ts ห้ามพิมพ์เอง) — `region` เก็บเป็น HealthZone slug
   ซึ่ง server คำนวณจากจังหวัดเสมอ (`provinceHealthZones`) ไม่รับค่าจาก client
 - `latitude/longitude` + `locationSource`: ผู้ใช้**ปักหมุดตำแหน่งจริงได้ (ไม่บังคับ)** ใน LocationPicker —

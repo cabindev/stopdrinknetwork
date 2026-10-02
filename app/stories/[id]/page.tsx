@@ -123,6 +123,7 @@ export default async function StoryPage({ params }: { params: Promise<{ id: stri
         <p className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-600">
           <span className="inline-flex items-center gap-1.5">
             <MapPin className="w-4 h-4 text-orange-600" /> {storyPlace(story)} · {getRegionLabel(story.region as HealthZone)}
+            {story.areas.length > 0 && <span className="text-orange-700">· และอีก {story.areas.length} พื้นที่</span>}
           </span>
           {started && (
             <span className="inline-flex items-center gap-1.5">
@@ -163,6 +164,22 @@ export default async function StoryPage({ params }: { params: Promise<{ id: stri
           <h2 className={h2}><span className={num}>1</span> บริบทและที่มา</h2>
           <p className="text-[15px] text-gray-700 leading-relaxed whitespace-pre-wrap">{lead}</p>
         </section>
+
+        {/* พื้นที่ที่เกี่ยวข้อง — ระดับตำบล ไม่มีพิกัด (STORY_SELECT) */}
+        {story.areas.length > 0 && (
+          <section className={section}>
+            <h2 className={h2}><MapPin className="w-5 h-5 text-orange-600" /> พื้นที่ที่เกี่ยวข้อง</h2>
+            <ul className="grid sm:grid-cols-2 gap-3">
+              {story.areas.map((a) => (
+                <li key={a.id} className="rounded-xl border border-orange-100 bg-orange-50/40 p-3">
+                  <p className="text-sm font-medium text-gray-800">{a.areaName || `ต.${a.district}`}</p>
+                  <p className="text-xs text-gray-500">ต.{a.district} อ.{a.amphoe} จ.{a.province}</p>
+                  {a.note && <p className="mt-1 text-sm text-gray-700">{a.note}</p>}
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
 
         {story.storyProcess && (
           <section className={section}>

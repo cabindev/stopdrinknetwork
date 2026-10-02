@@ -10,6 +10,7 @@ import { resolveActivityCoords } from '@/app/lib/provinceGeo';
 import { writeAuditLog } from '@/app/lib/audit';
 import { parseLinksField, parseMemberIds, parseActivityExtras, imageLimitError, applyImageMeta, policyFilesFrom, surveyFilesFrom } from '@/app/lib/activityInput';
 import { canCreateActivity, descriptionError } from '@/app/lib/activityMeta';
+import { parseExtraAreas } from '@/app/lib/activityAreas';
 
 const STATUSES = ['PLANNING', 'ACTIVE', 'COMPLETED'] as const;
 
@@ -112,6 +113,10 @@ export async function POST(request: NextRequest) {
     if ('error' in coords) {
       return NextResponse.json({ error: coords.error }, { status: 400 });
     }
+    const extraAreas = parseExtraAreas(formData);
+    if ('error' in extraAreas) {
+      return NextResponse.json({ error: extraAreas.error }, { status: 400 });
+    }
 
     // ไฟล์นโยบายรายระดับ (รับเฉพาะระดับที่ติ๊ก) — รวมขนาดกับไฟล์อื่นไม่เกินเพดานต่อครั้ง
     const policy = policyFilesFrom(formData, extras.policyLevels);
@@ -147,6 +152,7 @@ export async function POST(request: NextRequest) {
           links: { create: linkField.links.map((l, i) => ({ url: l.url, title: l.title || null, kind: l.kind, sortOrder: i })) },
         }),
         ...(team.ids && team.ids.length > 0 && { members: { create: team.ids.map((uid) => ({ userId: uid })) } }),
+        ...(extraAreas.areas && extraAreas.areas.length > 0 && { areas: { create: extraAreas.areas } }),
         status: status as (typeof STATUSES)[number],
         startDate,
         endDate,

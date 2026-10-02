@@ -64,15 +64,33 @@ export function resolveActivityCoords(
   district: string,
   amphoe: string,
   province: string,
-  scope: 'VILLAGE' | 'SUBDISTRICT' | 'DISTRICT' | 'PROVINCE' = 'SUBDISTRICT'
+  scope: AreaScopeArg = 'SUBDISTRICT'
+) {
+  return resolveCoords(
+    { source: String(formData.get('locationSource') ?? ''), lat: formData.get('latitude'), lng: formData.get('longitude') },
+    district,
+    amphoe,
+    province,
+    scope
+  );
+}
+
+type AreaScopeArg = 'VILLAGE' | 'SUBDISTRICT' | 'DISTRICT' | 'PROVINCE';
+
+// แกนเดียวกันสำหรับพื้นที่หลัก (formData) และพื้นที่ที่เกี่ยวข้อง (JSON ใน ActivityArea)
+export function resolveCoords(
+  pin: { source: string; lat: unknown; lng: unknown },
+  district: string,
+  amphoe: string,
+  province: string,
+  scope: AreaScopeArg = 'SUBDISTRICT'
 ):
   | { latitude: number | null; longitude: number | null; locationSource: 'TAMBON' | PinSource }
   | { error: string } {
-  const source = String(formData.get('locationSource') ?? '');
-  if (PIN_SOURCES.includes(source as PinSource)) {
-    const lat = Number(formData.get('latitude'));
-    const lng = Number(formData.get('longitude'));
-    if (!Number.isFinite(lat) || !Number.isFinite(lng) || !formData.get('latitude') || !formData.get('longitude')) {
+  if (PIN_SOURCES.includes(pin.source as PinSource)) {
+    const lat = Number(pin.lat);
+    const lng = Number(pin.lng);
+    if (!Number.isFinite(lat) || !Number.isFinite(lng) || pin.lat === null || pin.lat === '' || pin.lng === null || pin.lng === '') {
       return { error: 'พิกัดหมุดไม่ถูกต้อง' };
     }
     if (!isInProvince(lat, lng, province)) {
@@ -81,7 +99,7 @@ export function resolveActivityCoords(
     return {
       latitude: Math.round(lat * 1e6) / 1e6,
       longitude: Math.round(lng * 1e6) / 1e6,
-      locationSource: source as PinSource,
+      locationSource: pin.source as PinSource,
     };
   }
   // ไม่มีหมุด: งานระดับอำเภอ/จังหวัด → จุดกลางอำเภอ/จังหวัด (ไม่ใช่จุดกลางตำบลอ้างอิง ที่ทำให้ดูเหมือนงานเล็ก)

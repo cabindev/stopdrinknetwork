@@ -28,6 +28,8 @@ import imageCompression from 'browser-image-compression';
 import ThaiDateField from '@/app/components/ThaiDateField';
 import { RegionData } from '@/app/types/region';
 import LocationField from './LocationField';
+import ExtraAreasField from './ExtraAreasField';
+import type { ExtraAreaInput } from '@/app/lib/activityAreas';
 import type { PinValue } from './LocationPicker';
 import {
   MAX_IMAGES,
@@ -88,6 +90,7 @@ export interface ActivityInitialData {
   coordinatorLine: string | null;
   coordinatorConsent: boolean;
   links: { url: string; title: string | null }[]; // ลิงก์ที่เกี่ยวข้อง (เรียงตาม sortOrder)
+  extraAreas: ExtraAreaInput[]; // พื้นที่ที่เกี่ยวข้อง (ActivityArea) — คัดลอกงานไม่พาไปด้วย
   ownerId: number; // ผู้เขียน (เจ้าของงาน)
   memberIds: number[]; // ทีมงานร่วม
   attachments: {
@@ -130,6 +133,8 @@ export default function ActivityForm({
   const [links, setLinks] = useState<{ url: string; title: string }[]>(
     (initial?.links ?? []).map((l) => ({ url: l.url, title: l.title ?? '' }))
   );
+  // พื้นที่ที่เกี่ยวข้อง — ไม่คัดลอก (เหมือนพื้นที่หลัก/หมุด)
+  const [extraAreas, setExtraAreas] = useState<ExtraAreaInput[]>(copy ? [] : initial?.extraAreas ?? []);
   const [categories, setCategories] = useState<Category[]>([]);
   const [location, setLocation] = useState<RegionData | null>(
     initial && !copy
@@ -399,6 +404,7 @@ export default function ActivityForm({
       fd.set('coordinatorConsent', String(extra.coordinatorConsent));
       fd.set('memberIds', JSON.stringify(memberIds));
       fd.set('links', JSON.stringify(links));
+      fd.set('extraAreas', JSON.stringify(extraAreas));
       if (isEdit) fd.set('removeAttachmentIds', JSON.stringify(removeIds));
 
       const res = await fetch(isEdit ? `/api/activities/${initial!.id}` : '/api/activities', {
@@ -580,6 +586,7 @@ export default function ActivityForm({
             ))}
           </div>
         )}
+        <ExtraAreasField value={extraAreas} onChange={setExtraAreas} />
       </section>
 
       {/* ทีมงานร่วม — งานเป็นงานทีม */}

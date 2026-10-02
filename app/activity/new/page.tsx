@@ -52,6 +52,7 @@ export default async function NewActivityPage({
         startDatePrecision: src.startDatePrecision,
         partners: parsePartners(src.partners),
         links: src.links,
+        extraAreas: [], // ไม่คัดลอกพื้นที่
         ownerId: me,
         memberIds: [...new Set([src.userId, ...src.members.map((m) => m.userId)])].filter((id) => id !== me),
         areaName: null,
@@ -99,7 +100,7 @@ export default async function NewActivityPage({
           </div>
         ) : (
           <p className="mt-1 mb-8 text-sm text-gray-500">
-            1 รายการ = งาน 1 ประเด็นใน 1 พื้นที่ — ข้อมูลจะแสดงในโปรไฟล์ของคุณและแผนที่รวมขององค์กร
+            1 รายการ = งาน 1 ประเด็นใน 1 พื้นที่หลัก (เพิ่มพื้นที่ที่เกี่ยวข้องได้) — ข้อมูลจะแสดงในโปรไฟล์ของคุณและแผนที่รวมขององค์กร
           </p>
         )}
 

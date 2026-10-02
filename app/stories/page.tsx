@@ -26,19 +26,21 @@ export default async function StoriesPage({
       where: {
         isPublished: true,
         ...(sub ? { subCategory: { name: sub } } : {}),
-        ...(province ? { province } : {}),
+        // จังหวัด: พื้นที่หลัก หรือพื้นที่ที่เกี่ยวข้อง (ActivityArea) ของเรื่องนั้น
+        ...(province ? { OR: [{ province }, { areas: { some: { province } } }] } : {}),
       },
       select: STORY_SELECT,
       orderBy: { publishedAt: 'desc' },
     }),
     prisma.activity.findMany({
       where: { isPublished: true },
-      select: { province: true, subCategory: { select: { name: true } } },
+      select: { province: true, areas: { select: { province: true } }, subCategory: { select: { name: true } } },
     }),
   ]);
   const count = <T,>(list: T[]) => [...list.reduce((m, k) => m.set(k, (m.get(k) ?? 0) + 1), new Map<T, number>())];
   const subs = count(facets.map((f) => f.subCategory?.name).filter((x): x is string => !!x)).sort((a, b) => b[1] - a[1]);
-  const provinces = count(facets.map((f) => f.province)).sort((a, b) => a[0].localeCompare(b[0], 'th'));
+  // เรื่องเดียวนับครั้งเดียวต่อจังหวัด แม้จะมีหลายพื้นที่ในจังหวัดเดียวกัน
+  const provinces = count(facets.flatMap((f) => [...new Set([f.province, ...f.areas.map((a) => a.province)])])).sort((a, b) => a[0].localeCompare(b[0], 'th'));
 
   const chip = (active: boolean) =>
     `px-3 py-1 rounded-full border text-xs whitespace-nowrap transition-colors ${

@@ -34,13 +34,9 @@ const TOOLS = [
     title: 'ป้ายหน้างาน',
     text: 'ป้าย “เจ้าภาพขออภัย ไม่เลี้ยงเหล้าในงาน” ใส่ชื่อผู้วายชนม์ ดาวน์โหลดไปพิมพ์ได้ทันที',
   },
-  {
-    href: '/farewell/journey',
-    icon: Sparkles,
-    title: 'เส้นทางสุดท้าย',
-    text: 'ภาพ 3D เลื่อนตาม เดินไปส่งหีบหนึ่งใบตั้งแต่ปิดฝาจนเข้าเตา พร้อมบทเรียนระหว่างทาง',
-  },
 ];
+// หน้า 3D "เส้นทางสุดท้าย" ไม่อยู่ในการ์ดเครื่องมือ (ผู้ใช้ตัดสินใจ 2 ต.ค. 2026): หน้านี้สำหรับครอบครัวที่เพิ่งสูญเสีย
+// ภาพหีบเข้าเตาเผาอาจกระทบใจ + หนักบนมือถือ → เหลือลิงก์เล็กท้ายหน้า (สื่อรณรงค์สำหรับคนทั่วไป ลิงก์จากกรณีศึกษา/โซเชียล)
 
 const FACTS = [
   { value: '35,000 บาท', text: 'งบทั้งงานของเจ้าภาพที่จัดงานศพแม่แบบวันเดียวเผา' },
@@ -73,7 +69,7 @@ export default function FarewellPage() {
         </section>
 
         {/* เครื่องมือ */}
-        <section aria-label="เครื่องมือ" className="mt-12 grid gap-3 sm:grid-cols-2">
+        <section aria-label="เครื่องมือ" className="mt-12 grid gap-3 sm:grid-cols-3">
           {TOOLS.map(({ href, icon: Icon, title, text }) => (
             <Link
               key={href}
@@ -119,6 +115,14 @@ export default function FarewellPage() {
             <BookOpen className="w-4 h-4" /> อ่านเรื่องเล่าจากพื้นที่ที่ทำได้จริง
           </Link>
         </section>
+
+        {/* สื่อรณรงค์ — ลิงก์เล็ก ไม่ดึงความสนใจจากเครื่องมือของครอบครัว */}
+        <p className="mt-12 border-t border-gray-100 pt-6 text-sm text-gray-500">
+          สื่อรณรงค์สำหรับคนทั่วไป:{' '}
+          <Link href="/farewell/journey" className="inline-flex items-center gap-1 font-medium text-orange-700 hover:text-orange-800">
+            <Sparkles className="w-4 h-4" /> เส้นทางสุดท้าย (ภาพ 3D)
+          </Link>
+        </p>
       </div>
     </main>
   );

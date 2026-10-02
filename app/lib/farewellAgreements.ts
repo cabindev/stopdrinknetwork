@@ -95,6 +95,7 @@ export interface AgreementPoint {
   lng: number;
   levels: string[]; // ป้ายระดับ เช่น ["ตำบล"]
   storyId: number | null;
+  regionGroup: string; // ภาคเหนือ / ภาคอีสาน / ภาคอื่น — ใช้วางป้ายชื่อภาคบนแผนที่
 }
 
 export interface AgreementMapData {
@@ -146,6 +147,7 @@ export async function getAgreementMapData(): Promise<AgreementMapData> {
         .sort((x, y) => LEVEL_ORDER.indexOf(x) - LEVEL_ORDER.indexOf(y))
         .map((l) => POLICY_LABEL[l] ?? l),
       storyId: a.isPublished ? a.id : null,
+      regionGroup: regionGroup(a.region),
     });
     const g = regionGroup(a.region);
     regionCount.set(g, (regionCount.get(g) ?? 0) + 1);

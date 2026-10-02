@@ -22,6 +22,8 @@ import {
 import { getRegionLabel } from '@/app/utils/healthZones';
 import type { HealthZone } from '@/app/utils/healthZones';
 import ShareButtons from '../ShareButtons';
+import ChanFlowerIcon from '@/app/farewell/components/ChanFlowerIcon';
+import { FUNERAL_SUB } from '@/app/lib/farewellAgreements';
 
 async function loadStory(idRaw: string) {
   const id = Number(idRaw);
@@ -316,6 +318,27 @@ export default async function StoryPage({ params }: { params: Promise<{ id: stri
             <Link href={`/stories/series/${story.series.id}`} className="mt-3 inline-block text-sm font-medium text-orange-700 underline">
               ดูทั้งชุด
             </Link>
+          </section>
+        )}
+
+        {/* เรื่องงานศพ → ชี้ไปเครื่องมือ "ส่งด้วยใจ" + สื่อรณรงค์ 3D
+            (เงื่อนไข: ประเด็นย่อยงานศพปลอดเหล้า หรือชื่อเรื่องมีคำว่างานศพ เช่น #151 ที่อยู่หมวด Civic Space) */}
+        {(story.subCategory?.name === FUNERAL_SUB || story.title.includes('งานศพ')) && (
+          <section className={`${section} rounded-2xl bg-orange-50/60 border border-orange-100 p-5`} aria-label="ส่งด้วยใจ">
+            <p className="flex items-center gap-2 text-base font-bold text-gray-800">
+              <ChanFlowerIcon className="w-5 h-5 text-orange-600" /> ส่งด้วยใจ — วางแผนงานศพด้วยตัวเอง
+            </p>
+            <p className="mt-1 text-sm text-gray-600">
+              เครื่องมือให้ครอบครัววางแผนทีละขั้น ค้นข้อตกลงในตำบล และพิมพ์ป้าย &ldquo;ไม่เลี้ยงเหล้า&rdquo; ได้เลย ไม่ต้องสมัครสมาชิก
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Link href="/farewell" className="inline-flex items-center gap-1.5 min-h-10 px-4 rounded-full bg-orange-600 text-sm font-medium text-white hover:bg-orange-700">
+                เปิดส่งด้วยใจ
+              </Link>
+              <Link href="/farewell/journey" className="inline-flex items-center gap-1.5 min-h-10 px-4 rounded-full border border-orange-200 text-sm font-medium text-orange-700 hover:bg-white">
+                ชมสื่อรณรงค์ เส้นทางสุดท้าย (3D)
+              </Link>
+            </div>
           </section>
         )}
 

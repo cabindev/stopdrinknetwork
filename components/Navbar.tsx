@@ -58,8 +58,8 @@ export default function Navbar() {
                 <BookOpen className="w-4 h-4 text-gray-400" />
                 กรณีศึกษา
               </Link>
-              {/* ส่งด้วยใจ = เครื่องมือวางแผนงานศพสำหรับประชาชน (สาธารณะ) */}
-              <Link href="/farewell" className={PILL} title="ส่งด้วยใจ วางแผนงานศพ">
+              {/* ส่งด้วยใจ → หน้า 3D "เส้นทางสุดท้าย" ก่อน (ผู้ใช้ตัดสินใจ 2 ต.ค. 2026) ท้ายหน้ามีทางไปเครื่องมือวางแผน */}
+              <Link href="/farewell/journey" className={PILL} title="ส่งด้วยใจ — เส้นทางสุดท้าย">
                 <ChanFlowerIcon className="w-4 h-4 text-gray-400" />
                 ส่งด้วยใจ
               </Link>
@@ -172,11 +172,11 @@ export default function Navbar() {
             <BookOpen className="w-4 h-4 text-gray-400" /> กรณีศึกษา
           </Link>
           <Link
-            href="/farewell"
+            href="/farewell/journey"
             className="flex items-center gap-2 px-3 py-2.5 text-xs rounded-xl text-gray-600 hover:bg-orange-50 hover:text-orange-700"
             onClick={() => setIsMenuOpen(false)}
           >
-            <ChanFlowerIcon className="w-4 h-4 text-gray-400" /> ส่งด้วยใจ วางแผนงานศพ
+            <ChanFlowerIcon className="w-4 h-4 text-gray-400" /> ส่งด้วยใจ
           </Link>
           {session?.user && !isPending && (
             <Link

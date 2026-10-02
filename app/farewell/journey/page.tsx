@@ -7,11 +7,8 @@ import { ArrowRight, BookOpen, ClipboardList, Landmark, Megaphone } from 'lucide
 import JourneyScroll from './components/JourneyScroll';
 import AgreementMapSection from '../components/AgreementMapSection';
 import TrackView from '../components/TrackView';
-import localFont from 'next/font/local';
 
-// หัวข้อโปสเตอร์ = Kanit SemiBold (Cadson Demak, SIL Open Font License — ฝังเว็บได้ ดู Kanit-OFL.txt)
-// แทน FC Vision ที่ต้องซื้อสิทธิ์เชิงพาณิชย์และห้ามเผยแพร่ไฟล์ฟอนต์ (2 ต.ค. 2026) — ห้ามใส่ฟอนต์ที่ไม่ใช่ OFL/ซื้อสิทธิ์แล้ว
-const poster = localFont({ src: './Kanit-SemiBold.ttf', variable: '--font-poster', weight: '600', display: 'swap' });
+// หัวข้อโปสเตอร์ใช้ฟอนต์เสาชิงช้า Bold จาก app/farewell/layout.tsx (--font-sao) — ฟอนต์ต้องเป็นของที่มีสิทธิ์ใช้ในเว็บ
 
 export const metadata: Metadata = {
   title: 'เส้นทางสุดท้าย — ส่งด้วยใจ',
@@ -27,7 +24,7 @@ const NEXT = [
 
 export default function JourneyPage() {
   return (
-    <main className={`bg-white ${poster.variable}`}>
+    <main className="bg-white">
       <TrackView type="JOURNEY_VIEW" />
       <JourneyScroll />
       {/* ต่อจากฉากสุดท้าย "ความสูญเสียครั้งเดียว…" — ให้เห็นว่ามีชุมชนทำจริง ไม่ใช่แค่ข้อความรณรงค์ */}

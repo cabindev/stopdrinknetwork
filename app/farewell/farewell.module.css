@@ -1,0 +1,5 @@
+/* ส่งด้วยใจ: ฟอนต์เสาชิงช้า — semibold (600) ไม่มีในชุด เบราว์เซอร์เลือก Bold 700 ให้เอง */
+.sao { font-family: var(--font-sao), "Segoe UI", "Leelawadee UI", Tahoma, sans-serif; }
+/* ตัวเล็ก = Light — คลาส Tailwind ต้องห่อ :global (CSS Modules แปลงชื่อคลาสในไฟล์นี้)
+   :where ไม่เพิ่ม specificity → ถ้า element กำหนด font-medium/semibold เอง คลาสนั้นชนะ */
+.sao :where(:global(.text-xs), :global(.text-\[11px\]), :global(.text-\[10px\]), small) { font-weight: 300; }

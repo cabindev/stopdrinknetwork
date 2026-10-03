@@ -3,7 +3,7 @@
 // ไม่ส่งขึ้นเซิร์ฟเวอร์ (ผู้ใช้ตัดสินใจ ต.ค. 2026: ข้อมูลส่วนตัวของครอบครัวที่เพิ่งสูญเสีย)
 // ใช้ useSyncExternalStore: ฝั่ง server ได้ null แล้วค่อยอ่านค่าจริงตอน hydrate จึงไม่มี hydration mismatch
 import { useCallback, useMemo, useSyncExternalStore } from 'react';
-import { COST_LINES, type QuestionKey } from './content';
+import { COST_LINES, DEFAULT_COST, type QuestionKey } from './content';
 
 const KEY = 'sdn-farewell-plan-v1';
 const EVENT = 'sdn-farewell-plan';
@@ -19,7 +19,7 @@ export interface Plan {
   deceasedName: string;
   area: PlanArea | null;
   answers: Partial<Record<QuestionKey, string>>;
-  /** ราคาที่ครอบครัวกรอกเอง (บาท) — รายการต่อวันเก็บเป็นยอดต่อวัน */
+  /** ราคาที่ครอบครัวแก้เอง (บาท) — มีค่า = ใช้ค่านี้แทนค่าเริ่มต้น (0 ก็คือตั้งใจให้เป็น 0) · รายการต่อวันเก็บเป็นยอดต่อวัน */
   costs: Record<string, number>;
   /** เงินช่วยงานที่คาดว่าจะได้รับ (ไม่บังคับ) */
   support: number | null;
@@ -107,12 +107,23 @@ export function planDays(plan: Plan) {
   return Number.isFinite(n) && n > 0 ? n : 1;
 }
 
-/** สรุปงบจากตัวเลขที่ครอบครัวกรอกเอง — ไม่มีราคาตั้งต้นใด ๆ จากระบบ */
+/** ค่าเริ่มต้นของรายการตามคำตอบ (DEFAULT_COST) — ยังไม่ได้ตอบเรื่องนั้น/ยังไม่เลือกจำนวนวัน = ไม่มีค่าเริ่มต้น */
+export function defaultCost(id: string, answers: Plan['answers']): number | undefined {
+  const d = DEFAULT_COST[id];
+  if (d == null) return undefined;
+  if (typeof d === 'number') return answers.days ? d : undefined;
+  const choice = answers[id as QuestionKey];
+  return choice ? d[choice] : undefined;
+}
+
+/** สรุปงบ: ค่าที่ครอบครัวแก้เอง > ค่าเริ่มต้นตามตัวเลือก (ผู้ใช้ขอ 3 ต.ค. 2026) */
 export function planBudget(plan: Plan) {
   const days = planDays(plan);
   const lines = COST_LINES.filter((l) => !l.when || l.when(plan.answers)).map((l) => {
-    const amount = plan.costs[l.id] ?? 0;
-    return { ...l, amount, total: l.perDay ? amount * days : amount };
+    const custom = plan.costs[l.id] != null;
+    const fallback = defaultCost(l.id, plan.answers);
+    const amount = custom ? plan.costs[l.id] : (fallback ?? 0);
+    return { ...l, amount, total: l.perDay ? amount * days : amount, custom, isDefault: !custom && fallback != null, fallback };
   });
   const total = lines.reduce((s, l) => s + l.total, 0);
   const perDayTotal = lines.filter((l) => l.perDay).reduce((s, l) => s + l.amount, 0);

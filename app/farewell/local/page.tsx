@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import LocalLookup from './LocalLookup';
+import fontStyles from '../farewell.module.css';
 
 export const metadata: Metadata = {
   title: 'ข้อตกลงงานศพในพื้นที่ — ส่งด้วยใจ',
@@ -11,7 +12,7 @@ export const metadata: Metadata = {
 
 export default function LocalPage() {
   return (
-    <main className="min-h-screen bg-white pt-20 pb-16 px-4">
+    <main className={`${fontStyles.sao} min-h-screen bg-white pt-20 pb-16 px-4`}>
       <div className="max-w-2xl mx-auto">
         <Link href="/farewell" className="inline-flex items-center gap-1 min-h-10 text-sm text-gray-500 hover:text-gray-800">
           <ArrowLeft className="w-4 h-4" /> ส่งด้วยใจ

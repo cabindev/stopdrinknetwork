@@ -9,6 +9,7 @@ import { SITE_NAME, SITE_TAGLINE } from './content';
 import StartButton from './components/StartButton';
 import AgreementMapSection from './components/AgreementMapSection';
 import TrackView from './components/TrackView';
+import fontStyles from './farewell.module.css';
 
 export const metadata: Metadata = {
   title: `${SITE_NAME} — วางแผนงานศพด้วยตัวเอง`,
@@ -45,7 +46,7 @@ const FACTS = [
 
 export default function FarewellPage() {
   return (
-    <main className="min-h-screen bg-white pt-20 pb-16 px-4">
+    <main className={`${fontStyles.sao} min-h-screen bg-white pt-20 pb-16 px-4`}>
       <TrackView type="VISIT" />
       <div className="max-w-3xl mx-auto">
         {/* เปิดหน้า */}

@@ -3,10 +3,11 @@
 // ส่งต่อด้วย Web Share (มือถือ) หรือคัดลอกข้อความ/LINE — ข้อมูลออกจากเครื่องเมื่อผู้ใช้กดส่งเองเท่านั้น
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Check, ClipboardCopy, Pencil, Printer, Share2, Trash2 } from 'lucide-react';
+import { Check, ClipboardCopy, Download, ListChecks, MessageCircle, Pencil, Printer, Share2, Trash2 } from 'lucide-react';
 import { QUESTIONS, buildChecklist } from '../../content';
 import { baht, planBudget, usePlan, type Plan } from '../../planStore';
 import { areaText } from '../../components/AreaPicker';
+import Receipt, { receiptImage } from '../Receipt';
 import { track } from '../../track';
 
 // ส่ง PLAN_COMPLETE แล้ว (ต่อแผน — ล้างตอนผู้ใช้กดลบแผน จะได้นับแผนใหม่)
@@ -34,6 +35,8 @@ function summaryText(plan: Plan) {
 
 export default function PlanSummary() {
   const { plan, update, reset } = usePlan();
+  const [imageStatus, setImageStatus] = useState('');
+  const [imageBusy, setImageBusy] = useState(false);
   const [copied, setCopied] = useState(false);
   const [confirmClear, setConfirmClear] = useState(false);
 
@@ -54,11 +57,11 @@ export default function PlanSummary() {
   const answered = QUESTIONS.filter((q) => plan.answers[q.key]);
   if (answered.length === 0 && !plan.deceasedName && !plan.area) {
     return (
-      <div className="rounded-2xl border border-orange-100 bg-orange-50 p-6 text-center">
+      <div className="rounded-2xl border border-gray-200 bg-gray-100 p-6 text-center">
         <p className="text-base text-gray-800">ยังไม่มีแผนที่บันทึกไว้ในเครื่องนี้</p>
         <Link
           href="/farewell/plan"
-          className="mt-4 inline-flex items-center gap-2 min-h-12 px-5 rounded-full bg-orange-600 text-sm font-semibold text-white hover:bg-orange-700"
+          className="mt-4 inline-flex items-center gap-2 min-h-12 px-5 rounded-full bg-gray-900 text-sm font-semibold text-white hover:bg-gray-700"
         >
           เริ่มวางแผน
         </Link>
@@ -66,7 +69,6 @@ export default function PlanSummary() {
     );
   }
 
-  const b = planBudget(plan);
   const checklist = buildChecklist(plan.answers);
   const text = summaryText(plan);
 
@@ -94,87 +96,37 @@ export default function PlanSummary() {
     }
   };
 
+  const saveImage = async () => {
+    setImageBusy(true);
+    setImageStatus('');
+    try {
+      const blob = await receiptImage(plan);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `ใบสรุปแผน${plan.deceasedName ? '-' + plan.deceasedName : ''}.png`;
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
+      setImageStatus('บันทึกรูปแล้ว พร้อมส่งต่อให้ครอบครัว');
+    } catch { setImageStatus('สร้างรูปไม่สำเร็จ กรุณาลองอีกครั้ง'); }
+    finally { setImageBusy(false); }
+  };
+
   const btn =
     'inline-flex items-center justify-center gap-2 min-h-12 px-4 rounded-full border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50';
 
   return (
     <div>
       {/* ส่วนพิมพ์ */}
-      <article className="rounded-2xl border border-orange-100 p-5 sm:p-7 print:border-0 print:p-0">
-        <p className="text-xs font-medium text-orange-700">แผนงานศพ</p>
-        <h2 className="mt-1 text-2xl font-bold text-gray-900">{plan.deceasedName || 'ของครอบครัว'}</h2>
-        {plan.area && <p className="mt-1 text-sm text-gray-600">{areaText(plan.area)}</p>}
+      <div className="mx-auto max-w-md">
+        <Receipt plan={plan} />
+      </div>
 
-        <dl className="mt-6 divide-y divide-gray-100 border-y border-gray-100">
-          {QUESTIONS.map((q) => {
-            const o = q.options.find((x) => x.id === plan.answers[q.key]);
-            return (
-              <div key={q.key} className="grid grid-cols-[8rem,1fr] sm:grid-cols-[11rem,1fr] gap-3 py-3">
-                <dt className="text-sm text-gray-500">{q.title}</dt>
-                <dd className="text-sm text-gray-900">{o ? o.label : <span className="text-gray-400">ยังไม่ได้เลือก</span>}</dd>
-              </div>
-            );
-          })}
-        </dl>
-
-        {b.filled && (
-          <section className="mt-6">
-            <h3 className="text-sm font-semibold text-gray-900">งบประมาณโดยประมาณ (จากราคาที่ครอบครัวกรอก)</h3>
-            <table className="mt-3 w-full text-sm">
-              <tbody>
-                {b.lines
-                  .filter((l) => l.total > 0)
-                  .map((l) => (
-                    <tr key={l.id} className="border-b border-gray-100">
-                      <td className="py-2 text-gray-700">
-                        {l.label}
-                        {l.perDay && b.days > 1 && (
-                          <span className="text-xs text-gray-500"> ({baht(l.amount)} × {b.days} วัน)</span>
-                        )}
-                      </td>
-                      <td className="py-2 text-right text-gray-900">{baht(l.total)}</td>
-                    </tr>
-                  ))}
-                <tr>
-                  <td className="pt-3 font-semibold text-gray-900">รวม</td>
-                  <td className="pt-3 text-right text-lg font-bold text-gray-900">{baht(b.total)}</td>
-                </tr>
-                {b.net != null && (
-                  <tr>
-                    <td className="pt-1 text-gray-600">{b.net > 0 ? 'หักเงินช่วยงานแล้ว ครอบครัวออกเพิ่ม' : 'หักเงินช่วยงานแล้ว เหลือ'}</td>
-                    <td className="pt-1 text-right text-gray-900">{baht(Math.abs(b.net))}</td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </section>
-        )}
-
-        <section className="mt-6">
-          <h3 className="text-sm font-semibold text-gray-900">สิ่งที่ต้องทำ</h3>
-          <ul className="mt-3 space-y-1">
-            {checklist.map((c) => {
-              const done = !!plan.done[c.id];
-              return (
-                <li key={c.id}>
-                  <label className="flex items-start gap-3 rounded-xl px-2 py-2 hover:bg-orange-50 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={done}
-                      onChange={() => update((p) => ({ done: { ...p.done, [c.id]: !done } }))}
-                      className="mt-1 h-5 w-5 shrink-0 accent-orange-600"
-                    />
-                    <span className={`text-sm leading-relaxed ${done ? 'text-gray-400 line-through' : 'text-gray-800'}`}>{c.text}</span>
-                  </label>
-                </li>
-              );
-            })}
-          </ul>
-        </section>
-      </article>
-
-      {/* ปุ่ม (ไม่พิมพ์) */}
-      <div className="mt-6 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap print:hidden">
+      {/* ปุ่ม (ไม่พิมพ์) — บันทึกเป็นรูปคือทางที่ครอบครัวใช้มากที่สุด (ส่งในกลุ่ม LINE) จึงเป็นปุ่มหลัก */}
+      <div className="mt-6 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:justify-center print:hidden">
+        <button type="button" onClick={saveImage} disabled={imageBusy} className={`${btn} col-span-2 border-gray-900 bg-gray-900 text-white hover:bg-gray-700 disabled:opacity-60`}>
+          <Download className="w-4 h-4" /> {imageBusy ? 'กำลังสร้างรูป…' : 'บันทึกใบสรุปเป็นรูป'}
+        </button>
         <button
           type="button"
           onClick={() => {
@@ -195,13 +147,43 @@ export default function PlanSummary() {
           onClick={() => track('LINE')}
           className={btn}
         >
-          ส่งทาง LINE
+          <MessageCircle className="w-4 h-4" /> ส่งทาง LINE
         </a>
         <button type="button" onClick={copy} className={btn}>
-          {copied ? <Check className="w-4 h-4 text-orange-600" /> : <ClipboardCopy className="w-4 h-4" />}
+          {copied ? <Check className="w-4 h-4 text-gray-900" /> : <ClipboardCopy className="w-4 h-4" />}
           {copied ? 'คัดลอกแล้ว' : 'คัดลอกข้อความ'}
         </button>
-        <Link href="/farewell/plan" className={btn}>
+      </div>
+      <p role="status" className="mt-3 min-h-5 text-center text-sm text-gray-600 print:hidden">{imageStatus}</p>
+
+      <article className="mt-8 rounded-2xl border border-gray-200 bg-white p-5 sm:p-6 print:hidden">
+        <section>
+          <h3 className="flex items-center gap-2 text-base font-bold text-gray-900">
+            <ListChecks className="w-5 h-5 text-gray-900" /> สิ่งที่ต้องทำ
+          </h3>
+          <ul className="mt-3 space-y-1">
+            {checklist.map((c) => {
+              const done = !!plan.done[c.id];
+              return (
+                <li key={c.id}>
+                  <label className="flex items-start gap-3 rounded-xl px-2 py-2 hover:bg-gray-100 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={done}
+                      onChange={() => update((p) => ({ done: { ...p.done, [c.id]: !done } }))}
+                      className="mt-1 h-5 w-5 shrink-0 accent-gray-900"
+                    />
+                    <span className={`text-sm leading-relaxed ${done ? 'text-gray-400 line-through' : 'text-gray-800'}`}>{c.text}</span>
+                  </label>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      </article>
+
+      <div className="mt-4 print:hidden">
+        <Link href="/farewell/plan" className="inline-flex items-center gap-1.5 min-h-11 text-sm font-bold text-gray-800 hover:text-gray-900">
           <Pencil className="w-4 h-4" /> แก้ไขแผน
         </Link>
       </div>
@@ -224,7 +206,7 @@ export default function PlanSummary() {
               }}
               className="inline-flex items-center gap-1.5 min-h-10 px-4 rounded-full bg-gray-900 text-sm text-white hover:bg-gray-700"
             >
-              ลบเลย
+              <Trash2 className="w-4 h-4" /> ลบเลย
             </button>
             <button type="button" onClick={() => setConfirmClear(false)} className="min-h-10 px-4 rounded-full text-sm text-gray-600 hover:bg-gray-100">
               ยกเลิก
@@ -236,7 +218,7 @@ export default function PlanSummary() {
             onClick={() => setConfirmClear(true)}
             className="mt-2 inline-flex items-center gap-1.5 min-h-10 text-sm text-gray-500 hover:text-gray-800"
           >
-            <Trash2 className="w-4 h-4" /> ล้างข้อมูลแผนในเครื่องนี้
+             ล้างข้อมูลแผนในเครื่องนี้
           </button>
         )}
       </div>

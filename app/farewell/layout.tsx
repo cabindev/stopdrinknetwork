@@ -1,8 +1,8 @@
-// app/farewell/layout.tsx — ฟอนต์ "เสาชิงช้า" ของ กทม. ทั้งส่วนส่งด้วยใจ (ผู้ใช้เลือก 2 ต.ค. 2026 แทน Kanit/FC Vision)
-// น้ำหนักตามลำดับชั้น: หัวข้อ Bold · เนื้อความ Regular · ตัวเล็ก/หมายเหตุ Light (styles.sao)
-// Navbar อยู่ใน root layout จึงยังใช้ฟอนต์ระบบเหมือนส่วนอื่นของเว็บ · เงื่อนไขการใช้ฟอนต์ดู fonts/README.md
+// app/farewell/layout.tsx — โหลดฟอนต์ "เสาชิงช้า" ของ กทม. (--font-sao) ให้ทั้งส่วนส่งด้วยใจ
+// ใช้แบบเลือกเปิดรายหน้า: หน้าแรก/3D/ข้อตกลง/ป้าย ใส่คลาส `farewellFont` (styles.sao) ที่ <main>
+// หน้าวางแผน + สรุปแผน = ฟอนต์ปกติของเว็บ (ผู้ใช้ขอ 3 ต.ค. 2026 — ฟอร์มกรอกข้อมูลอ่านง่ายกว่า)
+// น้ำหนัก: หัวข้อ Bold · เนื้อความ Regular · ตัวเล็ก Light · เงื่อนไขการใช้ฟอนต์ดู fonts/README.md
 import localFont from 'next/font/local';
-import styles from './farewell.module.css';
 
 const sao = localFont({
   src: [
@@ -15,5 +15,5 @@ const sao = localFont({
 });
 
 export default function FarewellLayout({ children }: { children: React.ReactNode }) {
-  return <div className={`${sao.variable} ${styles.sao}`}>{children}</div>;
+  return <div className={sao.variable}>{children}</div>;
 }

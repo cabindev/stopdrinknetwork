@@ -7,6 +7,7 @@ import { ArrowRight, BookOpen, ClipboardList, Landmark, Megaphone } from 'lucide
 import JourneyScroll from './components/JourneyScroll';
 import AgreementMapSection from '../components/AgreementMapSection';
 import TrackView from '../components/TrackView';
+import fontStyles from '../farewell.module.css';
 
 // หัวข้อโปสเตอร์ใช้ฟอนต์เสาชิงช้า Bold จาก app/farewell/layout.tsx (--font-sao) — ฟอนต์ต้องเป็นของที่มีสิทธิ์ใช้ในเว็บ
 
@@ -24,7 +25,7 @@ const NEXT = [
 
 export default function JourneyPage() {
   return (
-    <main className="bg-white">
+    <main className={`${fontStyles.sao} bg-white`}>
       <TrackView type="JOURNEY_VIEW" />
       <JourneyScroll />
       {/* ต่อจากฉากสุดท้าย "ความสูญเสียครั้งเดียว…" — ให้เห็นว่ามีชุมชนทำจริง ไม่ใช่แค่ข้อความรณรงค์ */}

@@ -1,0 +1,32 @@
+/* app/farewell/plan/plan.module.css — เฉพาะ "ใบสรุปแผน" (ส่วนอื่นใช้ Tailwind ตามธีมส้ม-ขาว-ดำของทั้งเว็บ)
+   กระดาษขาว แถบส้มด้านบน เงาซ้อนกระดาษบาง ๆ — ไม่ใช้ gradient · ห้ามซ่อน svg ทั้งฟอร์ม (เคยทำให้ icon หายหมด) */
+.receipt {
+  position: relative;
+  width: 100%;
+  padding: 18px 18px 16px;
+  background: #ffffff;
+  color: #1f2937;
+  border: 1px solid #e5e7eb;
+  border-top: 4px solid #111827;
+  border-radius: 6px;
+  box-shadow: 0 1px 0 #f3f4f6, 4px 5px 0 -1px #f3f4f6, 4px 5px 0 0 #d1d5db, 0 18px 40px -24px rgb(28 25 23 / 0.35);
+  overflow-wrap: anywhere;
+}
+.dash { margin: 12px 0; border-top: 1px dashed #d1d5db; }
+.total {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 10px 6px;
+  border-bottom: 3px double #1f2937;
+}
+@media print {
+  .receipt { box-shadow: none; break-inside: avoid; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+}
+
+/* แถวใหม่ในใบสรุปค่อย ๆ โผล่ (เลือกเรื่องไหน แถวนั้นเติมเข้ามา) — ปิดเมื่อผู้ใช้ตั้งลดการเคลื่อนไหว */
+.rowIn { animation: rowIn .35s ease-out both; }
+@keyframes rowIn { from { opacity: 0; transform: translateY(-4px); background: #f3f4f6; } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .rowIn { animation: none; } }

@@ -15,11 +15,12 @@ export default function PlanSummaryPage() {
       <div className="max-w-2xl mx-auto">
         <Link
           href="/farewell/plan"
-          className="inline-flex items-center gap-1 min-h-10 text-sm text-gray-500 hover:text-gray-800 print:hidden"
+          className="inline-flex items-center gap-1.5 min-h-10 text-sm text-gray-500 hover:text-gray-900 print:hidden"
         >
           <ArrowLeft className="w-4 h-4" /> กลับไปแก้แผน
         </Link>
-        <h1 className="mt-2 text-2xl font-bold text-gray-900 print:hidden">สรุปแผน</h1>
+        <h1 className="mt-2 text-3xl font-bold text-gray-900 print:hidden">สรุปแผน</h1>
+        <p className="mt-1 text-base text-gray-600 print:hidden">บันทึกใบสรุปเป็นรูปแล้วส่งในกลุ่มครอบครัว หรือพิมพ์ติดไว้ให้ทุกคนเห็นตรงกัน</p>
         <div className="mt-6 print:mt-0">
           <PlanSummary />
         </div>

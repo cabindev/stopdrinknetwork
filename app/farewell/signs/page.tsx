@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import SignMaker from './SignMaker';
+import fontStyles from '../farewell.module.css';
 
 export const metadata: Metadata = {
   title: 'ป้ายหน้างานศพ ไม่เลี้ยงเหล้า — ส่งด้วยใจ',
@@ -11,7 +12,7 @@ export const metadata: Metadata = {
 
 export default function SignsPage() {
   return (
-    <main className="min-h-screen bg-white pt-20 pb-16 px-4 print:p-0">
+    <main className={`${fontStyles.sao} min-h-screen bg-white pt-20 pb-16 px-4 print:p-0`}>
       <div className="max-w-3xl mx-auto print:max-w-none">
         <div className="print:hidden">
           <Link href="/farewell" className="inline-flex items-center gap-1 min-h-10 text-sm text-gray-500 hover:text-gray-800">

@@ -9,9 +9,15 @@
 .note { font-size: 11px; line-height: 1.7; margin-top: 8px; color: #625b50; }
 .finale { width: min(100%, 920px); color: #fff7e9; }
 .finale .masthead { justify-content: center; color: #e5cfb0; }
-.finale .masthead img { mix-blend-mode: normal; background: white; border-radius: 3px; padding: 2px; }
-.finale .headline { font-size: clamp(34px, 5.3vw, 80px); text-shadow: 0 4px 30px #000; }
+/* โลโก้บนพื้นมืด: ไม่มีกล่องขาว (ผู้ใช้ขอ 3 ต.ค. 2026) — PNG เส้นดำพื้นใส กลับสีเป็นเส้นขาว */
+.finale .masthead img { mix-blend-mode: normal; background: transparent; padding: 0; border-radius: 0; filter: invert(1); opacity: .9; }
+.finale .headline { font-size: clamp(40px, 6.6vw, 104px); line-height: 1.34; /* ไทยมีสระบน/ล่าง — ต่ำกว่านี้ ญ/ู ชน ั้/ี่ ของบรรทัดถัดไป */ text-shadow: 0 4px 30px #000; }
 .finale .headline .accent { color: #e4b776; text-shadow: 0 3px 22px rgb(0 0 0 / .6); }
+/* ฉากสุดท้าย: ขนาด/น้ำหนักต่างกันรายบรรทัด (ผู้ใช้: "หนาเท่ากันหมด ไม่สวย") — บรรทัดเปิด/ปิดเบาและเล็ก
+   ให้ "ครั้งเดียว" + "ไม่ควรกลายเป็นหนี้" เป็นตัวหลัก */
+.finale .headline span:first-child { font-weight: 300; font-size: .5em; letter-spacing: 0; color: #e7e0d6; }
+.finale .headline span:nth-child(3) { font-size: .82em; }
+.finale .headline span:last-child { font-weight: 400; font-size: .5em; letter-spacing: 0; color: #e7e0d6; margin-top: .08em; }
 .finale a { font-family: var(--font-sao), Tahoma, sans-serif; font-size: 20px; }
 @media (max-width: 767px) {
   .masthead { margin-bottom: 10px; font-size: 9px; }

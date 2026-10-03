@@ -31,6 +31,8 @@ export interface SceneState {
   peephole: number;
   /** 0–1 แสงในเตา */
   interior: number;
+  /** 0–1 ไฟลุกในเตาหลังประตูปิด (แสงลอดขอบ/สาดพื้น/ประกายไฟ) */
+  fire: number;
   /** 0–1 ความสว่างแสงรวมของฉาก */
   ambient: number;
   /** ซ่อนเตาไว้จนหีบเริ่มหัน (หมอกอย่างเดียวซ่อนบานประตูที่เปิดยื่นออกมาไม่มิด) */
@@ -89,6 +91,7 @@ export function getSceneState(p: number, rig: ViewportRig): SceneState {
     doorRotY: DOOR_OPEN * (1 - easeOut(range(p, 0.72, 0.82))),
     latchX: -0.06 * easeInOut(range(p, 0.82, 0.86)),
     peephole: easeInOut(range(p, 0.86, 0.97)),
+    fire: easeInOut(range(p, 0.82, 0.9)),
     interior: range(p, 0.5, 0.64) * (1 - range(p, 0.76, 0.82)),
     // แสงรวมหรี่ลงตามเรื่อง: ห้องพิธีสว่าง → หน้าเมรุสลัว → เหลือแสงอุ่นจากช่องมอง
     ambient: lerp(1, 0.5, easeInOut(range(p, 0.3, 0.62))) * lerp(1, 0.55, easeInOut(range(p, 0.84, 1))),

@@ -25,6 +25,10 @@ export interface FurnaceParts {
   /** วัสดุเรืองแสงของช่องมอง (ใช้ร่วมกันทั้งด้านนอกและด้านใน) */
   peephole: THREE.MeshStandardMaterial;
   interiorLight: THREE.PointLight;
+  /** ไฟในเตาหลังปิดประตู = แสงลอดขอบบาน + ช่องมอง (peephole) เท่านั้น — ผู้ใช้ไม่เอาประกายไฟลอย/แสงสาดพื้น (3 ต.ค. 2026) */
+  fire: {
+    seam: THREE.MeshBasicMaterial; // แสงลอดขอบประตู (texture ซุ้มเบลอขอบ)
+  };
 }
 
 /** เส้นรอบช่องโค้งบน: ด้านล่างตรง ด้านบนครึ่งวงกลม */
@@ -215,5 +219,55 @@ export function buildFurnace(tex: JourneyTextures): FurnaceParts {
   innerFrameBox.rotation.y = Math.PI;
   doorHinge.add(outerHole, innerHole, innerFrameBox);
 
-  return { group, doorHinge, latches, peephole, interiorLight };
+  // ---------- ไฟในเตา (เปิดหลังประตูปิดสนิท) ----------
+  // แสงลอดขอบประตู: texture รูปซุ้มประตูที่เบลอขอบ (ใช้ shadowBlur ของ canvas — รองรับทุก browser)
+  // วางบนแผ่นหน้ากรอบเหล็ก (z 0.042) แต่หลังบาน → บานบังตรงกลาง เห็นแค่แสงฟุ้งรอบขอบ
+  // แผ่นเรขาคณิตแข็งหลายชั้นเคยลองแล้ว เห็นเป็นแถบโค้งบนผนัง ดูไม่เป็นไฟ
+  const PAD = 0.32;
+  const GW = DOOR_W + PAD * 2;
+  const GH = DOOR_H + PAD;
+  const pxPerM = 200;
+  const glowCanvas = document.createElement('canvas');
+  glowCanvas.width = Math.round(GW * pxPerM);
+  glowCanvas.height = Math.round(GH * pxPerM);
+  const gctx = glowCanvas.getContext('2d')!;
+  const drawArch = (grow: number, blur: number, color: string) => {
+    const w = (DOOR_W + grow * 2) * pxPerM;
+    const h = (DOOR_H + grow) * pxPerM;
+    const r = w / 2;
+    const cx = glowCanvas.width / 2;
+    const base = glowCanvas.height; // y ของพื้น (canvas นับจากบนลงล่าง)
+    const far = 10000; // วาดรูปจริงนอกจอ แล้วเลื่อนเงากลับมา → เหลือแต่เงาเบลอ
+    gctx.save();
+    gctx.shadowColor = color;
+    gctx.shadowBlur = blur;
+    gctx.shadowOffsetX = far;
+    gctx.beginPath();
+    gctx.moveTo(cx - r - far, base);
+    gctx.lineTo(cx - r - far, base - (h - r));
+    gctx.arc(cx - far, base - (h - r), r, Math.PI, 0);
+    gctx.lineTo(cx + r - far, base);
+    gctx.closePath();
+    gctx.fillStyle = '#000';
+    gctx.fill();
+    gctx.restore();
+  };
+  drawArch(0.06, 70, 'rgba(255,90,10,0.9)');
+  drawArch(0.02, 14, 'rgba(255,170,90,1)');
+  const glowTex = new THREE.CanvasTexture(glowCanvas);
+  glowTex.colorSpace = THREE.SRGBColorSpace;
+  const seam = new THREE.MeshBasicMaterial({
+    map: glowTex,
+    transparent: true,
+    opacity: 0,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+    toneMapped: false,
+  });
+  const seamMesh = new THREE.Mesh(new THREE.PlaneGeometry(GW, GH), seam);
+  seamMesh.position.set(0, GH / 2 - 0.004, 0.042);
+  seamMesh.renderOrder = 2;
+  group.add(seamMesh);
+
+  return { group, doorHinge, latches, peephole, interiorLight, fire: { seam } };
 }

@@ -11,7 +11,10 @@ import { createTextures } from './textures';
 import { getSceneState } from './timeline';
 
 export interface JourneyScene {
-  render(p: number): void;
+  /** live=false (ลดการเคลื่อนไหว) = ไฟนิ่ง ไม่กะพริบ ไม่มีประกายไฟลอย */
+  render(p: number, live?: boolean): void;
+  /** ช่วงที่ไฟลุก ต้องวาดทุกเฟรมแม้ไม่ได้เลื่อน */
+  needsFrames(p: number): boolean;
   resize(width: number, height: number): void;
   setPixelRatio(ratio: number): void;
   dispose(): void;
@@ -85,7 +88,10 @@ export async function createJourneyScene(
     camera.updateProjectionMatrix();
   }
 
-  function render(p: number) {
+  /** ไฟลุกอยู่ในจอ = ต้องวาดต่อเนื่อง (กะพริบ/ประกายไฟ) แม้ไม่ได้เลื่อน */
+  const needsFrames = (p: number) => getSceneState(p, rig).fire > 0;
+
+  function render(p: number, live = true) {
     const s = getSceneState(p, rig);
 
     coffin.lidHinge.rotation.x = -s.lidRotX;
@@ -96,8 +102,12 @@ export async function createJourneyScene(
     furnace.group.visible = s.furnaceVisible;
     furnace.doorHinge.rotation.y = s.doorRotY;
     furnace.latches.position.x = s.latchX;
-    furnace.peephole.emissiveIntensity = s.peephole * 1.6;
+    // ไฟไหม้ช้า ๆ: แสงหายใจเข้า-ออกช้า (คาบ ~4–9 วิ ผสมกันให้ไม่เป็นจังหวะเดียว) ไม่กะพริบถี่
+    const now = performance.now() / 1000;
+    const burn = !live ? 0.9 : 0.86 + 0.09 * Math.sin(now * 1.4) + 0.05 * Math.sin(now * 0.7 + 1.3);
+    furnace.peephole.emissiveIntensity = (s.peephole * 1.6 + s.fire * 2.4) * burn;
     furnace.interiorLight.intensity = s.interior * 12;
+    furnace.fire.seam.opacity = s.fire * burn;
 
     stage.hemi.intensity = 0.45 * s.ambient;
     stage.key.intensity = 3.5 * Math.max(0.45, s.ambient);
@@ -126,11 +136,16 @@ export async function createJourneyScene(
     canvas.removeEventListener('webglcontextlost', handleLost);
     const textures = new Set<THREE.Texture>(Object.values(tex));
     scene.traverse((obj) => {
-      const mesh = obj as THREE.Mesh;
-      if (!mesh.isMesh) return;
+      const mesh = obj as THREE.Mesh | THREE.Points;
+      if (!(mesh as THREE.Mesh).isMesh && !(mesh as THREE.Points).isPoints) return;
       mesh.geometry.dispose();
       const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
-      for (const mat of mats) mat.dispose();
+      for (const mat of mats) {
+        // texture ที่สร้างใน builder (แสงไฟเตา/ประกายไฟ) ไม่อยู่ใน tex — เก็บจาก material ด้วย
+        const map = (mat as THREE.MeshBasicMaterial).map;
+        if (map) textures.add(map);
+        mat.dispose();
+      }
     });
     textures.forEach((t) => t.dispose());
     envMap.dispose();
@@ -139,6 +154,7 @@ export async function createJourneyScene(
 
   return {
     render,
+    needsFrames,
     resize,
     setPixelRatio: (ratio) => {
       renderer.setPixelRatio(ratio);

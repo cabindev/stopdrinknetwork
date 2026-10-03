@@ -86,7 +86,7 @@ export default function JourneyScroll() {
       }
 
       // reduced-motion: ไม่ไหลต่อเนื่อง กระโดดไปท่าสุดท้ายของขั้นปัจจุบัน
-      if (scene && visible) scene.render(reduce ? snapToStage(p) : p);
+      if (scene && visible) scene.render(reduce ? snapToStage(p) : p, !reduce);
       updateOverlay();
 
       // เครื่องที่วาดไม่ทัน (เกิน 24ms ต่อเฟรมเกือบตลอด) ลดความละเอียดลงเหลือ 1x
@@ -103,7 +103,9 @@ export default function JourneyScroll() {
         }
       }
 
-      if (p !== target) raf = requestAnimationFrame(tick);
+      // ไฟในเตา (ท้ายเรื่อง) กะพริบเอง → วาดต่อเนื่องเฉพาะตอนเห็นฉากนั้นอยู่
+      const burning = !reduce && visible && !!scene?.needsFrames(p);
+      if (p !== target || burning) raf = requestAnimationFrame(tick);
       else last = 0;
     };
 
@@ -156,8 +158,9 @@ export default function JourneyScroll() {
         scene = created;
         const rect = sticky.getBoundingClientRect();
         created.resize(rect.width, rect.height);
-        created.render(reduce ? snapToStage(p) : p);
+        created.render(reduce ? snapToStage(p) : p, !reduce);
         setStatus('ready');
+        kick();
       })
       .catch((error) => {
         console.error('[farewell/journey] 3D scene failed', error);

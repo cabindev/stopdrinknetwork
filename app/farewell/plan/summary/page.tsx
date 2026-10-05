@@ -19,8 +19,6 @@ export default function PlanSummaryPage() {
         >
           <ArrowLeft className="w-4 h-4" /> กลับไปแก้แผน
         </Link>
-        <h1 className="mt-2 text-3xl font-bold text-gray-900 print:hidden">สรุปแผน</h1>
-        <p className="mt-1 text-base text-gray-600 print:hidden">บันทึกใบสรุปเป็นรูปแล้วส่งในกลุ่มครอบครัว หรือพิมพ์ติดไว้ให้ทุกคนเห็นตรงกัน</p>
         <div className="mt-6 print:mt-0">
           <PlanSummary />
         </div>

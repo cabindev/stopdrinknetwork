@@ -51,6 +51,7 @@ node scripts/seed-test-data.mjs       # ผู้ใช้ทดสอบ 3 ค�
 node scripts/seed-test-bulk.mjs       # เพิ่มงานทดสอบอีก 20 รายการ (สุ่มพื้นที่จริง)
 node scripts/seed-test-data.mjs --clean   # ลบข้อมูลทดสอบทั้งหมด (@test.sdn)
 node scripts/backfill-coords.mjs      # เติม lat/lng ให้ Activity ที่ยังไม่มี
+node scripts/build-halftone-map.mjs   # สร้างแผนที่จุดหน้าแรก + app/data/halftoneGrid.json (ผลลัพธ์ commit ไว้ — รันเมื่อแก้กรอบ/ระยะจุด)
 ```
 
 ### ⚠️ กับดักที่เจอบ่อย (อ่านก่อนดีบัก)
@@ -91,7 +92,8 @@ node scripts/backfill-coords.mjs      # เติม lat/lng ให้ Activity 
 ## Structure
 ```
 app/
-├── page.tsx                      # Landing page
+├── page.tsx                      # Landing page — แผนที่จุด halftone ไทย (public/maps/thailand-halftone.svg) + จุดส้ม = งานจริง
+│                                 #   ปัดเข้าตาราง ~18 กม. (lib/halftoneMap.ts) + ตัวเลข งาน/จังหวัด/ตำบล · force-dynamic
 ├── layout.tsx                    # SessionProvider + Navbar + Toaster (react-hot-toast มีที่นี่ที่เดียว)
 ├── auth/                         # signin/ signup/ forgot-password/ reset-password/
 ├── profile/page.tsx              # โปรไฟล์ + พอร์ตงานของฉัน: สถิติ, ประเด็นที่ทำ (แถบสี),

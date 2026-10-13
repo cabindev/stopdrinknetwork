@@ -5,13 +5,15 @@ import Image from 'next/image';
 import type { StageCopy } from '../content';
 import styles from './StageCard.module.css';
 
-const POSTER_LINES = [
-  ['เส้นทาง', 'สุดท้าย'],
-  ['ร่วมส่ง', 'ผู้วายชนม์', 'ครั้งสุดท้าย'],
-  ['ไม่ได้อยากจัดใหญ่', 'แต่กลัว', 'สายตาคน'],
-  ['เหล้าคือต้นทุน', 'ที่ตัดได้', 'โดยไม่เสียน้ำใจ'],
-  ['ส่งคนที่รัก', 'ด้วยใจ', 'ไม่ใช่ด้วยหนี้'],
-  ['ความสูญเสีย', 'ครั้งเดียว', 'ไม่ควรกลายเป็นหนี้', 'ของคนที่ยังอยู่'],
+/** หัวข้อบนภาพ 3D แยกบรรทัดพร้อมขนาด: sm เล็ก · md กลาง · xl คำหลัก (สีเน้น) · pill แถบดำ (วลีปิดท้าย) */
+type LineRole = 'sm' | 'md' | 'xl' | 'pill';
+const POSTER_LINES: [string, LineRole][][] = [
+  [['เส้นทาง', 'sm'], ['สุดท้าย', 'xl']],
+  [['ร่วมส่ง', 'sm'], ['ผู้วายชนม์', 'xl'], ['ครั้งสุดท้าย', 'pill']],
+  [['ไม่ได้อยากจัดใหญ่', 'sm'], ['แต่กลัว', 'md'], ['สายตาคน', 'xl']],
+  [['เหล้าคือต้นทุน', 'md'], ['ที่ตัดได้', 'xl'], ['โดยไม่เสียน้ำใจ', 'sm']],
+  [['ส่งคนที่รัก', 'sm'], ['ด้วยใจ', 'xl'], ['ไม่ใช่ด้วยหนี้', 'pill']],
+  [['ความสูญเสีย', 'sm'], ['ครั้งเดียว', 'xl'], ['ไม่ควรกลายเป็นหนี้', 'md'], ['ของคนที่ยังอยู่', 'sm']],
 ];
 
 interface StageCardProps {
@@ -28,7 +30,7 @@ export default function StageCard({ copy, index, dark = false, overlay = false }
 
   return (
     <div
-      className={overlay ? `${styles.poster} ${index === 5 ? styles.finale : ''} ${index === 1 ? styles.stack : ''}` : `rounded-2xl border px-5 py-4 sm:px-7 sm:py-7 shadow-[0_16px_60px_-30px_rgba(40,30,20,0.35)] backdrop-blur-xl transition-colors duration-500 ${
+      className={overlay ? `${styles.poster} ${index === 5 ? styles.finale : ''}` : `rounded-2xl border px-5 py-4 sm:px-7 sm:py-7 shadow-[0_16px_60px_-30px_rgba(40,30,20,0.35)] backdrop-blur-xl transition-colors duration-500 ${
         dark ? 'bg-[#24221f]/95 border-white/10 text-white' : 'bg-[#fffdf8]/95 border-white/70 text-[#302d28]'
       }`}
     >
@@ -40,7 +42,7 @@ export default function StageCard({ copy, index, dark = false, overlay = false }
         <p className={`text-xs font-medium mb-2 ${dark ? 'text-orange-300' : 'text-orange-700'}`}>{copy.eyebrow}</p>
       )}
       <Heading className={overlay ? styles.headline : `font-bold leading-snug text-balance ${index === 0 ? 'text-3xl sm:text-4xl mb-3' : 'text-lg sm:text-2xl mb-3'}`}>
-        {overlay ? POSTER_LINES[index].map((line, i) => <span key={line} className={i === 1 ? styles.accent : undefined}>{line}</span>) : copy.title}
+        {overlay ? POSTER_LINES[index].map(([line, role]) => <span key={line} className={styles[role]}>{line}</span>) : copy.title}
       </Heading>
       {copy.body && (
         <p className={overlay ? styles.body : `text-[15px] sm:text-base leading-relaxed ${dark ? 'text-gray-100' : 'text-gray-700'}`}>{copy.body}</p>

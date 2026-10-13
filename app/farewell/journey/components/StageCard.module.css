@@ -18,6 +18,10 @@
 .finale .headline span:first-child { font-weight: 300; font-size: .5em; letter-spacing: 0; color: #e7e0d6; }
 .finale .headline span:nth-child(3) { font-size: .82em; }
 .finale .headline span:last-child { font-weight: 400; font-size: .5em; letter-spacing: 0; color: #e7e0d6; margin-top: .08em; }
+/* ขั้นปิดฝา: เล็ก–ใหญ่–แถบเข้ม (แนวโปสเตอร์ที่ผู้ใช้ส่งมา 13 ต.ค. 2026) — แถบดำสนิท ตัวขาว */
+.stack .headline span:first-child { font-size: .55em; font-weight: 400; }
+.stack .headline span:nth-child(2) { font-size: 1.25em; line-height: 1.15; }
+.stack .headline span:last-child { display: inline-block; margin-top: .25em; padding: .1em .55em .22em; border-radius: .28em; background: #000; color: #fff; font-size: .62em; text-shadow: none; }
 .finale a { font-family: var(--font-sao), Tahoma, sans-serif; font-size: 20px; }
 @media (max-width: 767px) {
   .masthead { margin-bottom: 10px; font-size: 9px; }

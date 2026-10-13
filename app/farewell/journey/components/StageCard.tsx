@@ -7,7 +7,7 @@ import styles from './StageCard.module.css';
 
 const POSTER_LINES = [
   ['เส้นทาง', 'สุดท้าย'],
-  ['ร่วมส่งผู้วายชนม์', 'ครั้งสุดท้าย'],
+  ['ร่วมส่ง', 'ผู้วายชนม์', 'ครั้งสุดท้าย'],
   ['ไม่ได้อยากจัดใหญ่', 'แต่กลัว', 'สายตาคน'],
   ['เหล้าคือต้นทุน', 'ที่ตัดได้', 'โดยไม่เสียน้ำใจ'],
   ['ส่งคนที่รัก', 'ด้วยใจ', 'ไม่ใช่ด้วยหนี้'],
@@ -28,7 +28,7 @@ export default function StageCard({ copy, index, dark = false, overlay = false }
 
   return (
     <div
-      className={overlay ? `${styles.poster} ${index === 5 ? styles.finale : ''}` : `rounded-2xl border px-5 py-4 sm:px-7 sm:py-7 shadow-[0_16px_60px_-30px_rgba(40,30,20,0.35)] backdrop-blur-xl transition-colors duration-500 ${
+      className={overlay ? `${styles.poster} ${index === 5 ? styles.finale : ''} ${index === 1 ? styles.stack : ''}` : `rounded-2xl border px-5 py-4 sm:px-7 sm:py-7 shadow-[0_16px_60px_-30px_rgba(40,30,20,0.35)] backdrop-blur-xl transition-colors duration-500 ${
         dark ? 'bg-[#24221f]/95 border-white/10 text-white' : 'bg-[#fffdf8]/95 border-white/70 text-[#302d28]'
       }`}
     >

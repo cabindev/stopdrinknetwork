@@ -5,7 +5,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { BookOpen, ClipboardList, Landmark, Megaphone, ShieldCheck, Sparkles } from 'lucide-react';
 import ChanFlowerIcon from './components/ChanFlowerIcon';
-import { SITE_NAME, SITE_TAGLINE } from './content';
+import { JOURNEY_PUBLIC, SITE_NAME, SITE_TAGLINE } from './content';
 import StartButton from './components/StartButton';
 import AgreementMapSection from './components/AgreementMapSection';
 import TrackView from './components/TrackView';
@@ -118,12 +118,12 @@ export default function FarewellPage() {
         </section>
 
         {/* สื่อรณรงค์ — ลิงก์เล็ก ไม่ดึงความสนใจจากเครื่องมือของครอบครัว */}
-        <p className="mt-12 border-t border-gray-100 pt-6 text-sm text-gray-500">
+        {JOURNEY_PUBLIC && <p className="mt-12 border-t border-gray-100 pt-6 text-sm text-gray-500">
           สื่อรณรงค์สำหรับคนทั่วไป:{' '}
           <Link href="/farewell/journey" className="inline-flex items-center gap-1 font-medium text-orange-700 hover:text-orange-800">
             <Sparkles className="w-4 h-4" /> เส้นทางสุดท้าย (ภาพ 3D)
           </Link>
-        </p>
+        </p>}
       </div>
     </main>
   );

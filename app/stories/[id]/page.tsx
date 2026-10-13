@@ -24,6 +24,7 @@ import type { HealthZone } from '@/app/utils/healthZones';
 import ShareButtons from '../ShareButtons';
 import ChanFlowerIcon from '@/app/farewell/components/ChanFlowerIcon';
 import { FUNERAL_SUB } from '@/app/lib/farewellAgreements';
+import { JOURNEY_PUBLIC } from '@/app/farewell/content';
 
 async function loadStory(idRaw: string) {
   const id = Number(idRaw);
@@ -335,9 +336,9 @@ export default async function StoryPage({ params }: { params: Promise<{ id: stri
               <Link href="/farewell" className="inline-flex items-center gap-1.5 min-h-10 px-4 rounded-full bg-orange-600 text-sm font-medium text-white hover:bg-orange-700">
                 เปิดส่งด้วยใจ
               </Link>
-              <Link href="/farewell/journey" className="inline-flex items-center gap-1.5 min-h-10 px-4 rounded-full border border-orange-200 text-sm font-medium text-orange-700 hover:bg-white">
+              {JOURNEY_PUBLIC && <Link href="/farewell/journey" className="inline-flex items-center gap-1.5 min-h-10 px-4 rounded-full border border-orange-200 text-sm font-medium text-orange-700 hover:bg-white">
                 ชมสื่อรณรงค์ เส้นทางสุดท้าย (3D)
-              </Link>
+              </Link>}
             </div>
           </section>
         )}

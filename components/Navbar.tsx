@@ -7,6 +7,9 @@ import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { Home, User, LogOut, Menu, BarChart3, X, ClipboardList, Map as MapIcon, BookOpen, Clock } from 'lucide-react';
 import ChanFlowerIcon from '@/app/farewell/components/ChanFlowerIcon';
+import { JOURNEY_PUBLIC } from '@/app/farewell/content';
+
+const FAREWELL_HREF = JOURNEY_PUBLIC ? '/farewell/journey' : '/farewell';
 
 const PILL =
   'inline-flex items-center gap-1.5 h-9 px-3 rounded-full bg-white/95 backdrop-blur border border-gray-200 shadow-sm text-xs font-medium text-gray-700 hover:bg-white hover:text-orange-700 transition-colors';
@@ -58,8 +61,9 @@ export default function Navbar() {
                 <BookOpen className="w-4 h-4 text-gray-400" />
                 กรณีศึกษา
               </Link>
-              {/* ส่งด้วยใจ → หน้า 3D "เส้นทางสุดท้าย" ก่อน (ผู้ใช้ตัดสินใจ 2 ต.ค. 2026) ท้ายหน้ามีทางไปเครื่องมือวางแผน */}
-              <Link href="/farewell/journey" className={PILL} title="ส่งด้วยใจ — เส้นทางสุดท้าย">
+              {/* ส่งด้วยใจ → หน้า 3D "เส้นทางสุดท้าย" ก่อน (ผู้ใช้ตัดสินใจ 2 ต.ค. 2026) ท้ายหน้ามีทางไปเครื่องมือวางแผน
+                  — ระหว่างยังไม่เผยแพร่ 3D (JOURNEY_PUBLIC) ไปหน้า /farewell */}
+              <Link href={FAREWELL_HREF} className={PILL} title="ส่งด้วยใจ — เส้นทางสุดท้าย">
                 <ChanFlowerIcon className="w-4 h-4 text-gray-400" />
                 ส่งด้วยใจ
               </Link>
@@ -172,7 +176,7 @@ export default function Navbar() {
             <BookOpen className="w-4 h-4 text-gray-400" /> กรณีศึกษา
           </Link>
           <Link
-            href="/farewell/journey"
+            href={FAREWELL_HREF}
             className="flex items-center gap-2 px-3 py-2.5 text-xs rounded-xl text-gray-600 hover:bg-orange-50 hover:text-orange-700"
             onClick={() => setIsMenuOpen(false)}
           >

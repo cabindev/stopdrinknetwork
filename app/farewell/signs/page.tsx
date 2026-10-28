@@ -20,7 +20,7 @@ export default function SignsPage() {
           </Link>
           <h1 className="mt-2 text-2xl font-bold text-gray-900">ป้ายหน้างาน</h1>
           <p className="mt-2 text-sm sm:text-base leading-relaxed text-gray-600">
-            ป้ายช่วยให้เจ้าภาพสื่อสารกับแขกได้โดยไม่ต้องอธิบายเองทีละคน ขนาด A4 แนวนอน
+            ป้ายช่วยให้เจ้าภาพสื่อสารกับแขกได้โดยไม่ต้องอธิบายเองทีละคน เลือกแบบ ใส่ชื่อผู้วายชนม์ แล้วดาวน์โหลดหรือพิมพ์ขนาด A4 ได้ทันที
           </p>
         </div>
         <div className="mt-6 print:mt-0">

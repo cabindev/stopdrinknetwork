@@ -1,5 +1,7 @@
 'use client';
-// app/farewell/signs/SignMaker.tsx — ป้ายหน้างาน "ไม่เลี้ยงเหล้า" A4 แนวนอน วาดลง canvas แล้วดาวน์โหลด PNG/พิมพ์
+// app/farewell/signs/SignMaker.tsx — ป้ายหน้างาน "ไม่เลี้ยงเหล้า" วาดลง canvas แล้วดาวน์โหลด PNG/พิมพ์
+// 2 แบบ: ข้อความ (A4 แนวนอน กรอบส้ม) · สัญลักษณ์งานศพปลอดเหล้า (A4 แนวตั้ง พื้นขาว/พื้นดำ — เพิ่ม 28 ต.ค. 2026
+//   จากไฟล์สัญลักษณ์ที่ผู้ใช้ให้มา public/farewell/signs/rip-sign-{black,white}.png ย่อจากต้นฉบับ .ai เหลือสูง 2400px)
 // ข้อความ 3 แบบจากทีม Civic Space · สีส้ม–ขาว–ดำ พื้นล้วน (ตามธีมเว็บ ห้าม gradient)
 // ไม่ใช้ html2canvas (กติกาโปรเจกต์) วาดเองทั้งหมด
 import { useEffect, useRef, useState } from 'react';
@@ -57,10 +59,78 @@ function fit(ctx: CanvasRenderingContext2D, text: string, family: string, maxWid
   return { size: 60, lines: wrap(ctx, text, maxWidth) };
 }
 
+/** ฟอนต์ของป้าย = ฟอนต์ที่ canvas ได้รับจาก <main> (เสาชิงช้า ผ่านคลาส .sao) — ไม่ใช่ของ body ซึ่งเป็นฟอนต์ระบบ */
+const signFont = (canvas: HTMLCanvasElement) => getComputedStyle(canvas).fontFamily || 'sans-serif';
+
+type Layout = 'text' | 'symbol';
+
+const LAYOUTS: { id: Layout; label: string; detail: string }[] = [
+  { id: 'text', label: 'แบบข้อความ', detail: 'A4 แนวนอน ตัวหนังสือใหญ่ อ่านได้จากระยะไกล' },
+  { id: 'symbol', label: 'แบบมีสัญลักษณ์', detail: 'A4 แนวตั้ง สัญลักษณ์งานศพปลอดเหล้า พร้อมข้อความ' },
+];
+
+/** ป้ายแบบสัญลักษณ์ — A4 แนวตั้ง: ชื่อผู้วายชนม์ (ถ้ามี) · สัญลักษณ์ · ข้อความหลัก · บรรทัดล่าง */
+function drawSymbol(canvas: HTMLCanvasElement, logo: HTMLImageElement, dark: boolean, message: string, name: string, footer: string) {
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+  const family = signFont(canvas);
+  const w = H; // แนวตั้ง = สลับด้านของ A4 แนวนอน
+  const h = W;
+  const bg = dark ? INK : '#ffffff';
+  const ink = dark ? '#ffffff' : INK;
+  const muted = dark ? '#d1d5db' : MUTED;
+
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, w, h);
+  // กรอบเส้นคู่บาง ๆ แบบป้ายงานพิธี
+  ctx.strokeStyle = ink;
+  ctx.lineWidth = 10;
+  ctx.strokeRect(70, 70, w - 140, h - 140);
+  ctx.lineWidth = 3;
+  ctx.strokeRect(100, 100, w - 200, h - 200);
+
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  const maxWidth = w - 2 * 200;
+
+  let top = 250;
+  if (name.trim()) {
+    ctx.fillStyle = muted;
+    ctx.font = `400 78px ${family}`;
+    const nameLines = wrap(ctx, `งานบำเพ็ญกุศลศพ ${name.trim()}`, maxWidth).slice(0, 2);
+    nameLines.forEach((l, i) => ctx.fillText(l, w / 2, top + i * 104));
+    top += nameLines.length * 104 + 40;
+  } else top = 200;
+
+  // สัญลักษณ์: สูงตามพื้นที่ที่เหลือ ไม่เกิน 1200px
+  const footerTop = h - 260;
+  const textBlock = 520; // ที่ว่างสำหรับข้อความหลักใต้สัญลักษณ์
+  const logoH = Math.min(1200, footerTop - top - textBlock);
+  const logoW = (logo.naturalWidth / logo.naturalHeight) * logoH;
+  ctx.drawImage(logo, (w - logoW) / 2, top, logoW, logoH);
+
+  const { size, lines } = fit(ctx, message, family, maxWidth, 170, 2);
+  const lineH = size * 1.32;
+  const centerY = top + logoH + (footerTop - 90 - (top + logoH)) / 2;
+  ctx.fillStyle = ink;
+  ctx.font = `700 ${size}px ${family}`;
+  lines.forEach((l, i) => ctx.fillText(l, w / 2, centerY + (i - (lines.length - 1) / 2) * lineH));
+
+  if (footer.trim()) {
+    ctx.fillStyle = ink;
+    ctx.fillRect(w / 2 - 120, footerTop - 70, 240, 6);
+    ctx.fillStyle = muted;
+    ctx.font = `400 68px ${family}`;
+    wrap(ctx, footer.trim(), maxWidth)
+      .slice(0, 1)
+      .forEach((l) => ctx.fillText(l, w / 2, footerTop + 20));
+  }
+}
+
 function draw(canvas: HTMLCanvasElement, message: string, name: string, footer: string) {
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
-  const family = getComputedStyle(document.body).fontFamily || 'sans-serif';
+  const family = signFont(canvas);
 
   ctx.fillStyle = '#ffffff';
   ctx.fillRect(0, 0, W, H);
@@ -114,22 +184,45 @@ export default function SignMaker() {
   const [nameEdit, setNameEdit] = useState<string | undefined>(undefined);
   const [footer, setFooter] = useState(DEFAULT_FOOTER);
   const [printUrl, setPrintUrl] = useState('');
+  const [layout, setLayout] = useState<Layout>('text');
+  const [dark, setDark] = useState(false); // แบบสัญลักษณ์: พื้นดำ (พื้นขาวประหยัดหมึกกว่า)
   const name = nameEdit ?? plan?.deceasedName ?? '';
+  const portrait = layout === 'symbol';
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     let cancelled = false;
-    // รอฟอนต์ไทยโหลดก่อนวาด ไม่งั้นตัวอักษรอาจออกมาเป็นฟอนต์สำรอง
-    document.fonts.ready.then(() => {
-      if (cancelled) return;
-      draw(canvas, message, name, footer);
-      setPrintUrl(canvas.toDataURL('image/png'));
-    });
+    // รอฟอนต์ไทย (และรูปสัญลักษณ์) โหลดก่อนวาด ไม่งั้นตัวอักษรอาจออกมาเป็นฟอนต์สำรอง
+    const logo =
+      layout === 'symbol'
+        ? new Promise<HTMLImageElement>((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => resolve(img);
+            img.onerror = reject;
+            img.src = dark ? '/farewell/signs/rip-sign-white.png' : '/farewell/signs/rip-sign-black.png';
+          })
+        : Promise.resolve(null);
+    // fonts.ready ไม่รอฟอนต์ที่หน้ายังไม่ได้ใช้ — สั่งโหลดเสาชิงช้าน้ำหนักที่ป้ายใช้ (400/700) เองก่อน
+    const family = signFont(canvas);
+    const fonts = Promise.all([document.fonts.load(`400 80px ${family}`, 'ก'), document.fonts.load(`700 80px ${family}`, 'ก')]).catch(
+      () => undefined,
+    );
+    Promise.all([fonts, logo])
+      .then(([, img]) => {
+        if (cancelled) return;
+        if (img) drawSymbol(canvas, img, dark, message, name, footer);
+        else draw(canvas, message, name, footer);
+        setPrintUrl(canvas.toDataURL('image/png'));
+      })
+      .catch(() => {
+        // โหลดรูปสัญลักษณ์ไม่ได้ (เน็ตหลุด) — ใช้ป้ายแบบข้อความแทน
+        if (!cancelled) setLayout('text');
+      });
     return () => {
       cancelled = true;
     };
-  }, [message, name, footer]);
+  }, [layout, dark, message, name, footer]);
 
   const download = () => {
     track('SIGN_DOWNLOAD');
@@ -138,7 +231,7 @@ export default function SignMaker() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'ป้ายงานศพไม่เลี้ยงเหล้า.png';
+      a.download = portrait ? 'ป้ายงานศพปลอดเหล้า-สัญลักษณ์.png' : 'ป้ายงานศพไม่เลี้ยงเหล้า.png';
       a.click();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
     }, 'image/png');
@@ -146,21 +239,67 @@ export default function SignMaker() {
 
   return (
     <div>
-      {/* พิมพ์แค่ป้าย เต็มหน้า A4 แนวนอน */}
-      <style>{`@media print { @page { size: A4 landscape; margin: 0; } }`}</style>
+      {/* พิมพ์แค่ป้าย เต็มหน้า A4 ตามแนวของแบบที่เลือก */}
+      <style>{`@media print { @page { size: A4 ${portrait ? 'portrait' : 'landscape'}; margin: 0; } }`}</style>
       {printUrl && (
         // eslint-disable-next-line @next/next/no-img-element -- data URL จาก canvas ใช้ next/image ไม่ได้
         <img src={printUrl} alt="" className="hidden print:block print:w-full" />
       )}
 
       <div className="print:hidden">
+        <fieldset>
+          <legend className="text-sm font-medium text-gray-900">แบบป้าย</legend>
+          <div role="radiogroup" aria-label="แบบป้าย" className="mt-2 grid gap-2 sm:grid-cols-2">
+            {LAYOUTS.map((l) => {
+              const active = l.id === layout;
+              return (
+                <button
+                  key={l.id}
+                  type="button"
+                  role="radio"
+                  aria-checked={active}
+                  onClick={() => setLayout(l.id)}
+                  className={`rounded-2xl border px-4 py-3 text-left transition-colors ${
+                    active ? 'border-orange-600 bg-orange-50' : 'border-gray-200 hover:border-orange-300'
+                  }`}
+                >
+                  <span className="block text-base font-medium text-gray-900">{l.label}</span>
+                  <span className="block text-sm text-gray-600">{l.detail}</span>
+                </button>
+              );
+            })}
+          </div>
+          {portrait && (
+            <div role="radiogroup" aria-label="สีพื้นป้าย" className="mt-3 flex flex-wrap items-center gap-2 text-sm">
+              <span className="text-gray-700">สีพื้น</span>
+              {[
+                { v: false, label: 'พื้นขาว (ประหยัดหมึก)' },
+                { v: true, label: 'พื้นดำ' },
+              ].map((o) => (
+                <button
+                  key={o.label}
+                  type="button"
+                  role="radio"
+                  aria-checked={dark === o.v}
+                  onClick={() => setDark(o.v)}
+                  className={`min-h-10 rounded-full border px-4 ${
+                    dark === o.v ? 'border-gray-900 bg-gray-900 text-white' : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  {o.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </fieldset>
+
         <canvas
           ref={canvasRef}
-          width={W}
-          height={H}
+          width={portrait ? H : W}
+          height={portrait ? W : H}
           role="img"
           aria-label={`ตัวอย่างป้าย: ${message}`}
-          className="w-full h-auto rounded-2xl border border-gray-200 shadow-sm"
+          className={`mt-5 h-auto rounded-2xl border border-gray-200 shadow-sm ${portrait ? 'mx-auto w-full max-w-md' : 'w-full'}`}
         />
 
         <fieldset className="mt-6">

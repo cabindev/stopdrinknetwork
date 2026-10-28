@@ -3,7 +3,6 @@
 // หัวข้อหน้า (h1) อยู่ใน PlanWizard แสดงเฉพาะขั้นแรก — ขั้นอื่นการ์ดขึ้นบนสุด ไม่ต้องเลื่อน
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
 import PlanWizard from './PlanWizard';
 
 export const metadata: Metadata = {
@@ -14,9 +13,9 @@ export const metadata: Metadata = {
 export default function PlanPage() {
   return (
     <main className="min-h-screen bg-white pt-20 pb-16 px-4">
-      <div className="max-w-5xl mx-auto">
-        <Link href="/farewell" className="inline-flex items-center gap-1.5 min-h-10 text-sm text-gray-500 hover:text-gray-900">
-          <ArrowLeft className="w-4 h-4" /> ส่งด้วยใจ
+      <div className="max-w-6xl mx-auto">
+        <Link href="/farewell" className="inline-flex items-center min-h-10 text-sm text-gray-500 underline-offset-4 hover:text-gray-900 hover:underline">
+          กลับหน้าส่งด้วยใจ
         </Link>
         <PlanWizard />
       </div>

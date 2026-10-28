@@ -6,7 +6,6 @@
 import { QUESTIONS, type QuestionKey } from '../content';
 import { planBudget, type Plan } from '../planStore';
 import { areaText } from '../components/AreaPicker';
-import ChanFlowerIcon from '../components/ChanFlowerIcon';
 import styles from './plan.module.css';
 
 const num = (n: number) => n.toLocaleString('th-TH');
@@ -179,9 +178,7 @@ export default function Receipt({
   return (
     <article data-receipt className={styles.receipt} aria-label="ใบสรุปแผนและประมาณการค่าใช้จ่าย" aria-live="polite">
       <div className="flex items-center justify-between text-xs">
-        <span className="inline-flex items-center gap-1.5 font-medium text-gray-900">
-          <ChanFlowerIcon className="w-4 h-4" /> ส่งด้วยใจ
-        </span>
+        <span className="font-medium text-gray-900">ส่งด้วยใจ</span>
         <span className="text-gray-500">สำเนาครอบครัว</span>
       </div>
       <div className={styles.dash} />

@@ -10,11 +10,13 @@ type AreaResult = PlanArea & { agreement: 'here' | 'amphoe' | 'province' | null 
 interface AreaPickerProps {
   value: PlanArea | null;
   onChange: (area: PlanArea | null) => void;
+  /** แบบทางการ ขาว-ดำ ไม่มีไอคอน (หน้าวางแผน /farewell/plan — ผู้ใช้ขอ 28 ต.ค. 2026) */
+  plain?: boolean;
 }
 
 export const areaText = (a: PlanArea) => `ต.${a.district} อ.${a.amphoe} จ.${a.province}`;
 
-export default function AreaPicker({ value, onChange }: AreaPickerProps) {
+export default function AreaPicker({ value, onChange, plain = false }: AreaPickerProps) {
   const [q, setQ] = useState('');
   const [results, setResults] = useState<AreaResult[]>([]);
   const [loading, setLoading] = useState(false);
@@ -52,6 +54,21 @@ export default function AreaPicker({ value, onChange }: AreaPickerProps) {
     }
   }, [results]);
 
+  if (value && plain) {
+    return (
+      <div className="flex items-center gap-3 rounded-md border border-gray-900 bg-gray-50 px-4 py-2.5">
+        <span className="flex-1 text-sm font-medium text-gray-900">{areaText(value)}</span>
+        <button
+          type="button"
+          onClick={() => onChange(null)}
+          className="min-h-9 rounded-md px-3 text-xs text-gray-600 underline underline-offset-2 hover:bg-white hover:text-gray-900"
+        >
+          เปลี่ยน
+        </button>
+      </div>
+    );
+  }
+
   if (value) {
     return (
       <div className="flex items-center gap-3 rounded-2xl border border-orange-200 bg-orange-50 px-4 py-3">
@@ -75,8 +92,14 @@ export default function AreaPicker({ value, onChange }: AreaPickerProps) {
       <label htmlFor={`${listId}-input`} className="sr-only">
         ชื่อตำบล
       </label>
-      <div className="flex items-center gap-2 rounded-2xl border border-gray-300 bg-white px-4 focus-within:border-orange-500 focus-within:ring-2 focus-within:ring-orange-100">
-        <Search className="w-4 h-4 shrink-0 text-gray-400" />
+      <div
+        className={
+          plain
+            ? 'flex items-center rounded-md border border-gray-300 bg-white px-3 focus-within:border-gray-900 focus-within:ring-2 focus-within:ring-gray-200'
+            : 'flex items-center gap-2 rounded-2xl border border-gray-300 bg-white px-4 focus-within:border-orange-500 focus-within:ring-2 focus-within:ring-orange-100'
+        }
+      >
+        {!plain && <Search className="w-4 h-4 shrink-0 text-gray-400" />}
         <input
           id={`${listId}-input`}
           ref={inputRef}
@@ -85,15 +108,15 @@ export default function AreaPicker({ value, onChange }: AreaPickerProps) {
           onChange={(e) => setQ(e.target.value)}
           placeholder="พิมพ์ชื่อตำบลที่จะจัดงาน"
           autoComplete="off"
-          className="w-full h-12 scroll-mt-24 bg-transparent text-base outline-none placeholder:text-gray-400"
+          className={`w-full ${plain ? 'h-11 sm:text-sm' : 'h-12'} scroll-mt-24 bg-transparent text-base outline-none placeholder:text-gray-400`}
         />
       </div>
       {/* ชื่อตำบลซ้ำกันได้หลายจังหวัด (เช่น หินดาด 3 แห่ง) — เตือนให้ดูอำเภอ/จังหวัด เพราะข้อตกลงผูกกับตำบลที่ถูกต้อง */}
       {new Set(shown.map((r) => r.district)).size < shown.length && (
-        <p className="mt-2 text-xs text-orange-700">มีตำบลชื่อซ้ำกันหลายแห่ง — ดูชื่ออำเภอและจังหวัดให้ตรงก่อนเลือก</p>
+        <p className={`mt-2 text-xs ${plain ? 'text-gray-700' : 'text-orange-700'}`}>มีตำบลชื่อซ้ำกันหลายแห่ง — ดูชื่ออำเภอและจังหวัดให้ตรงก่อนเลือก</p>
       )}
       {shown.length > 0 && (
-        <ul className="mt-2 rounded-2xl border border-gray-200 bg-white divide-y divide-gray-100 overflow-hidden">
+        <ul className={`mt-2 ${plain ? 'rounded-md' : 'rounded-2xl'} border border-gray-200 bg-white divide-y divide-gray-100 overflow-hidden`}>
           {shown.map((r) => (
             <li key={`${r.district}|${r.amphoe}|${r.province}`}>
               <button
@@ -102,7 +125,7 @@ export default function AreaPicker({ value, onChange }: AreaPickerProps) {
                   onChange({ district: r.district, amphoe: r.amphoe, province: r.province });
                   setQ('');
                 }}
-                className="w-full flex items-center gap-3 text-left px-4 py-2.5 min-h-12 text-sm text-gray-800 hover:bg-orange-50"
+                className={`w-full flex items-center gap-3 text-left px-4 py-2.5 min-h-12 text-sm text-gray-800 ${plain ? 'hover:bg-gray-50' : 'hover:bg-orange-50'}`}
               >
                 {/* จังหวัดเด่นเท่าชื่อตำบล — ชื่อตำบลซ้ำกันได้ จังหวัดคือสิ่งที่ใช้แยก */}
                 <span className="flex-1 min-w-0">

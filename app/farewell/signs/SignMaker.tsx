@@ -179,7 +179,11 @@ function draw(canvas: HTMLCanvasElement, message: string, name: string, footer: 
 export default function SignMaker() {
   const { plan } = usePlan();
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [message, setMessage] = useState<string>(SIGN_MESSAGES[0]);
+  const [preset, setPreset] = useState<string>(SIGN_MESSAGES[0]);
+  // เขียนข้อความเอง (ผู้ใช้ขอ 28 ต.ค. 2026) — เว้นวรรค = ขึ้นบรรทัดใหม่บนป้าย (fit ตัดบรรทัดตามช่องว่างก่อน)
+  const [custom, setCustom] = useState(false);
+  const [customText, setCustomText] = useState('');
+  const message = custom ? customText.trim() : preset;
   // undefined = ยังไม่ได้แก้เอง → ใช้ชื่อจากแผนในเครื่อง
   const [nameEdit, setNameEdit] = useState<string | undefined>(undefined);
   const [footer, setFooter] = useState(DEFAULT_FOOTER);
@@ -306,14 +310,17 @@ export default function SignMaker() {
           <legend className="text-sm font-medium text-gray-900">ข้อความบนป้าย</legend>
           <div className="mt-2 space-y-2">
             {SIGN_MESSAGES.map((m) => {
-              const active = m === message;
+              const active = !custom && m === preset;
               return (
                 <button
                   key={m}
                   type="button"
                   role="radio"
                   aria-checked={active}
-                  onClick={() => setMessage(m)}
+                  onClick={() => {
+                    setPreset(m);
+                    setCustom(false);
+                  }}
                   className={`w-full flex items-center gap-3 rounded-2xl border px-4 py-3 text-left text-base transition-colors ${
                     active ? 'border-orange-600 bg-orange-50 text-gray-900' : 'border-gray-200 text-gray-700 hover:border-orange-300'
                   }`}
@@ -329,6 +336,44 @@ export default function SignMaker() {
                 </button>
               );
             })}
+            <button
+              type="button"
+              role="radio"
+              aria-checked={custom}
+              onClick={() => setCustom(true)}
+              className={`w-full flex items-center gap-3 rounded-2xl border px-4 py-3 text-left text-base transition-colors ${
+                custom ? 'border-orange-600 bg-orange-50 text-gray-900' : 'border-gray-200 text-gray-700 hover:border-orange-300'
+              }`}
+            >
+              <span
+                className={`flex w-5 h-5 shrink-0 items-center justify-center rounded-full border ${
+                  custom ? 'border-orange-600 bg-orange-600 text-white' : 'border-gray-300'
+                }`}
+              >
+                {custom && <Check className="w-3.5 h-3.5" />}
+              </span>
+              เขียนข้อความเอง
+            </button>
+            {custom && (
+              <div className="pl-1">
+                <label htmlFor="sign-custom" className="sr-only">
+                  ข้อความบนป้าย
+                </label>
+                <input
+                  id="sign-custom"
+                  type="text"
+                  autoFocus
+                  value={customText}
+                  onChange={(e) => setCustomText(e.target.value.slice(0, 60))}
+                  placeholder="เช่น ร่วมส่งท่านด้วยใจ ไม่มีเหล้าในงานนี้"
+                  className="w-full h-12 rounded-2xl border border-gray-300 px-4 text-base outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
+                />
+                <p className="mt-1.5 flex justify-between gap-3 text-xs text-gray-500">
+                  <span>เว้นวรรคตรงที่อยากให้ขึ้นบรรทัดใหม่ · ข้อความยาวตัวอักษรจะเล็กลง</span>
+                  <span className="shrink-0 tabular-nums">{customText.length}/60</span>
+                </p>
+              </div>
+            )}
           </div>
         </fieldset>
 

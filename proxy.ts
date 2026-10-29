@@ -2,11 +2,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getToken } from 'next-auth/jwt';
 
-// หน้าแรกของคนที่ล็อกอินแล้ว = แผนที่รวมงาน
+// หน้าแรกของคนที่ล็อกอินแล้ว = แผนที่รวมงาน (หลัง login ฟอร์มพาไป /map เอง)
 const HOME_AFTER_LOGIN = '/map';
 
-// ล็อกอินแล้วไม่ต้องเห็นหน้า landing / เข้าสู่ระบบ / สมัครสมาชิกอีก
-const GUEST_ONLY = ['/', '/auth/signin', '/auth/signup'];
+// ล็อกอินแล้วไม่ต้องเห็นหน้าเข้าสู่ระบบ / สมัครสมาชิกอีก
+// หน้าแรก (/) เปิดได้ทุกคน — กดโลโก้ Network แล้วกลับหน้าแรก (ผู้ใช้ขอ 29 ต.ค. 2026)
+const GUEST_ONLY = ['/auth/signin', '/auth/signup'];
 
 export async function proxy(request: NextRequest) {
   const user = await getToken({

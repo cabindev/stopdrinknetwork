@@ -1,8 +1,10 @@
-// app/page.tsx — หน้าแรก (สาธารณะ — คนที่ login แล้วถูก proxy.ts ส่งไป /map)
+// app/page.tsx — หน้าแรก (สาธารณะ ทุกคนเปิดได้ — กดโลโก้ Network ใน Navbar มาที่นี่ · login แล้วซ่อนลิงก์เข้าสู่ระบบ)
 // แผนที่จุด halftone ประเทศไทย (แนวเดียวกับ parliament) + จุดส้ม = พื้นที่ที่เครือข่ายมีงานจริง ดึงสดจาก DB
 // ข้อมูลที่ออกหน้านี้: จำนวนรวม + จุดที่ปัดเข้าตาราง ~18 กม. เท่านั้น (ไม่มีชื่องาน/คน/พิกัดจริง)
 import Link from 'next/link';
 import { ArrowRight, BookOpen, Map as MapIcon } from 'lucide-react';
+import { getServerSession } from 'next-auth/next';
+import authOptions from '@/app/lib/configs/auth/authOptions';
 import prisma from '@/app/lib/db';
 import { HALFTONE_VIEWBOX, RECENT_DAYS, toSpots } from '@/app/lib/halftoneMap';
 
@@ -33,7 +35,7 @@ async function getNetworkMap() {
 const spotRadius = (count: number) => Math.min(13, 6.5 + Math.sqrt(count - 1) * 2);
 
 export default async function HomePage() {
-  const { spots, pulses, activities, provinces, tambons } = await getNetworkMap();
+  const [{ spots, pulses, activities, provinces, tambons }, session] = await Promise.all([getNetworkMap(), getServerSession(authOptions)]);
   const stats = [
     { value: activities, label: 'งาน' },
     { value: provinces, label: 'จังหวัด' },
@@ -78,7 +80,7 @@ export default async function HomePage() {
               <BookOpen className="w-4 h-4" /> อ่านกรณีศึกษา
             </Link>
           </div>
-          <p className="mt-6 text-sm text-gray-500">
+          {!session && <p className="mt-6 text-sm text-gray-500">
             เจ้าหน้าที่เครือข่าย{' '}
             <Link href="/auth/signin" className="font-medium text-orange-700 hover:text-orange-800">
               เข้าสู่ระบบ
@@ -87,7 +89,7 @@ export default async function HomePage() {
             <Link href="/auth/signup" className="font-medium text-orange-700 hover:text-orange-800">
               สมัครสมาชิก
             </Link>
-          </p>
+          </p>}
         </div>
 
         {/* แผนที่ — ฐาน (SVG นิ่ง cache ได้) + ชั้นจุดงาน viewBox เดียวกัน วางทับพอดี */}

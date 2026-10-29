@@ -232,7 +232,8 @@ components/Navbar.tsx             # แสดงทุกหน้า ยกเ�
 server.js                         # Express ห่อ Next สำหรับ Plesk/Passenger (production) — ห้าม express.static uploads/
                                   #   ขั้นตอน deploy: docs/deploy-plesk.md
 proxy.ts                          # (Next 16 เปลี่ยนชื่อจาก middleware.ts) /dashboard/* ต้อง role admin|superadmin ไม่งั้น → /auth/signin
-                                  #   ล็อกอินแล้วเข้า / , /auth/signin, /auth/signup → redirect /map (หน้าแรกหลังล็อกอิน)
+                                  #   ล็อกอินแล้วเข้า /auth/signin, /auth/signup → redirect /map · หน้าแรก / เปิดได้ทุกคน (กดโลโก้ = หน้าแรก)
+                                  #   หลัง login ฟอร์มพาไป /map เอง (SignInForm/GoogleSignInButton callbackUrl)
 prisma/schema.prisma              # User, WorkCategory, WorkSubCategory, Activity, ActivityArea, ActivityPolicy, ActivityMember,
                                   #   StorySeries,
                                   #   ActivityAttachment, AuditLog · migrations/ = ประวัติ schema (ใช้ migrate deploy)

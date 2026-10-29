@@ -15,7 +15,13 @@
 - ปุ่ม/element หลัก: `bg-orange-600 text-white hover:bg-orange-700` — พื้นหลังหน้า: `bg-white`
 - Card ขาว `rounded-2xl border border-orange-100`, tint อ่อน `bg-orange-50`, ข้อความ gray-800/500 (โทนดำ)
 - Font: สไตล์ Microsoft — system stack `"Segoe UI", "Leelawadee UI", Tahoma, "Noto Sans Thai", sans-serif` (ตั้งใน globals.css + tailwind fontFamily.sans, ไม่ใช้ next/font)
-- Icons: lucide-react (โลโก้ = ตัวอักษร "SDN" font-extrabold `text-orange-600` ไม่มีกล่องพื้นหลัง)
+- Icons: lucide-react
+- **โลโก้ "Network"** (29 ต.ค. 2026): คนการ์ตูนลายเส้นบิดเบี้ยว 8 คน **ผู้ใหญ่ตัวสูงสลับเด็กตัวเตี้ย** ยืนล้อมวง เท้าเข้าหากลาง หัวออกนอก จับมือคนข้าง ๆ = เครือข่ายของคนทุกวัย
+  (ผู้ใช้ขออารมณ์งานวาดมือแบบ Claude — ภาพรวมแผ่ออกจากจุดกลาง แต่เป็น "คน" ไม่ใช่แฉก **ห้ามทำให้เหมือนดาวของ Claude**) + "Network" ฟอนต์ **Seppuri SemiBold** (outline แล้ว — ยังไม่ได้ตรวจสัญญาอนุญาตฟอนต์)
+  · ลองแบบอื่นแล้ว (ตัว N, hub, จิ๊กซอว์ 2 คน, สามเหลี่ยมเขยื้อนภูเขา, กราฟแท่ง, ถนนรูป N, คนแบบหัว+เส้นโค้ง) — ผู้ใช้เลือกกลับมาใช้แบบนี้ · ไฟล์แบบอื่นอยู่ใน ~/.Trash/network-logo-*
+  · `public/brand/network-logo-horizontal-{color,white}.svg` (ใช้รุ่น 5 คน — Navbar = color, Sidebar แดชบอร์ด = white), `network-logo-color.svg` (ซ้อนบน-ล่าง 8 คน),
+    `network-symbol-{color,white}.svg`, `network-symbol-small-white.svg` (5 คน สำหรับ <48px — favicon + Sidebar ตอนย่อ)
+  · favicon `app/icon.svg` (5 คนสีขาวบนพื้นส้ม) + `app/apple-icon.png` 180px · ต้นฉบับ .ai/.svg/.png ที่ `~/Desktop/logo/network/` (สร้างจากสคริปต์ people.py seed 12, ความสูง HEIGHTS สลับผู้ใหญ่/เด็ก)
 - **Navbar ลอย ไม่มีแถบพื้นหลัง** (`fixed top-0 pointer-events-none`) แต่ละเมนูเป็นแคปซูลขาว
   `bg-white/95 backdrop-blur border rounded-full` จึงอ่านออกทั้งบนแผนที่และหน้าพื้นขาว
   → **หน้าอื่นต้องเว้นระยะบนเอง** (`pt-20` สำหรับหน้าเนื้อหา, `pt-16` หน้าแรก) เพราะ navbar ไม่กินพื้นที่

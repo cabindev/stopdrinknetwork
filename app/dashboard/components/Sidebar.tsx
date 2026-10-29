@@ -6,6 +6,7 @@ import ChanFlowerIcon from '@/app/farewell/components/ChanFlowerIcon';
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { signOut } from 'next-auth/react';
 import { toast } from 'react-hot-toast';
@@ -116,18 +117,16 @@ export default function Sidebar({ user }: SidebarProps) {
         <div className="flex h-14 items-center justify-between border-b border-orange-100 px-3 bg-orange-600">
           {!sidebarCollapsed ? (
             <div className="flex items-center">
-              <Link href="/dashboard">
-                <span className="text-sm font-extrabold text-white tracking-wide">SDN</span>
+              <Link href="/dashboard" aria-label="แดชบอร์ด Stop Drink Network">
+                <Image src="/brand/network-logo-horizontal-white.svg" alt="" width={86} height={20} unoptimized className="h-5 w-auto" />
               </Link>
-              <Link href="/" className="ml-2">
-                <span className="text-white font-semibold text-sm tracking-wide">
-                  STOP DRINK
-                </span>
+              <Link href="/" className="ml-2.5 border-l border-white/40 pl-2.5">
+                <span className="whitespace-nowrap text-white/90 font-medium text-xs">เครือข่ายงดเหล้า</span>
               </Link>
             </div>
           ) : (
-            <Link href="/dashboard" className="mx-auto">
-              <span className="text-sm font-extrabold text-white tracking-wide">SDN</span>
+            <Link href="/dashboard" className="mx-auto" aria-label="แดชบอร์ด Stop Drink Network">
+              <Image src="/brand/network-symbol-small-white.svg" alt="" width={24} height={24} unoptimized className="h-6 w-auto" />
             </Link>
           )}
 

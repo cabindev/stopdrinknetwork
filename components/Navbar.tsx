@@ -5,6 +5,7 @@ import React, { useState, useEffect } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Home, User, LogOut, Menu, BarChart3, X, ClipboardList, Map as MapIcon, BookOpen, Clock } from 'lucide-react';
 import ChanFlowerIcon from '@/app/farewell/components/ChanFlowerIcon';
 import { JOURNEY_PUBLIC } from '@/app/farewell/content';
@@ -42,11 +43,13 @@ export default function Navbar() {
         {/* แบรนด์ */}
         <Link
           href="/"
-          className="pointer-events-auto inline-flex items-center gap-2 h-9 pl-2.5 pr-3.5 rounded-full bg-white/95 backdrop-blur border border-gray-200 shadow-sm"
+          aria-label="Stop Drink Network เครือข่ายงดเหล้า — หน้าแรก"
+          className="pointer-events-auto inline-flex items-center gap-2.5 h-9 pl-3 pr-4 rounded-full bg-white/95 backdrop-blur border border-gray-200 shadow-sm"
         >
-          <span className="text-sm font-extrabold tracking-wide text-orange-600">SDN</span>
-          <span className="hidden sm:inline text-xs font-medium text-gray-600">
-            Stop Drink Network
+          {/* โลโก้ "Network" (สัญลักษณ์ hub + แฉกพู่กัน + โหนด) — ต้นฉบับ ~/Desktop/logo/network/*.ai · ไฟล์ใช้งาน public/brand/ */}
+          <Image src="/brand/network-logo-horizontal-color.svg" alt="" width={97} height={24} priority unoptimized className="h-6 w-auto" />
+          <span className="hidden sm:inline border-l border-gray-200 pl-2.5 text-xs font-medium text-gray-600">
+            เครือข่ายงดเหล้า
           </span>
         </Link>
 

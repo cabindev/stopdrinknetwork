@@ -12,6 +12,7 @@ import { POLICY_LEVELS, POLICY_TYPES } from '@/app/lib/activityMeta';
 import { provinceAreaTotals } from '@/app/lib/areaCoverage';
 import { FUNERAL_SUB } from '@/app/lib/farewellAgreements';
 import { getRegionLabel, getAllHealthZones, type HealthZone } from '@/app/utils/healthZones';
+import PolicyPie, { LEVEL_FILL } from '../components/PolicyPie';
 
 const selCls =
   'px-3 py-2 text-sm text-gray-900 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-300';
@@ -37,16 +38,6 @@ interface ProvinceRow {
   national: number;
   places: Record<Level, Place[]>;
 }
-
-// สีชิ้นพาย: ไล่โทนเทา→ดำตามขนาดพื้นที่ (ระดับมีลำดับ — สีไล่โทนสื่อลำดับ ไม่ใช่สีแยกกลุ่ม) ตามธีมขาวดำของหน้านี้
-// ชิ้นสีอ่อนตัดพื้นขาวน้อย (validator: contrast WARN) → ชดเชยด้วยเส้นขาวคั่นชิ้น + คำอธิบายมีตัวเลข + ตารางรายการ
-const LEVEL_FILL: Record<Level, string> = {
-  VILLAGE: '#d4d4d4',
-  SUBDISTRICT: '#a3a3a3',
-  DISTRICT: '#737373',
-  PROVINCE: '#404040',
-  NATIONAL: '#141413',
-};
 
 const emptyPlaces = (): Record<Level, Place[]> => ({ VILLAGE: [], SUBDISTRICT: [], DISTRICT: [], PROVINCE: [], NATIONAL: [] });
 
@@ -406,82 +397,5 @@ function Cell({ label, value, of, text }: { label: string; value: number; of?: n
         </span>
       )}
     </span>
-  );
-}
-
-// พาย SVG ฝั่ง server — แต่ละชิ้นเป็นลิงก์ ?level= · ชิ้นที่เลือกดันออกจากวง · <title> = คำอธิบายเมื่อชี้
-function PolicyPie({
-  counts,
-  selected,
-  href,
-}: {
-  counts: Record<Level, number>;
-  selected: Level | null;
-  href: (l: Level | null) => string;
-}) {
-  const total = POLICY_LEVELS.reduce((n, { value }) => n + counts[value], 0);
-  const R = 100;
-  const C = 120;
-  if (total === 0) {
-    return (
-      <svg viewBox="0 0 240 240" className="mx-auto w-full max-w-[260px]" role="img" aria-label="ยังไม่มีนโยบาย">
-        <circle cx={C} cy={C} r={R} fill="#f5f5f5" />
-      </svg>
-    );
-  }
-  // มุมเริ่มของแต่ละชิ้น = ผลรวมสะสมของชิ้นก่อนหน้า (คำนวณล่วงหน้า ไม่แก้ตัวแปรระหว่าง render)
-  const present = POLICY_LEVELS.filter(({ value }) => counts[value] > 0);
-  const starts = present.map((_, i) =>
-    -Math.PI / 2 + (present.slice(0, i).reduce((n, { value }) => n + counts[value], 0) / total) * Math.PI * 2,
-  );
-  const slices = present.map(({ value, label }, i) => {
-    const a0 = starts[i];
-    const a1 = a0 + (counts[value] / total) * Math.PI * 2;
-    const mid = (a0 + a1) / 2;
-    const push = selected === value ? 8 : 0;
-    const ox = Math.cos(mid) * push;
-    const oy = Math.sin(mid) * push;
-    const pt = (a: number) => `${(C + ox + Math.cos(a) * R).toFixed(2)},${(C + oy + Math.sin(a) * R).toFixed(2)}`;
-    const large = a1 - a0 > Math.PI ? 1 : 0;
-    const d =
-      counts[value] === total
-        ? `M${C + R},${C}A${R},${R} 0 1 1 ${C - R},${C}A${R},${R} 0 1 1 ${C + R},${C}Z`
-        : `M${(C + ox).toFixed(2)},${(C + oy).toFixed(2)}L${pt(a0)}A${R},${R} 0 ${large} 1 ${pt(a1)}Z`;
-    // ป้ายเปอร์เซ็นต์บนชิ้นที่ใหญ่พอ — สีตัวอักษรตามความเข้มของชิ้น
-    const pct = Math.round((counts[value] / total) * 100);
-    const lx = C + ox + Math.cos(mid) * R * 0.62;
-    const ly = C + oy + Math.sin(mid) * R * 0.62;
-    const dark = value === 'DISTRICT' || value === 'PROVINCE' || value === 'NATIONAL';
-    return { value, label, d, pct, lx, ly, dark, show: a1 - a0 > 0.35 };
-  });
-  return (
-    <svg viewBox="-10 -10 260 260" className="mx-auto w-full max-w-[260px]" role="img" aria-label="สัดส่วนนโยบายแยกตามระดับ">
-      {slices.map((s) => (
-        <a key={s.value} href={href(selected === s.value ? null : s.value)} aria-label={`ระดับ${s.label} ${counts[s.value]} นโยบาย`}>
-          <path
-            d={s.d}
-            fill={LEVEL_FILL[s.value]}
-            stroke="#ffffff"
-            strokeWidth={2}
-            className="cursor-pointer transition-opacity hover:opacity-85"
-            opacity={selected && selected !== s.value ? 0.45 : 1}
-          >
-            <title>{`ระดับ${s.label}: ${counts[s.value]} นโยบาย (${s.pct}%)`}</title>
-          </path>
-          {s.show && (
-            <text
-              x={s.lx}
-              y={s.ly}
-              textAnchor="middle"
-              dominantBaseline="middle"
-              className="pointer-events-none text-[13px] font-semibold"
-              fill={s.dark ? '#ffffff' : '#141413'}
-            >
-              {s.pct}%
-            </text>
-          )}
-        </a>
-      ))}
-    </svg>
   );
 }

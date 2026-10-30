@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import authOptions from '../lib/configs/auth/authOptions';
 import QuickActions from './components/QuickActions';
 import StatsOverview from './components/StatsOverview';
+import PolicyOverview from './components/PolicyOverview';
 import Link from 'next/link';
 import { Clock } from 'lucide-react';
 import prisma from '../lib/db';
@@ -39,7 +40,7 @@ export default async function DashboardPage({
         <div>
           <div className="flex items-center justify-between flex-wrap gap-3">
             <div>
-              <p className="text-[11px] tracking-[0.2em] text-orange-600 uppercase mb-2">
+              <p className="text-[11px] tracking-[0.2em] text-gray-900 uppercase mb-2">
                 Stop Drink Network · พ.ศ. {buddhistYear}
               </p>
               <h1 className="text-3xl font-bold text-gray-900">
@@ -51,9 +52,9 @@ export default async function DashboardPage({
             </div>
             <div className="text-right">
               <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${
-                isAdmin ? 'bg-orange-100 text-orange-700' : 'bg-gray-100 text-gray-600'
+                isAdmin ? 'bg-gray-100 text-gray-900' : 'bg-gray-100 text-gray-600'
               }`}>
-                <span className={`w-1.5 h-1.5 rounded-full ${isAdmin ? 'bg-orange-500' : 'bg-gray-400'}`} />
+                <span className={`w-1.5 h-1.5 rounded-full ${isAdmin ? 'bg-gray-800' : 'bg-gray-400'}`} />
                 {isAdmin ? 'ผู้ดูแลระบบ' : 'ผู้ใช้งาน'}
               </span>
               <p className="text-xs text-gray-400 mt-2">{today}</p>
@@ -64,18 +65,18 @@ export default async function DashboardPage({
         {pendingCount > 0 && (
           <Link
             href="/dashboard/setting/admin"
-            className="flex items-center gap-3 px-4 py-3 rounded-2xl border border-orange-200 bg-orange-50 text-sm text-gray-800 hover:bg-orange-100 transition-colors"
+            className="flex items-center gap-3 px-4 py-3 rounded-2xl border border-gray-300 bg-gray-50 text-sm text-gray-800 hover:bg-gray-100 transition-colors"
           >
-            <Clock className="w-5 h-5 text-orange-600 shrink-0" />
+            <Clock className="w-5 h-5 text-gray-900 shrink-0" />
             <span className="flex-1">
               มีบัญชีสมัครใหม่ <b>{pendingCount}</b> บัญชีรออนุมัติ — ยังเห็นแค่ข้อมูลสาธารณะจนกว่าจะอนุมัติ
             </span>
-            <span className="text-orange-700 font-medium">ตรวจสอบ →</span>
+            <span className="text-gray-900 font-medium">ตรวจสอบ →</span>
           </Link>
         )}
 
-        {/* สถิติภาพรวมทั้งเครือข่าย */}
-        <StatsOverview year={yearNum} />
+        {/* สถิติภาพรวมทั้งเครือข่าย — ส่วนที่ 2 ต่อจากตัวเลขรวม = พายนโยบายงานศพ (จิ้มชิ้น = รายการพื้นที่ใน /dashboard/policies) */}
+        <StatsOverview year={yearNum} second={isAdmin ? <PolicyOverview /> : null} />
 
         {/* Quick Actions */}
         <QuickActions isAdmin={isAdmin} />

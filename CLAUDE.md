@@ -14,7 +14,10 @@
 - **สีหลัก**: ส้ม–ขาว–ดำ เท่านั้น **สีพื้นล้วน ห้ามใช้ gradient ทุกชนิด**
 - ปุ่ม/element หลัก: `bg-orange-600 text-white hover:bg-orange-700` — พื้นหลังหน้า: `bg-white`
 - Card ขาว `rounded-2xl border border-orange-100`, tint อ่อน `bg-orange-50`, ข้อความ gray-800/500 (โทนดำ)
-- Font: สไตล์ Microsoft — system stack `"Segoe UI", "Leelawadee UI", Tahoma, "Noto Sans Thai", sans-serif` (ตั้งใน globals.css + tailwind fontFamily.sans, ไม่ใช้ next/font)
+- Font: **IBM Plex Sans Thai** ทั้งเว็บ (ผู้ใช้ขอ 30 ต.ค. 2026) — `next/font/google` ใน app/layout.tsx → `--font-ibm` บน `<html>`
+  ใช้ใน globals.css (body) + tailwind fontFamily.sans · **ยกเว้นหน้าที่ใช้เสาชิงช้า** (คลาส `.sao` ใน farewell: หน้าแรก/3D/ข้อตกลง/ป้าย) ใช้ต่อตามเดิม
+  · canvas (ภาพแผนที่ PNG, ใบสรุปแผน) อ่านฟอนต์จาก getComputedStyle ไม่เขียนชื่อฟอนต์ตายตัว
+  · next/font ดาวน์โหลดฟอนต์ตอน build — เซิร์ฟเวอร์ที่ build ต้องออกเน็ตไป fonts.googleapis.com ได้
 - Icons: lucide-react
 - **โลโก้ "Network"** (29 ต.ค. 2026): คนการ์ตูนลายเส้นบิดเบี้ยว 8 คน **ผู้ใหญ่ตัวสูงสลับเด็กตัวเตี้ย** ยืนล้อมวง เท้าเข้าหากลาง หัวออกนอก จับมือคนข้าง ๆ = เครือข่ายของคนทุกวัย
   (ผู้ใช้ขออารมณ์งานวาดมือแบบ Claude — ภาพรวมแผ่ออกจากจุดกลาง แต่เป็น "คน" ไม่ใช่แฉก **ห้ามทำให้เหมือนดาวของ Claude**) + "Network" ฟอนต์ **Seppuri SemiBold** (outline แล้ว — ยังไม่ได้ตรวจสัญญาอนุญาตฟอนต์)
@@ -156,6 +159,10 @@ app/
 │   │                             #   + ติ๊กเลือก → แถบ "โอนงาน" ให้ผู้ใช้อื่น (TransferSelection.tsx → POST /api/admin/activities/transfer,
 │   │                             #   audit ทุกงาน, เลือกทั้งหมดตามตัวกรองข้ามหน้าได้) — ผู้รับต้องมีบัญชีก่อน · **เฉพาะ superadmin**
 │   │                             #   + pagination + ลิงก์แก้ไข + export ตามตัวกรอง (URL แชร์ได้)
+│   ├── policies/page.tsx         # ★ นโยบายงานศพปลอดเหล้ารายพื้นที่ (แอดมิน, เฉพาะ FUNERAL_SUB — ไม่รวม Civic Space/ประเด็นอื่น · โทนขาวดำ + โลโก้ประเด็นย่อย)
+│   │                             #   รายจังหวัด แยกระดับ หมู่บ้าน/ตำบล/อำเภอ/จังหวัด/ประเทศ
+│   │                             #   ตำบล/อำเภอ = จำนวนพื้นที่ไม่ซ้ำ เทียบทั้งจังหวัด (areaCoverage) · คลิกจังหวัด = รายชื่อพื้นที่ + ลิงก์งาน
+│   │                             #   กรอง ภาค/จังหวัด/ประเภท/ปี พ.ศ. ของนโยบาย · นับพื้นที่หลักเท่านั้น + ACTIVE_ACTIVITY
 │   ├── loading.tsx               # Skeleton
 │   ├── components/
 │   │   ├── DashboardClient.tsx   # Sidebar + TopNav + main (margin ตาม sidebarCollapsed)
@@ -208,6 +215,7 @@ app/
 │                                 #   AuthLayout.tsx = เปลือก+Field/PasswordField/SubmitButton/Notice ร่วม (ดีไซน์แนว activerun:
 │                                 #   ไม่มีการ์ด ช่องเส้นใต้ ปุ่มแคปซูลส้ม, ปุ่ม Google อยู่บนสุด) — label ไทยห้ามใส่ letter-spacing
 └── lib/
+    ├── focus.ts                  # FOCUS_SUB/FOCUS_WHERE — เว็บเน้นงานศพปลอดเหล้า ซ่อนประเด็นอื่น (ดู Activity Module Rules)
     ├── db.ts                     # Prisma singleton + กรองงานในถังขยะอัตโนมัติ (ACTIVE_ACTIVITY สำหรับ relation ซ้อน)
     ├── activityAccess.ts         # involvedWhere() งานที่เป็นผู้เขียน/ทีม · purgeExpiredTrash() · teamPeople()
     ├── adminAuth.ts              # getAdminUser() — ตรวจสิทธิ์ admin/superadmin สำหรับ API
@@ -242,6 +250,12 @@ uploads/                          # ไฟล์แนบ runtime (gitignore) �
 ```
 
 ## Activity Module Rules
+- **★ เว็บนี้ขับเคลื่อนเรื่อง "งานศพปลอดเหล้า" อย่างเดียว** (ผู้ใช้ตัดสินใจ 30 ต.ค. 2026) — ตั้งที่ `app/lib/focus.ts` (`FOCUS_SUB`, `FOCUS_WHERE`)
+  งานประเด็นอื่น (เช่น Civic Space) **ซ่อน ไม่ลบ** ที่: หน้าแรก (จุด+ตัวเลข), /map (+ตัวกรองประเด็น), /stories (+หน้าเรื่อง = 404, ชุด, เรื่องใกล้เคียง),
+  แดชบอร์ด (StatsOverview, /dashboard/activities + ตัวเลือกตัวกรอง, /dashboard/policies), Excel (ยกเว้น `mine=1`) ·
+  ฟอร์มบันทึกงาน: งานใหม่/คัดลอก/แก้งานศพ = ล็อกประเด็นเป็นป้าย (ไม่มี select) · แก้งานประเด็นอื่นเดิม = ยังเลือกได้ (ไม่เปลี่ยนประเด็นเงียบ ๆ)
+  · "งานของฉัน" /activity และ /profile ยังเห็นครบทุกประเด็น · **query ใหม่ที่แสดงงานต้องใส่ `FOCUS_WHERE` ใน `AND: [...]`**
+    (ห้าม spread ปนกับ `subCategory` ของตัวกรอง — key ชนกันแล้วตัวกรองทับ) · ปิดโหมด = `FOCUS_SUB = null`
 - 1 Activity = งาน 1 ประเด็นใน 1 พื้นที่หลัก (กิจกรรมต่อเนื่อง: endDate null = ยังดำเนินการอยู่)
 - **พื้นที่ที่เกี่ยวข้อง** (`ActivityArea`, 2 ต.ค. 2026 — ผู้ใช้เลือก "ระบบปักหลายพื้นที่" แทนการแยกรายการ): งานเดียวที่ยกหลายพื้นที่
   (เช่น งานสื่อสารประเด็นงานศพที่เล่าต้นแบบ 4 จังหวัด) · ≤`MAX_EXTRA_AREAS` (20) แห่ง · ฟิลด์ตำแหน่งชุดเดียวกับ Activity + `note` (บทบาทของพื้นที่)

@@ -18,7 +18,7 @@ const config: Config = {
     },
     extend: {
       fontFamily: {
-        sans: ['"Segoe UI"', '"Leelawadee UI"', 'Tahoma', '"Noto Sans Thai"', 'sans-serif'],
+        sans: ['var(--font-ibm)', '"Segoe UI"', '"Leelawadee UI"', 'Tahoma', 'sans-serif'],
       },
       colors: {
         // สีหลักของ Stop Drink Network — orange สีพื้นล้วน (ไม่ใช้ gradient)

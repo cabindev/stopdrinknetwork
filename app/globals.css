@@ -10,8 +10,8 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  /* ฟอนต์สไตล์ Microsoft — Segoe UI/Leelawadee UI บน Windows, Tahoma (มีอักษรไทย) บนเครื่องอื่น */
-  font-family: "Segoe UI", "Leelawadee UI", Tahoma, "Noto Sans Thai", sans-serif;
+  /* ฟอนต์หลัก IBM Plex Sans Thai (next/font ใน app/layout.tsx → --font-ibm) · สำรองด้วยฟอนต์ระบบที่มีอักษรไทย */
+  font-family: var(--font-ibm), "Segoe UI", "Leelawadee UI", Tahoma, sans-serif;
 }
 
 /* Popup ของหมุดงาน — ให้เข้าธีมส้ม/ขาวของแอป */

@@ -736,12 +736,12 @@ export default function MapView({ activities, categories, categoryLogos, subCate
       ctx.fillStyle = '#ea580c';
       ctx.fillRect(0, 0, out.width, 4 * k);
       ctx.fillStyle = '#1c1917';
-      ctx.font = `bold ${20 * k}px "Segoe UI", Tahoma, sans-serif`;
+      ctx.font = `bold ${20 * k}px ${getComputedStyle(document.body).fontFamily}`;
       const scope = selectedProvince ? `จ.${selectedProvince}` : 'ทั่วประเทศ';
       ctx.fillText(`แผนที่การดำเนินงาน — ${scope}`, 16 * k, 30 * k);
 
       ctx.fillStyle = '#6b7280';
-      ctx.font = `${13 * k}px "Segoe UI", Tahoma, sans-serif`;
+      ctx.font = `${13 * k}px ${getComputedStyle(document.body).fontFamily}`;
       const parts = [
         `${(selectedProvince ? selectedActivities : filtered).length} งาน`,
         selectedProvince
@@ -754,7 +754,7 @@ export default function MapView({ activities, categories, categoryLogos, subCate
       ctx.fillText(parts.join('  ·  '), 16 * k, 50 * k);
 
       // เครดิตแผนที่ (ต้องแสดงตามเงื่อนไขการใช้งาน OpenStreetMap)
-      ctx.font = `${11 * k}px "Segoe UI", Tahoma, sans-serif`;
+      ctx.font = `${11 * k}px ${getComputedStyle(document.body).fontFamily}`;
       ctx.fillStyle = '#374151';
       const credit = '© OpenStreetMap contributors';
       const cw = ctx.measureText(credit).width;

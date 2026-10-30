@@ -131,7 +131,7 @@ export default function PeopleTable({ people }: { people: PersonRow[] }) {
     const html = `<!doctype html><html lang="th"><head><meta charset="utf-8">
       <title>ใบลงชื่อเข้าประชุม</title>
       <style>
-        body{font-family:"Segoe UI","Leelawadee UI",Tahoma,sans-serif;padding:28px;color:#1f2937}
+        body{font-family:"IBM Plex Sans Thai","Segoe UI","Leelawadee UI",Tahoma,sans-serif;padding:28px;color:#1f2937}
         h1{font-size:18px;margin:0 0 4px}
         p.meta{font-size:12px;color:#6b7280;margin:0 0 18px}
         table{width:100%;border-collapse:collapse;font-size:13px}

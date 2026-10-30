@@ -103,10 +103,10 @@ export default function ThaiDateField({
           type="button"
           onClick={() => setOpen((o) => !o)}
           className={`flex-1 flex items-center gap-2 px-3 py-2.5 text-sm text-left bg-white border rounded-lg transition-colors ${
-            open ? 'border-orange-400 ring-2 ring-orange-400' : 'border-orange-200 hover:border-orange-300'
+            open ? 'border-gray-500 ring-2 ring-gray-400' : 'border-gray-300 hover:border-gray-400'
           }`}
         >
-          <CalendarDays className="w-4 h-4 text-orange-500 shrink-0" />
+          <CalendarDays className="w-4 h-4 text-gray-600 shrink-0" />
           <span className={label ? 'text-gray-900' : 'text-gray-400'}>{label || placeholder}</span>
         </button>
         {value && (
@@ -122,14 +122,14 @@ export default function ThaiDateField({
       </div>
 
       {open && (
-        <div className="absolute z-50 mt-1 w-[292px] bg-white rounded-xl border border-orange-100 shadow-xl p-3">
+        <div className="absolute z-50 mt-1 w-[292px] bg-white rounded-xl border border-gray-200 shadow-xl p-3">
           {/* หัวปฏิทิน: เดือน + ปี พ.ศ. */}
           <div className="flex items-center gap-1 mb-2">
             <button
               type="button"
               onClick={() => shiftMonth(-1)}
               aria-label="เดือนก่อนหน้า"
-              className="p-1.5 rounded-lg text-gray-500 hover:bg-orange-50 hover:text-orange-700"
+              className="p-1.5 rounded-lg text-gray-500 hover:bg-gray-50 hover:text-gray-600"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
@@ -138,7 +138,7 @@ export default function ThaiDateField({
               aria-label="เดือน"
               value={view.m}
               onChange={(e) => setView((v) => ({ ...v, m: Number(e.target.value) }))}
-              className="flex-1 min-w-0 px-2 py-1.5 text-sm text-gray-800 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400"
+              className="flex-1 min-w-0 px-2 py-1.5 text-sm text-gray-800 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400"
             >
               {MONTHS.map((name, i) => (
                 <option key={name} value={i + 1}>{name}</option>
@@ -149,7 +149,7 @@ export default function ThaiDateField({
               aria-label="ปี พ.ศ."
               value={view.y + 543}
               onChange={(e) => setView((v) => ({ ...v, y: Number(e.target.value) - 543 }))}
-              className="w-[86px] px-2 py-1.5 text-sm text-gray-800 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400"
+              className="w-[86px] px-2 py-1.5 text-sm text-gray-800 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400"
             >
               {years.map((be) => (
                 <option key={be} value={be}>{be}</option>
@@ -160,7 +160,7 @@ export default function ThaiDateField({
               type="button"
               onClick={() => shiftMonth(1)}
               aria-label="เดือนถัดไป"
-              className="p-1.5 rounded-lg text-gray-500 hover:bg-orange-50 hover:text-orange-700"
+              className="p-1.5 rounded-lg text-gray-500 hover:bg-gray-50 hover:text-gray-600"
             >
               <ChevronRight className="w-4 h-4" />
             </button>
@@ -187,10 +187,10 @@ export default function ThaiDateField({
                   onClick={() => pick(d)}
                   className={`h-8 rounded-lg text-sm transition-colors ${
                     isSelected
-                      ? 'bg-orange-600 text-white font-semibold'
+                      ? 'bg-gray-900 text-white font-semibold'
                       : isToday
-                        ? 'bg-orange-50 text-orange-700 font-semibold'
-                        : 'text-gray-700 hover:bg-orange-50'
+                        ? 'bg-gray-50 text-gray-900 font-semibold'
+                        : 'text-gray-700 hover:bg-gray-50'
                   }`}
                 >
                   {d}
@@ -207,7 +207,7 @@ export default function ThaiDateField({
                 onChange(toISO(today.y, today.m, today.d));
                 setOpen(false);
               }}
-              className="px-2.5 py-1 rounded-lg text-xs font-medium text-orange-700 hover:bg-orange-50"
+              className="px-2.5 py-1 rounded-lg text-xs font-medium text-gray-900 hover:bg-gray-50"
             >
               วันนี้
             </button>

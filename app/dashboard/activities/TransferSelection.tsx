@@ -40,7 +40,7 @@ export function TransferProvider({ children }: { children: React.ReactNode }) {
   return <SelectionContext.Provider value={value}>{children}</SelectionContext.Provider>;
 }
 
-const boxCls = 'w-4 h-4 rounded border-orange-300 text-orange-600 focus:ring-orange-400 cursor-pointer';
+const boxCls = 'w-4 h-4 rounded border-gray-400 text-gray-900 focus:ring-gray-400 cursor-pointer';
 
 export function RowCheck({ id }: { id: number }) {
   const { selected, toggle } = useSel();
@@ -121,11 +121,11 @@ export function TransferBar({ users, filteredIds }: { users: UserOption[]; filte
   return (
     <div
       data-testid="transfer-bar"
-      className="sticky bottom-4 z-20 mt-4 bg-white rounded-2xl border border-orange-200 shadow-lg shadow-orange-100 p-3 flex flex-wrap items-center gap-2"
+      className="sticky bottom-4 z-20 mt-4 bg-white rounded-2xl border border-gray-300 shadow-lg shadow-gray-200 p-3 flex flex-wrap items-center gap-2"
     >
-      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-orange-600 text-white text-xs font-medium">
+      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-900 text-white text-xs font-medium">
         เลือก {selected.size} งาน
-        <button type="button" onClick={clear} aria-label="ล้างที่เลือก" className="hover:text-orange-100">
+        <button type="button" onClick={clear} aria-label="ล้างที่เลือก" className="hover:text-white">
           <X className="w-3.5 h-3.5" />
         </button>
       </span>
@@ -133,7 +133,7 @@ export function TransferBar({ users, filteredIds }: { users: UserOption[]; filte
         <button
           type="button"
           onClick={() => setMany(filteredIds, true)}
-          className="text-xs text-orange-700 underline underline-offset-2 hover:text-orange-800"
+          className="text-xs text-gray-900 underline underline-offset-2 hover:text-gray-600"
         >
           เลือกทั้งหมดตามตัวกรอง ({filteredIds.length} งาน)
         </button>
@@ -146,14 +146,14 @@ export function TransferBar({ users, filteredIds }: { users: UserOption[]; filte
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="ค้นชื่อ/อีเมล"
-          className="w-36 pl-8 pr-2 py-2 text-sm border border-orange-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400"
+          className="w-36 pl-8 pr-2 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400"
         />
       </div>
       <select
         data-testid="transfer-user"
         value={userId}
         onChange={(e) => setUserId(e.target.value)}
-        className="max-w-[16rem] px-3 py-2 text-sm text-gray-800 bg-white border border-orange-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400"
+        className="max-w-[16rem] px-3 py-2 text-sm text-gray-800 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400"
       >
         <option value="">— เลือกผู้รับผิดชอบ ({shown.length}) —</option>
         {shown.map((u) => (
@@ -166,7 +166,7 @@ export function TransferBar({ users, filteredIds }: { users: UserOption[]; filte
         type="button"
         onClick={submit}
         disabled={!target || saving}
-        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-orange-600 text-white text-sm font-medium hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed"
+        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-gray-900 text-white text-sm font-medium hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowRightLeft className="w-4 h-4" />}
         โอนงาน

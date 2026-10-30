@@ -17,9 +17,9 @@ export default async function HistorySection({ activityId }: { activityId: numbe
   if (logs.length === 0) return null;
 
   return (
-    <section className="mt-6 bg-white rounded-2xl border border-orange-100 p-5">
+    <section className="mt-6 bg-white rounded-2xl border border-gray-200 p-5">
       <h2 className="flex items-center gap-2 text-sm font-semibold text-gray-800 mb-3">
-        <History className="w-4 h-4 text-orange-600" /> ประวัติการแก้ไข
+        <History className="w-4 h-4 text-gray-900" /> ประวัติการแก้ไข
       </h2>
       <ol className="space-y-3">
         {logs.map((log) => {
@@ -29,7 +29,7 @@ export default async function HistorySection({ activityId }: { activityId: numbe
             <li key={log.id} className="flex gap-3">
               <span
                 className={`mt-0.5 flex w-6 h-6 shrink-0 rounded-full items-center justify-center ${
-                  isCreate ? 'bg-green-50 text-green-600' : 'bg-orange-50 text-orange-600'
+                  isCreate ? 'bg-green-50 text-green-600' : 'bg-gray-50 text-gray-900'
                 }`}
               >
                 {isCreate ? <Plus className="w-3.5 h-3.5" /> : <SquarePen className="w-3.5 h-3.5" />}

@@ -31,7 +31,7 @@ export default function TrashActions({ id }: { id: number }) {
         type="button"
         onClick={() => run('restore')}
         disabled={!!busy}
-        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-orange-600 text-white text-xs font-medium hover:bg-orange-700 disabled:opacity-50"
+        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-gray-900 text-white text-xs font-medium hover:bg-gray-700 disabled:opacity-50"
       >
         {busy === 'restore' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RotateCcw className="w-3.5 h-3.5" />} กู้คืน
       </button>

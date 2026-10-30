@@ -213,20 +213,20 @@ export default function LocationPicker({ location, value, onChange, onRegionChan
         <div
           ref={mapElRef}
           data-testid="location-picker-map"
-          className="h-64 sm:h-80 w-full rounded-xl border border-orange-100 overflow-hidden z-0"
+          className="h-64 sm:h-80 w-full rounded-xl border border-gray-200 overflow-hidden z-0"
         />
         <button
           type="button"
           onClick={() => setBasemap((b) => (b === 'streets' ? 'satellite' : 'streets'))}
-          className="absolute top-2.5 right-2.5 z-[400] inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/95 border border-gray-200 shadow-sm text-xs font-medium text-gray-700 hover:bg-orange-50"
+          className="absolute top-2.5 right-2.5 z-[400] inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/95 border border-gray-200 shadow-sm text-xs font-medium text-gray-700 hover:bg-gray-50"
         >
           {basemap === 'streets' ? (
             <>
-              <Satellite className="w-3.5 h-3.5 text-orange-600" /> ภาพดาวเทียม
+              <Satellite className="w-3.5 h-3.5 text-gray-900" /> ภาพดาวเทียม
             </>
           ) : (
             <>
-              <MapIcon className="w-3.5 h-3.5 text-orange-600" /> แผนที่ถนน
+              <MapIcon className="w-3.5 h-3.5 text-gray-900" /> แผนที่ถนน
             </>
           )}
         </button>
@@ -255,7 +255,7 @@ export default function LocationPicker({ location, value, onChange, onRegionChan
           <button
             type="button"
             onClick={() => onRegionChange(pinRegion!)}
-            className="px-2.5 py-1 rounded-lg bg-orange-600 text-white font-medium hover:bg-orange-700"
+            className="px-2.5 py-1 rounded-lg bg-gray-900 text-white font-medium hover:bg-gray-700"
           >
             ใช้ตำบลนี้
           </button>

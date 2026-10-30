@@ -350,7 +350,7 @@ export default function LocationField({ location, pin, areaName, onLocation, onP
         <div ref={boxRef} className="relative">
           <div className="flex gap-2">
             <div className="relative flex-1 min-w-0">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-orange-500 pointer-events-none" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-600 pointer-events-none" />
               <input
                 ref={inputRef}
                 id="locationSearch"
@@ -372,10 +372,10 @@ export default function LocationField({ location, pin, areaName, onLocation, onP
                 onKeyDown={onKeyDown}
                 placeholder="ชื่อสถานที่ ตำบล หรือวางลิงก์ Google Maps"
                 autoComplete="off"
-                className="scroll-mt-24 w-full pl-10 pr-9 py-3 text-sm text-gray-900 bg-white border border-orange-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-orange-400"
+                className="scroll-mt-24 w-full pl-10 pr-9 py-3 text-sm text-gray-900 bg-white border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-gray-500"
               />
               {busy && (
-                <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-orange-500 animate-spin" />
+                <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-600 animate-spin" />
               )}
             </div>
             <button
@@ -383,7 +383,7 @@ export default function LocationField({ location, pin, areaName, onLocation, onP
               onClick={useGps}
               disabled={locating}
               title="ใช้ตำแหน่งปัจจุบัน"
-              className="shrink-0 inline-flex items-center gap-1.5 px-3 sm:px-4 rounded-xl bg-orange-600 text-white text-sm font-medium hover:bg-orange-700 disabled:opacity-60"
+              className="shrink-0 inline-flex items-center gap-1.5 px-3 sm:px-4 rounded-xl bg-gray-900 text-white text-sm font-medium hover:bg-gray-700 disabled:opacity-60"
             >
               {locating ? <Loader2 className="w-4 h-4 animate-spin" /> : <LocateFixed className="w-4 h-4" />}
               <span className="hidden sm:inline">ตำแหน่งปัจจุบัน</span>
@@ -394,7 +394,7 @@ export default function LocationField({ location, pin, areaName, onLocation, onP
             <ul
               id="location-results"
               role="listbox"
-              className="absolute z-50 mt-1 w-full bg-white rounded-xl shadow-lg max-h-80 overflow-auto border border-orange-100 py-1"
+              className="absolute z-50 mt-1 w-full bg-white rounded-xl shadow-lg max-h-80 overflow-auto border border-gray-200 py-1"
             >
               {items.length === 0 && (
                 <li className="px-4 py-5 text-center text-sm text-gray-500">
@@ -418,10 +418,10 @@ export default function LocationField({ location, pin, areaName, onLocation, onP
                       onMouseDown={(e) => e.preventDefault()} // ไม่ให้ input เสีย focus ก่อน click
                       onClick={() => it.apply()}
                       className={`flex items-start gap-3 px-4 py-2 cursor-pointer ${
-                        i === active ? 'bg-orange-50' : ''
+                        i === active ? 'bg-gray-50' : ''
                       }`}
                     >
-                      <Icon className="h-4 w-4 text-orange-500 shrink-0 mt-0.5" />
+                      <Icon className="h-4 w-4 text-gray-600 shrink-0 mt-0.5" />
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-medium text-gray-800 truncate">{it.title}</p>
                         <p className="text-xs text-gray-500 truncate">{it.sub}</p>
@@ -444,7 +444,7 @@ export default function LocationField({ location, pin, areaName, onLocation, onP
               <button
                 type="button"
                 onClick={() => setShowMap(true)}
-                className="text-orange-700 hover:text-orange-800 font-medium"
+                className="text-gray-900 hover:text-gray-600 font-medium"
               >
                 หรือเลือกจากแผนที่
               </button>
@@ -452,9 +452,9 @@ export default function LocationField({ location, pin, areaName, onLocation, onP
           </div>
         </div>
       ) : (
-        <div data-testid="location-card" className="rounded-xl border border-orange-200 bg-orange-50 p-4">
+        <div data-testid="location-card" className="rounded-xl border border-gray-300 bg-gray-50 p-4">
           <div className="flex items-start gap-3">
-            <MapPin className="w-5 h-5 text-orange-600 shrink-0 mt-1" />
+            <MapPin className="w-5 h-5 text-gray-900 shrink-0 mt-1" />
             <div className="min-w-0 flex-1">
               <input
                 id="areaName"
@@ -463,11 +463,11 @@ export default function LocationField({ location, pin, areaName, onLocation, onP
                 onChange={(e) => onAreaName(e.target.value)}
                 placeholder="ชื่อสถานที่/ชุมชน (ถ้ามี) เช่น โรงเรียนบ้านแม่ใจ"
                 aria-label="ชื่อสถานที่/ชุมชน"
-                className="w-full bg-transparent text-base font-semibold text-gray-900 placeholder:font-normal placeholder:text-gray-400 border-b border-dashed border-orange-300 focus:border-orange-500 focus:outline-none pb-0.5"
+                className="w-full bg-transparent text-base font-semibold text-gray-900 placeholder:font-normal placeholder:text-gray-400 border-b border-dashed border-gray-400 focus:border-gray-900 focus:outline-none pb-0.5"
               />
               <p className="mt-1.5 text-sm text-gray-700">{regionLine(location)}</p>
               <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-xs">
-                <span className="px-2 py-0.5 rounded-full bg-white border border-orange-200 text-orange-700 font-medium">
+                <span className="px-2 py-0.5 rounded-full bg-white border border-gray-300 text-gray-900 font-medium">
                   {zone}
                 </span>
                 {location.zipcode ? (
@@ -486,14 +486,14 @@ export default function LocationField({ location, pin, areaName, onLocation, onP
               type="button"
               onClick={clearAll}
               aria-label="เปลี่ยนพื้นที่"
-              className="shrink-0 inline-flex items-center gap-1 p-1.5 sm:px-2.5 sm:py-1 rounded-lg text-xs font-medium text-orange-700 hover:bg-orange-100"
+              className="shrink-0 inline-flex items-center gap-1 p-1.5 sm:px-2.5 sm:py-1 rounded-lg text-xs font-medium text-gray-900 hover:bg-gray-100"
             >
               <X className="w-4 h-4 sm:w-3.5 sm:h-3.5" /> <span className="hidden sm:inline">เปลี่ยน</span>
             </button>
           </div>
 
           {altRegion && (
-            <div className="mt-3 pt-3 border-t border-orange-200 flex flex-wrap items-center gap-2 text-xs text-gray-600">
+            <div className="mt-3 pt-3 border-t border-gray-300 flex flex-wrap items-center gap-2 text-xs text-gray-600">
               <span className="flex-1 min-w-0">
                 ⚠️ ข้อมูล 2 แหล่งไม่ตรงกัน — {altRegion.from} ต.{altRegion.region.district} อ.{altRegion.region.amphoe}
                 ถ้าที่ตั้งจริงอยู่ตำบลนั้น กดสลับได้
@@ -506,7 +506,7 @@ export default function LocationField({ location, pin, areaName, onLocation, onP
                   // สลับกลับได้ — เผื่อกดผิด
                   setAltRegion(current ? { region: current, from: 'ขอบเขตพื้นที่ระบุ' } : null);
                 }}
-                className="shrink-0 px-2.5 py-1 rounded-lg bg-white border border-orange-300 text-orange-700 font-medium hover:bg-orange-100"
+                className="shrink-0 px-2.5 py-1 rounded-lg bg-white border border-gray-400 text-gray-900 font-medium hover:bg-gray-100"
               >
                 ใช้ ต.{altRegion.region.district}
               </button>
@@ -514,7 +514,7 @@ export default function LocationField({ location, pin, areaName, onLocation, onP
           )}
 
           {nearby.length > 0 && (
-            <div className="mt-3 pt-3 border-t border-orange-200">
+            <div className="mt-3 pt-3 border-t border-gray-300">
               <p className="text-xs text-gray-500 mb-1.5">สถานที่ใกล้หมุด — แตะเพื่อใช้ชื่อและตำแหน่งนี้</p>
               <div className="flex flex-wrap gap-1.5">
                 {nearby.map((n) => (
@@ -526,9 +526,9 @@ export default function LocationField({ location, pin, areaName, onLocation, onP
                       onPin({ lat: n.lat, lng: n.lng, source: 'PLACE' });
                       setNearby([]);
                     }}
-                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white border border-orange-200 text-xs text-gray-700 hover:border-orange-400 hover:text-orange-700"
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white border border-gray-300 text-xs text-gray-700 hover:border-gray-500 hover:text-gray-600"
                   >
-                    <Building2 className="w-3 h-3 text-orange-500" />
+                    <Building2 className="w-3 h-3 text-gray-600" />
                     {n.name}
                   </button>
                 ))}

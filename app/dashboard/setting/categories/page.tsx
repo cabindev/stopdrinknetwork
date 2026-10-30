@@ -36,7 +36,7 @@ interface SubItem {
 }
 
 const inputCls =
-  'w-full px-3 py-2 text-sm text-gray-900 bg-white border border-orange-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-orange-400 transition-all';
+  'w-full px-3 py-2 text-sm text-gray-900 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-gray-500 transition-all';
 
 export default function CategoriesSettingPage() {
   const [categories, setCategories] = useState<CategoryItem[]>([]);
@@ -205,8 +205,8 @@ export default function CategoriesSettingPage() {
   return (
     <div className="p-6 max-w-3xl">
       <div className="flex items-center gap-3 mb-1">
-        <span className="flex w-10 h-10 rounded-xl bg-orange-50 border border-orange-100 items-center justify-center">
-          <Tags className="w-5 h-5 text-orange-600" />
+        <span className="flex w-10 h-10 rounded-xl bg-gray-50 border border-gray-200 items-center justify-center">
+          <Tags className="w-5 h-5 text-gray-900" />
         </span>
         <div>
           <h1 className="text-xl font-bold text-gray-800">จัดการประเด็นงาน</h1>
@@ -233,7 +233,7 @@ export default function CategoriesSettingPage() {
       {/* เพิ่มหมวดใหม่ */}
       <form
         onSubmit={handleAdd}
-        className="mt-6 bg-white rounded-2xl border border-orange-100 p-5"
+        className="mt-6 bg-white rounded-2xl border border-gray-200 p-5"
       >
         <div className="grid sm:grid-cols-[1fr_1.4fr_auto] gap-3">
           <input
@@ -253,7 +253,7 @@ export default function CategoriesSettingPage() {
           <button
             type="submit"
             disabled={adding}
-            className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg bg-orange-600 text-white text-sm font-medium hover:bg-orange-700 disabled:opacity-60 transition-all"
+            className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg bg-gray-900 text-white text-sm font-medium hover:bg-gray-700 disabled:opacity-60 transition-all"
           >
             {adding ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
             เพิ่ม
@@ -262,7 +262,7 @@ export default function CategoriesSettingPage() {
       </form>
 
       {/* รายการ */}
-      <div className="mt-6 bg-white rounded-2xl border border-orange-100 divide-y divide-orange-50 overflow-hidden">
+      <div className="mt-6 bg-white rounded-2xl border border-gray-200 divide-y divide-gray-100 overflow-hidden">
         {loading ? (
           <div className="p-10 text-center text-gray-400 text-sm">
             <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" />
@@ -292,7 +292,7 @@ export default function CategoriesSettingPage() {
                     <button
                       onClick={saveEdit}
                       disabled={busy}
-                      className="p-2 rounded-lg bg-orange-100 text-orange-700 hover:bg-orange-200 transition-colors"
+                      className="p-2 rounded-lg bg-gray-100 text-gray-900 hover:bg-gray-200 transition-colors"
                       aria-label="บันทึก"
                     >
                       {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
@@ -319,17 +319,17 @@ export default function CategoriesSettingPage() {
                       aria-label={c.logo ? `เปลี่ยนโลโก้ ${c.name}` : `เพิ่มโลโก้ ${c.name}`}
                       // มีโลโก้ = วงกลมขาวเปล่าแบบเดียวกับหมุดบนแผนที่ · ไม่มี = ขอบสีประจำหมวด (บอกว่าแผนที่ใช้สีนี้)
                       className={`group relative shrink-0 w-12 h-12 rounded-full bg-white flex items-center justify-center overflow-hidden transition-all ${
-                        c.logo ? 'shadow-md hover:ring-2 hover:ring-orange-300' : 'border-2 hover:border-orange-400'
+                        c.logo ? 'shadow-md hover:ring-2 hover:ring-gray-400' : 'border-2 hover:border-gray-500'
                       }`}
                       style={c.logo ? undefined : { borderColor: categoryColor(c.name) }}
                     >
                       {logoBusy === c.id ? (
-                        <Loader2 className="w-4 h-4 animate-spin text-orange-600" />
+                        <Loader2 className="w-4 h-4 animate-spin text-gray-900" />
                       ) : c.logo ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={`/api/files/${c.logo}`} alt={`โลโก้ ${c.name}`} className="w-full h-full object-contain p-1" />
                       ) : (
-                        <ImagePlus className="w-4 h-4 text-gray-300 group-hover:text-orange-500" />
+                        <ImagePlus className="w-4 h-4 text-gray-300 group-hover:text-gray-600" />
                       )}
                     </button>
                     <div className="min-w-0 flex-1">
@@ -343,7 +343,7 @@ export default function CategoriesSettingPage() {
                         type="button"
                         onClick={() => setOpenSubs(openSubs === c.id ? null : c.id)}
                         aria-expanded={openSubs === c.id}
-                        className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-orange-700 hover:text-orange-800"
+                        className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-gray-900 hover:text-gray-600"
                       >
                         ประเด็นย่อย ({c.subCategories.filter((x) => x.isActive).length})
                         <ChevronDown className={`w-3.5 h-3.5 transition-transform ${openSubs === c.id ? 'rotate-180' : ''}`} />
@@ -363,7 +363,7 @@ export default function CategoriesSettingPage() {
                       )}
                       <button
                         onClick={() => startEdit(c)}
-                        className="p-2 rounded-lg text-gray-400 hover:text-orange-600 hover:bg-orange-50 transition-colors"
+                        className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-colors"
                         aria-label={`แก้ไข ${c.name}`}
                       >
                         <SquarePen className="w-4 h-4" />
@@ -378,7 +378,7 @@ export default function CategoriesSettingPage() {
                         aria-checked={c.isActive}
                         aria-label={`เปิด/ปิด ${c.name}`}
                         className={`relative w-10 h-6 rounded-full transition-colors ${
-                          c.isActive ? 'bg-orange-500' : 'bg-gray-200'
+                          c.isActive ? 'bg-gray-800' : 'bg-gray-200'
                         }`}
                       >
                         <span
@@ -462,7 +462,7 @@ function SubCategoryPanel({
   };
 
   return (
-    <div className="mt-3 ml-[60px] rounded-xl bg-orange-50/60 border border-orange-100 p-3">
+    <div className="mt-3 ml-[60px] rounded-xl bg-gray-50/60 border border-gray-200 p-3">
       <p className="text-[11px] text-gray-500 mb-2">
         ประเด็นย่อยของ “{category.name}” — ผู้บันทึกงานเลือกได้ในฟอร์ม และใช้กรองบนแผนที่/ตารางงาน ·
         คลิกวงกลมเพื่อใส่โลโก้เฉพาะประเด็นย่อย (แผนที่ใช้แทนโลโก้/สีของประเด็นหลัก)
@@ -487,7 +487,7 @@ function SubCategoryPanel({
       ) : (
         <ul className="space-y-1 mb-2">
           {category.subCategories.map((sc) => (
-            <li key={sc.id} className="flex items-center gap-2 bg-white rounded-lg border border-orange-100 px-2.5 py-1.5">
+            <li key={sc.id} className="flex items-center gap-2 bg-white rounded-lg border border-gray-200 px-2.5 py-1.5">
               {editId === sc.id ? (
                 <>
                   <input
@@ -495,14 +495,14 @@ function SubCategoryPanel({
                     onChange={(e) => setEditName(e.target.value)}
                     autoFocus
                     aria-label="ชื่อประเด็นย่อย"
-                    className="flex-1 min-w-0 text-xs px-2 py-1 border border-orange-200 rounded focus:outline-none focus:ring-1 focus:ring-orange-400"
+                    className="flex-1 min-w-0 text-xs px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-gray-400"
                   />
                   <button
                     type="button"
                     onClick={async () => {
                       if (await onPatch(sc.id, { name: editName }, 'แก้ชื่อประเด็นย่อยแล้ว')) setEditId(null);
                     }}
-                    className="p-1 rounded text-orange-700 hover:bg-orange-100"
+                    className="p-1 rounded text-gray-900 hover:bg-gray-100"
                     aria-label="บันทึกชื่อ"
                   >
                     <Check className="w-3.5 h-3.5" />
@@ -523,16 +523,16 @@ function SubCategoryPanel({
                     aria-label={sc.logo ? `เปลี่ยนโลโก้ ${sc.name}` : `เพิ่มโลโก้ ${sc.name}`}
                     title={sc.logo ? 'เปลี่ยนโลโก้' : 'เพิ่มโลโก้ประเด็นย่อย'}
                     className={`shrink-0 w-7 h-7 rounded-full bg-white flex items-center justify-center overflow-hidden ${
-                      sc.logo ? 'shadow' : 'border border-dashed border-orange-300 hover:border-orange-500'
+                      sc.logo ? 'shadow' : 'border border-dashed border-gray-400 hover:border-gray-700'
                     }`}
                   >
                     {logoBusy === sc.id ? (
-                      <Loader2 className="w-3 h-3 animate-spin text-orange-600" />
+                      <Loader2 className="w-3 h-3 animate-spin text-gray-900" />
                     ) : sc.logo ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={`/api/files/${sc.logo}`} alt={`โลโก้ ${sc.name}`} className="w-full h-full object-contain p-0.5" />
                     ) : (
-                      <ImagePlus className="w-3 h-3 text-orange-300" />
+                      <ImagePlus className="w-3 h-3 text-gray-400" />
                     )}
                   </button>
                   <span className={`flex-1 min-w-0 truncate text-xs ${sc.isActive ? 'text-gray-800' : 'text-gray-400 line-through'}`}>
@@ -556,7 +556,7 @@ function SubCategoryPanel({
                       setEditId(sc.id);
                       setEditName(sc.name);
                     }}
-                    className="p-1 rounded text-gray-400 hover:text-orange-600"
+                    className="p-1 rounded text-gray-400 hover:text-gray-600"
                     aria-label={`แก้ชื่อ ${sc.name}`}
                   >
                     <SquarePen className="w-3.5 h-3.5" />
@@ -567,7 +567,7 @@ function SubCategoryPanel({
                     aria-checked={sc.isActive}
                     aria-label={`เปิด/ปิด ${sc.name}`}
                     onClick={() => onPatch(sc.id, { isActive: !sc.isActive }, sc.isActive ? 'ปิดประเด็นย่อยแล้ว' : 'เปิดประเด็นย่อยแล้ว')}
-                    className={`relative w-8 h-5 rounded-full shrink-0 transition-colors ${sc.isActive ? 'bg-orange-500' : 'bg-gray-200'}`}
+                    className={`relative w-8 h-5 rounded-full shrink-0 transition-colors ${sc.isActive ? 'bg-gray-800' : 'bg-gray-200'}`}
                   >
                     <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all ${sc.isActive ? 'left-[14px]' : 'left-0.5'}`} />
                   </button>
@@ -583,12 +583,12 @@ function SubCategoryPanel({
           onChange={(e) => setName(e.target.value)}
           placeholder="เพิ่มประเด็นย่อย เช่น งานศพปลอดเหล้า"
           aria-label={`เพิ่มประเด็นย่อยของ ${category.name}`}
-          className="flex-1 min-w-0 text-xs px-2.5 py-1.5 bg-white border border-orange-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400"
+          className="flex-1 min-w-0 text-xs px-2.5 py-1.5 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400"
         />
         <button
           type="submit"
           disabled={busy || !name.trim()}
-          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-orange-600 text-white text-xs font-medium hover:bg-orange-700 disabled:opacity-50"
+          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-gray-900 text-white text-xs font-medium hover:bg-gray-700 disabled:opacity-50"
         >
           <Plus className="w-3.5 h-3.5" /> เพิ่ม
         </button>

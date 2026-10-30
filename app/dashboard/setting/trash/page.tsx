@@ -42,8 +42,8 @@ export default async function TrashPage() {
   return (
     <div className="p-6 max-w-5xl">
       <div className="flex items-center gap-3 mb-1">
-        <span className="flex w-10 h-10 rounded-xl bg-orange-50 border border-orange-100 items-center justify-center">
-          <Trash2 className="w-5 h-5 text-orange-600" />
+        <span className="flex w-10 h-10 rounded-xl bg-gray-50 border border-gray-200 items-center justify-center">
+          <Trash2 className="w-5 h-5 text-gray-900" />
         </span>
         <div>
           <h1 className="text-xl font-bold text-gray-800">ถังขยะ</h1>
@@ -53,12 +53,12 @@ export default async function TrashPage() {
         </div>
       </div>
 
-      <div className="mt-5 bg-white rounded-2xl border border-orange-100 overflow-hidden">
+      <div className="mt-5 bg-white rounded-2xl border border-gray-200 overflow-hidden">
         {rows.length === 0 ? (
           <p className="px-4 py-12 text-center text-gray-400">ถังขยะว่าง</p>
         ) : (
           <table className="w-full text-sm">
-            <thead className="bg-orange-50/60 text-gray-600">
+            <thead className="bg-gray-50/60 text-gray-600">
               <tr>
                 <th className="text-left font-medium px-4 py-3">งาน</th>
                 <th className="text-left font-medium px-4 py-3 whitespace-nowrap">ผู้เขียน</th>
@@ -67,7 +67,7 @@ export default async function TrashPage() {
                 <th className="px-4 py-3" />
               </tr>
             </thead>
-            <tbody className="divide-y divide-orange-50">
+            <tbody className="divide-y divide-gray-100">
               {rows.map((r) => {
                 const daysLeft = Math.max(0, TRASH_DAYS - Math.floor((now - r.deletedAt!.getTime()) / 86_400_000));
                 return (

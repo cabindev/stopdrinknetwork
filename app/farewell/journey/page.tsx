@@ -46,7 +46,7 @@ export default async function JourneyPage() {
       </div>
       <section id="learn" className="scroll-mt-16 px-4 py-14 sm:py-20">
         <div className="max-w-3xl mx-auto">
-          <p className="text-xs font-medium text-orange-700">ส่งด้วยใจ</p>
+          <p className="text-xs font-medium text-gray-900">ส่งด้วยใจ</p>
           <h2 className="mt-1 text-2xl font-bold text-gray-900">ครอบครัวเลือกเองได้</h2>
           <p className="mt-2 text-sm sm:text-base leading-relaxed text-gray-600">
             การเปลี่ยนค่านิยมงานศพไม่ใช่การลดความอาลัย แต่คือการคืนความหมายของงานบุญ เริ่มจากเรื่องที่ครอบครัวตัดสินใจได้เอง
@@ -56,15 +56,15 @@ export default async function JourneyPage() {
               <Link
                 key={href}
                 href={href}
-                className="group flex items-start gap-3 rounded-2xl border border-orange-100 p-4 hover:border-orange-300 transition-colors"
+                className="group flex items-start gap-3 rounded-2xl border border-gray-200 p-4 hover:border-gray-400 transition-colors"
               >
-                <span className="flex w-10 h-10 shrink-0 items-center justify-center rounded-xl bg-orange-50">
-                  <Icon className="w-5 h-5 text-orange-600" />
+                <span className="flex w-10 h-10 shrink-0 items-center justify-center rounded-xl bg-gray-50">
+                  <Icon className="w-5 h-5 text-gray-900" />
                 </span>
                 <span className="flex-1">
                   <span className="flex items-center gap-1 text-base font-semibold text-gray-900">
                     {title}
-                    <ArrowRight className="w-4 h-4 text-orange-600 opacity-0 transition-opacity group-hover:opacity-100" />
+                    <ArrowRight className="w-4 h-4 text-gray-900 opacity-0 transition-opacity group-hover:opacity-100" />
                   </span>
                   <span className="mt-0.5 block text-sm text-gray-600">{text}</span>
                 </span>

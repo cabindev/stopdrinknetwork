@@ -14,18 +14,18 @@ body {
   font-family: var(--font-ibm), "Segoe UI", "Leelawadee UI", Tahoma, sans-serif;
 }
 
-/* Popup ของหมุดงาน — ให้เข้าธีมส้ม/ขาวของแอป */
+/* Popup ของหมุดงาน — ให้เข้าธีมขาว-ดำของแอป */
 .leaflet-popup-content-wrapper {
   border-radius: 12px;
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.15);
-  border: 1px solid #ffedd5;
+  border: 1px solid #e5e7eb;
 }
 .leaflet-popup-content {
   margin: 12px 14px;
   font-family: inherit;
 }
 .leaflet-popup-tip {
-  border-top-color: #ffedd5;
+  border-top-color: #e5e7eb;
 }
 
 /* Leaflet: ซ่อนกรอบ focus สี่เหลี่ยมน้ำเงินที่ขึ้นตอนคลิก polygon/หมุด

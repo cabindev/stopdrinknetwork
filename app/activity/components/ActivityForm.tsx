@@ -115,7 +115,7 @@ const STATUS_OPTIONS = [
 ];
 
 const inputCls =
-  'w-full px-3 py-2.5 text-sm text-gray-900 bg-white border border-orange-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-orange-400 transition-all';
+  'w-full px-3 py-2.5 text-sm text-gray-900 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-gray-500 transition-all';
 const labelCls = 'block text-gray-700 text-sm font-medium mb-1';
 
 export default function ActivityForm({
@@ -444,9 +444,9 @@ export default function ActivityForm({
     <form onSubmit={handleSubmit} aria-busy={!hydrated}>
       <fieldset disabled={!hydrated} className="space-y-8 min-w-0 border-0 p-0 m-0 disabled:opacity-70">
       {/* ข้อมูลกิจกรรม */}
-      <section className="bg-white rounded-2xl border border-orange-100 p-6">
+      <section className="bg-white rounded-2xl border border-gray-200 p-6">
         <h2 className="flex items-center gap-2 text-base font-semibold text-gray-800 mb-4">
-          <ClipboardList className="w-5 h-5 text-orange-600" />
+          <ClipboardList className="w-5 h-5 text-gray-900" />
           ข้อมูลกิจกรรม
         </h2>
         <div className="space-y-4">
@@ -506,7 +506,7 @@ export default function ActivityForm({
           {/* ประเด็นย่อย — ย่อส่วน สีจาง เยื้องใต้ช่องประเด็นงาน ให้เห็นว่าเป็นระดับรองของประเด็นที่เลือก */}
           {!focusLocked && selectedCategory && selectedCategory.subCategories.length > 0 && (
             <div className="-mt-2 sm:w-1/2 sm:pr-2 flex items-center gap-2 pl-3">
-              <span aria-hidden className="text-orange-300 text-sm leading-none">└</span>
+              <span aria-hidden className="text-gray-400 text-sm leading-none">└</span>
               <label className="shrink-0 text-xs font-light text-gray-400" htmlFor="subCategoryId">
                 ประเด็นย่อย
               </label>
@@ -514,7 +514,7 @@ export default function ActivityForm({
                 id="subCategoryId"
                 value={extra.subCategoryId}
                 onChange={setX('subCategoryId')}
-                className="flex-1 min-w-0 px-2 py-1 text-xs font-light text-gray-600 bg-orange-50/40 border border-orange-100 rounded-md focus:outline-none focus:ring-1 focus:ring-orange-300 focus:border-orange-300"
+                className="flex-1 min-w-0 px-2 py-1 text-xs font-light text-gray-600 bg-gray-50/40 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-500"
               >
                 <option value="">— ไม่ระบุ (ถ้ามี) —</option>
                 {selectedCategory.subCategories.map((sc) => (
@@ -546,7 +546,7 @@ export default function ActivityForm({
                     แล้วแนบรายงานฉบับเต็มเป็นไฟล์
                   </span>
                 ) : descLength > DESCRIPTION_SUGGEST_FILE_AT ? (
-                  <span className="text-orange-700">
+                  <span className="text-gray-900">
                     💡 ข้อความยาว — ถ้าเป็นรายงานฉบับเต็ม แนะนำแนบเป็นไฟล์ PDF/Word ในส่วน “ไฟล์แนบ”
                     แล้วเขียนสรุปสาระสำคัญไว้ที่นี่ให้อ่านง่าย
                   </span>
@@ -559,7 +559,7 @@ export default function ActivityForm({
                   descLength > MAX_DESCRIPTION
                     ? 'text-red-600 font-semibold'
                     : descLength > DESCRIPTION_WARN_AT
-                      ? 'text-orange-600 font-medium'
+                      ? 'text-gray-900 font-medium'
                       : 'text-gray-400'
                 }`}
               >
@@ -571,9 +571,9 @@ export default function ActivityForm({
       </section>
 
       {/* พื้นที่ดำเนินงาน */}
-      <section className="bg-white rounded-2xl border border-orange-100 p-6">
+      <section className="bg-white rounded-2xl border border-gray-200 p-6">
         <h2 className="flex items-center gap-2 text-base font-semibold text-gray-800 mb-1">
-          <MapPin className="w-5 h-5 text-orange-600" />
+          <MapPin className="w-5 h-5 text-gray-900" />
           พื้นที่ดำเนินงาน <span className="text-red-500 text-sm">*</span>
         </h2>
         <p className="text-xs text-gray-400 mb-4">
@@ -601,8 +601,8 @@ export default function ActivityForm({
                 onClick={() => setAreaScope(value)}
                 className={`px-2.5 py-1 rounded-full border transition-colors ${
                   areaScope === value
-                    ? 'bg-orange-600 border-orange-600 text-white'
-                    : 'bg-white border-orange-200 text-gray-600 hover:bg-orange-50'
+                    ? 'bg-gray-900 border-gray-900 text-white'
+                    : 'bg-white border-gray-300 text-gray-600 hover:bg-gray-50'
                 }`}
               >
                 {value === 'DISTRICT' ? `ทั้ง อ.${location.amphoe}` : value === 'PROVINCE' ? `ทั้ง จ.${location.province}` : label}
@@ -619,10 +619,10 @@ export default function ActivityForm({
       {/* ผลลัพธ์ + ภาคี + ผู้ประสานงาน — พับได้ ไม่บังคับ (ฟอร์มชั้น 2: เติมทีหลังได้) */}
       <details
         open={!!(initial?.participantCount || initial?.partners?.length || initial?.coordinatorName)}
-        className="group bg-white rounded-2xl border border-orange-100 p-6 [&_summary::-webkit-details-marker]:hidden"
+        className="group bg-white rounded-2xl border border-gray-200 p-6 [&_summary::-webkit-details-marker]:hidden"
       >
         <summary className="flex items-center gap-2 cursor-pointer list-none">
-          <Users className="w-5 h-5 text-orange-600" />
+          <Users className="w-5 h-5 text-gray-900" />
           <span className="text-base font-semibold text-gray-800">ผลลัพธ์ ภาคี และผู้ประสานงาน</span>
           <span className="text-xs text-gray-400">(ไม่บังคับ — เติมทีหลังได้)</span>
           <ChevronDown className="ml-auto w-4 h-4 text-gray-400 transition-transform group-open:rotate-180" />
@@ -661,8 +661,8 @@ export default function ActivityForm({
                       }
                       className={`px-2.5 py-1 rounded-full text-xs border transition-colors ${
                         on
-                          ? 'bg-orange-600 text-white border-orange-600'
-                          : 'bg-white text-gray-600 border-orange-200 hover:bg-orange-50'
+                          ? 'bg-gray-900 text-white border-gray-900'
+                          : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
                       }`}
                     >
                       {p}
@@ -701,7 +701,7 @@ export default function ActivityForm({
             </div>
           </div>
 
-          <div className="pt-4 border-t border-orange-100">
+          <div className="pt-4 border-t border-gray-200">
             <p className="text-sm font-medium text-gray-700">ผู้ประสานงานในพื้นที่</p>
             <p className="text-xs text-gray-400 mb-3">
               คนในพื้นที่ที่ติดต่อต่อได้ เช่น ผู้ใหญ่บ้าน เจ้าอาวาส ผอ.รพ.สต. —
@@ -719,7 +719,7 @@ export default function ActivityForm({
                   type="checkbox"
                   checked={extra.coordinatorConsent}
                   onChange={(e) => setExtra((prev) => ({ ...prev, coordinatorConsent: e.target.checked }))}
-                  className="mt-0.5 accent-orange-600"
+                  className="mt-0.5 accent-gray-900"
                 />
                 ผู้ประสานงานยินยอมให้บันทึกช่องทางติดต่อไว้ในระบบ เพื่อให้แอดมินเครือข่ายติดต่อประสานงาน
                 <span className="text-red-500">*</span>
@@ -730,9 +730,9 @@ export default function ActivityForm({
       </details>
 
       {/* ช่วงเวลา */}
-      <section className="bg-white rounded-2xl border border-orange-100 p-6">
+      <section className="bg-white rounded-2xl border border-gray-200 p-6">
         <h2 className="flex items-center gap-2 text-base font-semibold text-gray-800 mb-4">
-          <CalendarDays className="w-5 h-5 text-orange-600" />
+          <CalendarDays className="w-5 h-5 text-gray-900" />
           ช่วงเวลาดำเนินงาน
         </h2>
         <div className="grid sm:grid-cols-2 gap-4">
@@ -744,7 +744,7 @@ export default function ActivityForm({
                   type="checkbox"
                   checked={yearOnly}
                   onChange={(e) => setYearOnly(e.target.checked)}
-                  className="w-3.5 h-3.5 accent-orange-600"
+                  className="w-3.5 h-3.5 accent-gray-900"
                 />
                 รู้แค่ปี
               </label>
@@ -782,9 +782,9 @@ export default function ActivityForm({
       </section>
 
       {/* นโยบาย/ข้อตกลงที่เกิดจากงาน — หัวข้อ "มีนโยบายระดับ" + ช่องติ๊กแถวเดียว, ติ๊กแล้วแนบไฟล์ของระดับนั้น (ไม่บังคับ) */}
-      <section className="bg-white rounded-2xl border border-orange-100 p-6">
+      <section className="bg-white rounded-2xl border border-gray-200 p-6">
         <h2 className="flex flex-wrap items-baseline gap-x-2 text-base font-semibold text-gray-800 mb-3">
-          <ScrollText className="w-5 h-5 text-orange-600 self-center" />
+          <ScrollText className="w-5 h-5 text-gray-900 self-center" />
           มีนโยบายระดับ
           <span className="text-xs font-normal text-gray-400">
             (ถ้ามี — ติ๊กได้หลายระดับ แล้วแนบไฟล์ PDF, Word หรือรูปถ่ายเอกสาร)
@@ -815,8 +815,8 @@ export default function ActivityForm({
                 key={value}
                 className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-sm cursor-pointer select-none transition-colors ${
                   on
-                    ? 'bg-orange-600 border-orange-600 text-white'
-                    : 'bg-white border-orange-200 text-gray-700 hover:bg-orange-50'
+                    ? 'bg-gray-900 border-gray-900 text-white'
+                    : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
                 }`}
               >
                 <input
@@ -858,13 +858,13 @@ export default function ActivityForm({
                     onChange={(e) => setPolicyDetail(value, { name: e.target.value })}
                     placeholder="ชื่อนโยบาย เช่น ธรรมนูญตำบลงานศพปลอดเหล้า"
                     aria-label={`ชื่อนโยบาย${label}`}
-                    className="flex-1 min-w-[180px] px-2 py-1 border border-orange-200 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-orange-400"
+                    className="flex-1 min-w-[180px] px-2 py-1 border border-gray-300 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-gray-400"
                   />
                   <select
                     value={policyDetails[value]?.type ?? ''}
                     onChange={(e) => setPolicyDetail(value, { type: e.target.value || undefined })}
                     aria-label={`ประเภทนโยบาย${label}`}
-                    className="px-2 py-1 border border-orange-200 rounded-lg text-xs text-gray-700 bg-white focus:outline-none focus:ring-1 focus:ring-orange-400"
+                    className="px-2 py-1 border border-gray-300 rounded-lg text-xs text-gray-700 bg-white focus:outline-none focus:ring-1 focus:ring-gray-400"
                   >
                     <option value="">ประเภท</option>
                     {POLICY_TYPES.map((t) => (
@@ -878,7 +878,7 @@ export default function ActivityForm({
                     onChange={(e) => setPolicyDetail(value, { year: e.target.value ? Number(e.target.value) : undefined })}
                     placeholder="ปี พ.ศ."
                     aria-label={`ปีที่ประกาศนโยบาย${label}`}
-                    className="w-20 px-2 py-1 border border-orange-200 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-orange-400"
+                    className="w-20 px-2 py-1 border border-gray-300 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-gray-400"
                   />
                   <span className="basis-full h-0 sm:hidden" />
                   {oldFiles.map((a) => {
@@ -887,7 +887,7 @@ export default function ActivityForm({
                       <span
                         key={a.id}
                         className={`inline-flex items-center gap-1 max-w-[220px] px-2 py-1 rounded-lg border ${
-                          marked ? 'bg-red-50 border-red-100 text-red-500 line-through' : 'bg-orange-50 border-orange-100 text-gray-700'
+                          marked ? 'bg-red-50 border-red-100 text-red-500 line-through' : 'bg-gray-50 border-gray-200 text-gray-700'
                         }`}
                       >
                         <span className="truncate">📜 {a.fileName}</span>
@@ -906,10 +906,10 @@ export default function ActivityForm({
                   {newFiles.map((f, i) => (
                     <span
                       key={`${f.name}-${i}`}
-                      className="inline-flex items-center gap-1 max-w-[220px] px-2 py-1 rounded-lg border bg-orange-50 border-orange-200 text-gray-700"
+                      className="inline-flex items-center gap-1 max-w-[220px] px-2 py-1 rounded-lg border bg-gray-50 border-gray-300 text-gray-700"
                     >
                       <span className="truncate">📜 {f.name}</span>
-                      <span className="text-orange-600">(ใหม่)</span>
+                      <span className="text-gray-900">(ใหม่)</span>
                       <button
                         type="button"
                         aria-label="ลบไฟล์"
@@ -928,7 +928,7 @@ export default function ActivityForm({
                       policyInputRef.current?.click();
                     }}
                     aria-label={`แนบไฟล์นโยบาย${label}`}
-                    className="inline-flex items-center gap-1 px-2 py-1 rounded-lg border border-dashed border-orange-300 text-orange-700 hover:bg-orange-50"
+                    className="inline-flex items-center gap-1 px-2 py-1 rounded-lg border border-dashed border-gray-400 text-gray-900 hover:bg-gray-50"
                   >
                     <Paperclip className="w-3 h-3" /> แนบไฟล์
                   </button>
@@ -940,9 +940,9 @@ export default function ActivityForm({
       </section>
 
       {/* แบบสำรวจ — ติ๊ก "มีแบบสำรวจ" แล้วแนบไฟล์ได้ (ไม่บังคับ) */}
-      <section className="bg-white rounded-2xl border border-orange-100 p-6">
+      <section className="bg-white rounded-2xl border border-gray-200 p-6">
         <h2 className="flex flex-wrap items-baseline gap-x-2 text-base font-semibold text-gray-800 mb-3">
-          <ClipboardCheck className="w-5 h-5 text-orange-600 self-center" />
+          <ClipboardCheck className="w-5 h-5 text-gray-900 self-center" />
           แบบสำรวจ
           <span className="text-xs font-normal text-gray-400">(ถ้ามี — แนบไฟล์ PDF, Word, Excel หรือรูปถ่ายแบบสำรวจ)</span>
         </h2>
@@ -963,8 +963,8 @@ export default function ActivityForm({
         <label
           className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-sm cursor-pointer select-none transition-colors ${
             hasSurvey
-              ? 'bg-orange-600 border-orange-600 text-white'
-              : 'bg-white border-orange-200 text-gray-700 hover:bg-orange-50'
+              ? 'bg-gray-900 border-gray-900 text-white'
+              : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
           }`}
         >
           <input
@@ -984,11 +984,11 @@ export default function ActivityForm({
                 <div
                   key={a.id}
                   className={`flex items-center gap-2 px-3 py-2 rounded-lg border ${
-                    marked ? 'bg-red-50 border-red-100 text-red-500' : 'bg-orange-50 border-orange-100 text-gray-700'
+                    marked ? 'bg-red-50 border-red-100 text-red-500' : 'bg-gray-50 border-gray-200 text-gray-700'
                   }`}
                 >
                   <span className="shrink-0 w-5 text-gray-400 tabular-nums">{i + 1}.</span>
-                  <FileText className="w-3.5 h-3.5 shrink-0 text-orange-600" />
+                  <FileText className="w-3.5 h-3.5 shrink-0 text-gray-900" />
                   <span className={`flex-1 truncate ${marked ? 'line-through' : ''}`}>{a.fileName}</span>
                   {marked && <span className="shrink-0">จะถูกลบ</span>}
                   <button
@@ -1012,13 +1012,13 @@ export default function ActivityForm({
                 <div
                   key={`${f.name}-${i}`}
                   className={`flex items-center gap-2 px-3 py-2 rounded-lg border ${
-                    tooBig ? 'bg-red-50 border-red-200' : 'bg-orange-50 border-orange-200'
+                    tooBig ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-gray-300'
                   } text-gray-700`}
                 >
                   <span className="shrink-0 w-5 text-gray-400 tabular-nums">{existingSurvey.length + i + 1}.</span>
-                  <FileText className="w-3.5 h-3.5 shrink-0 text-orange-600" />
+                  <FileText className="w-3.5 h-3.5 shrink-0 text-gray-900" />
                   <span className="flex-1 truncate">{f.name}</span>
-                  <span className={`shrink-0 ${tooBig ? 'text-red-500' : 'text-orange-600'}`}>
+                  <span className={`shrink-0 ${tooBig ? 'text-red-500' : 'text-gray-900'}`}>
                     {tooBig ? `${Math.round(f.size / 1024 / 1024)}MB เกิน 20MB` : 'ใหม่'}
                   </span>
                   <button
@@ -1036,7 +1036,7 @@ export default function ActivityForm({
               type="button"
               onClick={() => surveyInputRef.current?.click()}
               aria-label="แนบไฟล์แบบสำรวจ"
-              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-dashed border-orange-300 text-orange-700 hover:bg-orange-50"
+              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-dashed border-gray-400 text-gray-900 hover:bg-gray-50"
             >
               <Plus className="w-3.5 h-3.5" />
               {existingSurvey.length + surveyFiles.length > 0 ? 'เพิ่มแบบสำรวจ' : 'แนบไฟล์แบบสำรวจ'}
@@ -1074,11 +1074,11 @@ export default function ActivityForm({
           }
         }}
         className={`bg-white rounded-2xl border p-6 transition-colors ${
-          dragOver ? 'border-orange-400 bg-orange-50/50' : 'border-orange-100'
+          dragOver ? 'border-gray-500 bg-gray-50/50' : 'border-gray-200'
         }`}
       >
         <h2 className="flex items-center gap-2 text-base font-semibold text-gray-800 mb-4">
-          <Paperclip className="w-5 h-5 text-orange-600" />
+          <Paperclip className="w-5 h-5 text-gray-900" />
           ไฟล์แนบ
         </h2>
 
@@ -1095,7 +1095,7 @@ export default function ActivityForm({
                     className={`flex items-center justify-between gap-2 text-xs border rounded px-2 py-1.5 ${
                       marked
                         ? 'bg-red-50 border-red-100 text-red-500 line-through'
-                        : 'bg-orange-50 border-orange-100 text-gray-700'
+                        : 'bg-gray-50 border-gray-200 text-gray-700'
                     }`}
                   >
                     <span className="truncate">📄 {a.fileName}</span>
@@ -1123,7 +1123,7 @@ export default function ActivityForm({
             <button
               type="button"
               onClick={() => docInputRef.current?.click()}
-              className="w-full flex items-center justify-center gap-2 py-3 border-2 border-dashed border-orange-200 rounded-lg text-sm text-orange-700 hover:bg-orange-50 transition-colors"
+              className="w-full flex items-center justify-center gap-2 py-3 border-2 border-dashed border-gray-300 rounded-lg text-sm text-gray-900 hover:bg-gray-50 transition-colors"
             >
               <Paperclip className="w-4 h-4" /> เลือกไฟล์เอกสาร
             </button>
@@ -1145,7 +1145,7 @@ export default function ActivityForm({
             {documents.length > 0 && (
               <ul className="mt-2 space-y-1">
                 {documents.map((f, i) => (
-                  <li key={i} className="flex items-center justify-between gap-2 text-xs bg-orange-50 border border-orange-100 rounded px-2 py-1.5">
+                  <li key={i} className="flex items-center justify-between gap-2 text-xs bg-gray-50 border border-gray-200 rounded px-2 py-1.5">
                     <span className="truncate text-gray-700">{f.name}</span>
                     <button type="button" onClick={() => setDocuments((prev) => prev.filter((_, j) => j !== i))} aria-label="ลบไฟล์">
                       <X className="w-3.5 h-3.5 text-gray-400 hover:text-red-500" />
@@ -1167,11 +1167,11 @@ export default function ActivityForm({
               type="button"
               onClick={() => imageInputRef.current?.click()}
               disabled={isCompressing || imageSlots <= 0}
-              className="w-full flex items-center justify-center gap-2 py-3 border-2 border-dashed border-orange-200 rounded-lg text-sm text-orange-700 hover:bg-orange-50 transition-colors disabled:opacity-60"
+              className="w-full flex items-center justify-center gap-2 py-3 border-2 border-dashed border-gray-300 rounded-lg text-sm text-gray-900 hover:bg-gray-50 transition-colors disabled:opacity-60"
             >
               {isCompressing ? (
                 <>
-                  <span className="w-4 h-4 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+                  <span className="w-4 h-4 border-2 border-gray-700 border-t-transparent rounded-full animate-spin" />
                   กำลังบีบอัดรูป...
                 </>
               ) : imageSlots <= 0 ? (
@@ -1207,7 +1207,7 @@ export default function ActivityForm({
             {/* หน้ากรณีศึกษาใช้เฉพาะรูปที่เปิดเผย — ปกใหม่ที่ยังไม่เปิดเผยจะไม่ขึ้นบนหน้าสาธารณะ (เคยเกิดกับ #151) */}
             {isEdit && initial?.isPublished && cover &&
               (cover.startsWith('new:') || !existingImages.find((a) => `existing:${a.id}` === cover)?.isPublic) && (
-                <p role="note" className="mb-2 text-xs text-orange-700 bg-orange-50 border border-orange-200 rounded-lg px-3 py-2">
+                <p role="note" className="mb-2 text-xs text-gray-900 bg-gray-50 border border-gray-300 rounded-lg px-3 py-2">
                   รูปปกที่เลือกยังไม่เปิดเผยบนหน้ากรณีศึกษา — บันทึกแล้วไปติ๊ก &quot;เปิดเผย&quot; ที่หน้าเผยแพร่ด้วย ไม่งั้นหน้าสาธารณะยังใช้รูปปกเดิม
                 </p>
               )}
@@ -1280,8 +1280,8 @@ export default function ActivityForm({
         disabled={isLoading}
         className={`w-full py-3 rounded-lg font-medium text-white transition-all ${
           isLoading
-            ? 'bg-orange-400 cursor-not-allowed'
-            : 'bg-orange-600 hover:bg-orange-700 shadow-lg shadow-orange-600/20'
+            ? 'bg-gray-700 cursor-not-allowed'
+            : 'bg-gray-900 hover:bg-gray-700 shadow-lg shadow-gray-200/20'
         }`}
       >
         {isLoading ? (
@@ -1319,7 +1319,7 @@ function ImageTile({
   onRemove: () => void;
 }) {
   return (
-    <li className={`rounded-xl border overflow-hidden ${isCover ? 'border-orange-400 ring-2 ring-orange-200' : 'border-orange-100'}`}>
+    <li className={`rounded-xl border overflow-hidden ${isCover ? 'border-gray-500 ring-2 ring-gray-300' : 'border-gray-200'}`}>
       <div className="relative">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={src} alt={alt} className={`w-full h-28 object-cover ${removed ? 'opacity-30 grayscale' : ''}`} />
@@ -1331,7 +1331,7 @@ function ImageTile({
             aria-label={isCover ? 'รูปปก' : 'ตั้งเป็นรูปปก'}
             title={isCover ? 'รูปปก' : 'ตั้งเป็นรูปปก'}
             className={`absolute top-1.5 left-1.5 inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-semibold shadow ${
-              isCover ? 'bg-orange-600 text-white' : 'bg-white/90 text-gray-500 hover:text-orange-600'
+              isCover ? 'bg-gray-900 text-white' : 'bg-white/90 text-gray-500 hover:text-gray-600'
             }`}
           >
             <Star className={`w-3 h-3 ${isCover ? 'fill-white' : ''}`} />
@@ -1359,7 +1359,7 @@ function ImageTile({
         maxLength={200}
         placeholder="คำบรรยายรูป (ถ้ามี)"
         aria-label={`คำบรรยาย ${alt}`}
-        className="w-full px-2 py-1.5 text-xs text-gray-700 border-t border-orange-100 focus:outline-none focus:bg-orange-50/50 disabled:bg-gray-50"
+        className="w-full px-2 py-1.5 text-xs text-gray-700 border-t border-gray-200 focus:outline-none focus:bg-gray-50/50 disabled:bg-gray-50"
       />
     </li>
   );

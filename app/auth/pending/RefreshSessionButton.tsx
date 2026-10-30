@@ -18,7 +18,7 @@ export default function RefreshSessionButton() {
         router.push('/activity');
         router.refresh();
       }}
-      className="mt-6 px-4 py-2.5 rounded-xl bg-orange-600 text-white text-sm font-medium hover:bg-orange-700 disabled:opacity-60"
+      className="mt-6 px-4 py-2.5 rounded-xl bg-gray-900 text-white text-sm font-medium hover:bg-gray-700 disabled:opacity-60"
     >
       {busy ? 'กำลังเข้าสู่ระบบ…' : 'ไปหน้างานของฉัน'}
     </button>

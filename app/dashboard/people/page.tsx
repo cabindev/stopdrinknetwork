@@ -51,8 +51,8 @@ export default async function PeoplePage() {
   return (
     <div className="p-6 max-w-6xl">
       <div className="flex items-center gap-3 mb-1">
-        <span className="flex w-10 h-10 rounded-xl bg-orange-50 border border-orange-100 items-center justify-center">
-          <Contact className="w-5 h-5 text-orange-600" />
+        <span className="flex w-10 h-10 rounded-xl bg-gray-50 border border-gray-200 items-center justify-center">
+          <Contact className="w-5 h-5 text-gray-900" />
         </span>
         <div>
           <h1 className="text-xl font-bold text-gray-800">รายชื่อเครือข่าย</h1>

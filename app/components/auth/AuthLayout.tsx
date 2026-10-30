@@ -24,7 +24,7 @@ export function AuthLayout({
     <div className="min-h-screen bg-white flex flex-col pt-20">
       <main className="flex-1 flex items-center px-5 sm:px-8 pb-16">
         <div className="w-full max-w-md mx-auto animate-rise">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-orange-600">{eyebrow}</p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-gray-900">{eyebrow}</p>
           <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-gray-900 mt-2">{title}</h1>
           {subtitle && <p className="text-sm text-gray-500 mt-2">{subtitle}</p>}
           <div className="mt-9">{children}</div>
@@ -51,7 +51,7 @@ export function OrDivider({ label = "หรือใช้อีเมล" }: { 
 
 export const inputClass =
   "w-full h-11 bg-transparent border-b border-gray-300 text-[15px] text-gray-900 placeholder:text-gray-400 " +
-  "focus:outline-none focus:border-orange-600 transition-colors"
+  "focus:outline-none focus:border-gray-900 transition-colors"
 
 const labelClass = "text-[13px] font-semibold text-gray-500" // ไม่ใส่ letter-spacing — ทำให้อักษรไทยแยกห่าง
 
@@ -63,7 +63,7 @@ export function Field({ label, name, className, ...props }: InputProps) {
     <div className={className}>
       <label htmlFor={props.id ?? name} className={cn(labelClass, "block mb-1")}>
         {label}
-        {props.required && <span className="text-orange-600 ml-1">*</span>}
+        {props.required && <span className="text-gray-900 ml-1">*</span>}
       </label>
       <input id={name} name={name} className={inputClass} {...props} />
     </div>
@@ -78,7 +78,7 @@ export function PasswordField({ label, name, className, ...props }: InputProps) 
       <div className="flex items-baseline justify-between mb-1">
         <label htmlFor={props.id ?? name} className={labelClass}>
           {label}
-          {props.required && <span className="text-orange-600 ml-1">*</span>}
+          {props.required && <span className="text-gray-900 ml-1">*</span>}
         </label>
         <button
           type="button"
@@ -99,7 +99,7 @@ export function SubmitButton({ loading, children }: { loading: boolean; children
     <button
       type="submit"
       disabled={loading}
-      className="w-full h-12 rounded-full bg-orange-600 text-white text-[15px] font-semibold hover:bg-orange-700 transition-colors disabled:bg-orange-300 disabled:cursor-not-allowed inline-flex items-center justify-center"
+      className="w-full h-12 rounded-full bg-gray-900 text-white text-[15px] font-semibold hover:bg-gray-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed inline-flex items-center justify-center"
     >
       {loading ? <Spinner /> : children}
     </button>

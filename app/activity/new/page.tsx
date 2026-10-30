@@ -83,15 +83,15 @@ export default async function NewActivityPage({
       <div className="max-w-2xl mx-auto">
         <Link
           href={src ? `/activity/${src.id}` : '/activity'}
-          className="inline-flex items-center gap-1.5 text-sm text-orange-700 hover:text-orange-800 mb-6"
+          className="inline-flex items-center gap-1.5 text-sm text-gray-900 hover:text-gray-600 mb-6"
         >
           <ArrowLeft className="w-4 h-4" /> {src ? 'กลับไปงานต้นฉบับ' : 'งานของฉัน'}
         </Link>
 
         <h1 className="text-2xl font-bold text-gray-800">บันทึกการดำเนินงาน</h1>
         {src ? (
-          <div className="mt-3 mb-8 flex items-start gap-2 px-4 py-3 rounded-xl border border-orange-200 bg-orange-50 text-sm text-gray-700">
-            <Copy className="w-4 h-4 mt-0.5 shrink-0 text-orange-600" />
+          <div className="mt-3 mb-8 flex items-start gap-2 px-4 py-3 rounded-xl border border-gray-300 bg-gray-50 text-sm text-gray-700">
+            <Copy className="w-4 h-4 mt-0.5 shrink-0 text-gray-900" />
             <p>
               คัดลอกจาก <span className="font-medium">{src.title}</span> (ต.{src.district} จ.{src.province}) —
               กรอกประเด็น รายละเอียด วันที่ ภาคี ทีม และลิงก์ไว้ให้แล้ว

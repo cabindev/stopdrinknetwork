@@ -115,7 +115,7 @@ export default async function StoryPage({ params }: { params: Promise<{ id: stri
   const lead = story.storyLead || story.description;
   const section = 'mt-8';
   const h2 = 'text-lg font-bold text-gray-800 mb-3 flex items-center gap-2';
-  const num = 'flex w-7 h-7 rounded-full bg-orange-600 text-white text-sm font-bold items-center justify-center shrink-0';
+  const num = 'flex w-7 h-7 rounded-full bg-gray-900 text-white text-sm font-bold items-center justify-center shrink-0';
 
   return (
     <main className="min-h-screen bg-white pt-20 pb-16 px-4">
@@ -129,43 +129,43 @@ export default async function StoryPage({ params }: { params: Promise<{ id: stri
             </Link>
           </div>
         )}
-        <Link href="/stories" className="inline-flex items-center gap-1.5 text-sm text-orange-700 hover:text-orange-800 mb-5">
+        <Link href="/stories" className="inline-flex items-center gap-1.5 text-sm text-gray-900 hover:text-gray-600 mb-5">
           <ArrowLeft className="w-4 h-4" /> กรณีศึกษาทั้งหมด
         </Link>
 
-        <p className="text-xs font-medium text-orange-700">
+        <p className="text-xs font-medium text-gray-900">
           {story.category.name}
           {story.subCategory && <> › {story.subCategory.name}</>}
         </p>
         <h1 className="mt-1 text-2xl sm:text-3xl font-bold text-gray-900 leading-snug">{story.title}</h1>
         <p className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-600">
           <span className="inline-flex items-center gap-1.5">
-            <MapPin className="w-4 h-4 text-orange-600" /> {storyPlace(story)} · {getRegionLabel(story.region as HealthZone)}
-            {story.areas.length > 0 && <span className="text-orange-700">· และอีก {story.areas.length} พื้นที่</span>}
+            <MapPin className="w-4 h-4 text-gray-900" /> {storyPlace(story)} · {getRegionLabel(story.region as HealthZone)}
+            {story.areas.length > 0 && <span className="text-gray-900">· และอีก {story.areas.length} พื้นที่</span>}
           </span>
           {started && (
             <span className="inline-flex items-center gap-1.5">
-              <CalendarDays className="w-4 h-4 text-orange-600" /> เริ่ม{started}
+              <CalendarDays className="w-4 h-4 text-gray-900" /> เริ่ม{started}
             </span>
           )}
         </p>
         {story.series && seriesItems.length > 1 && (
           <Link
             href={`/stories/series/${story.series.id}`}
-            className="mt-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-orange-200 bg-orange-50 text-xs text-orange-800 hover:bg-orange-100"
+            className="mt-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-gray-300 bg-gray-50 text-xs text-gray-900 hover:bg-gray-100"
           >
             <Layers className="w-3.5 h-3.5" /> ชุดกรณีศึกษา: {story.series.title}
-            {seriesPos >= 0 && <span className="text-orange-600">· เรื่องที่ {seriesPos + 1}/{seriesItems.length}</span>}
+            {seriesPos >= 0 && <span className="text-gray-900">· เรื่องที่ {seriesPos + 1}/{seriesItems.length}</span>}
           </Link>
         )}
 
         {coverSrc ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={coverSrc} alt={cover?.caption || story.title} className="mt-6 w-full aspect-video object-cover rounded-2xl border border-orange-100 bg-orange-50" />
+          <img src={coverSrc} alt={cover?.caption || story.title} className="mt-6 w-full aspect-video object-cover rounded-2xl border border-gray-200 bg-gray-50" />
         ) : (
           storyLogoUrl(story) && (
             // ยังไม่มีรูปเปิดเผย → โลโก้ประเด็นกลางกรอบ (เตี้ยกว่า 16:9 ไม่ให้ที่ว่างเยอะเกิน)
-            <div className="mt-6 w-full aspect-[21/9] rounded-2xl border border-orange-100 bg-orange-50 flex items-center justify-center">
+            <div className="mt-6 w-full aspect-[21/9] rounded-2xl border border-gray-200 bg-gray-50 flex items-center justify-center">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={storyLogoUrl(story)!}
@@ -179,8 +179,8 @@ export default async function StoryPage({ params }: { params: Promise<{ id: stri
         {stats.length > 0 && (
           <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3">
             {stats.map((s) => (
-              <div key={s.label} className="rounded-2xl border border-orange-100 bg-orange-50/50 p-4 text-center">
-                <p className="text-2xl font-bold text-orange-700">{s.value}</p>
+              <div key={s.label} className="rounded-2xl border border-gray-200 bg-gray-50/50 p-4 text-center">
+                <p className="text-2xl font-bold text-gray-900">{s.value}</p>
                 <p className="text-xs text-gray-500 mt-0.5">{s.label}</p>
               </div>
             ))}
@@ -195,10 +195,10 @@ export default async function StoryPage({ params }: { params: Promise<{ id: stri
         {/* พื้นที่ที่เกี่ยวข้อง — ระดับตำบล ไม่มีพิกัด (STORY_SELECT) */}
         {story.areas.length > 0 && (
           <section className={section}>
-            <h2 className={h2}><MapPin className="w-5 h-5 text-orange-600" /> พื้นที่ที่เกี่ยวข้อง</h2>
+            <h2 className={h2}><MapPin className="w-5 h-5 text-gray-900" /> พื้นที่ที่เกี่ยวข้อง</h2>
             <ul className="grid sm:grid-cols-2 gap-3">
               {story.areas.map((a) => (
-                <li key={a.id} className="rounded-xl border border-orange-100 bg-orange-50/40 p-3">
+                <li key={a.id} className="rounded-xl border border-gray-200 bg-gray-50/40 p-3">
                   <p className="text-sm font-medium text-gray-800">{a.areaName || `ต.${a.district}`}</p>
                   <p className="text-xs text-gray-500">ต.{a.district} อ.{a.amphoe} จ.{a.province}</p>
                   {a.note && <p className="mt-1 text-sm text-gray-700">{a.note}</p>}
@@ -220,8 +220,8 @@ export default async function StoryPage({ params }: { params: Promise<{ id: stri
             <h2 className={h2}><span className={num}>{story.storyProcess ? 3 : 2}</span> นโยบาย / กติกาที่เกิดขึ้น</h2>
             <ul className="space-y-2">
               {levels.map((l) => (
-                <li key={l} className="flex flex-wrap items-start gap-2 rounded-xl border border-orange-100 p-3">
-                  <span className="shrink-0 px-2.5 py-0.5 rounded-full bg-orange-600 text-white text-xs font-medium">
+                <li key={l} className="flex flex-wrap items-start gap-2 rounded-xl border border-gray-200 p-3">
+                  <span className="shrink-0 px-2.5 py-0.5 rounded-full bg-gray-900 text-white text-xs font-medium">
                     ระดับ{POLICY_LABEL[l]}
                   </span>
                   <span className="text-sm text-gray-800">{policyDetailText(details[l]) || 'มีนโยบาย/ข้อตกลง'}</span>
@@ -238,10 +238,10 @@ export default async function StoryPage({ params }: { params: Promise<{ id: stri
                         href={f.src}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl border border-orange-100 hover:bg-orange-50"
+                        className="flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl border border-gray-200 hover:bg-gray-50"
                       >
                         <span className="flex items-center gap-2 min-w-0">
-                          <FileText className="w-4 h-4 text-orange-600 shrink-0" />
+                          <FileText className="w-4 h-4 text-gray-900 shrink-0" />
                           <span className="text-sm text-gray-700 truncate">{f.fileName}</span>
                         </span>
                         <Download className="w-4 h-4 text-gray-400 shrink-0" />
@@ -256,24 +256,24 @@ export default async function StoryPage({ params }: { params: Promise<{ id: stri
 
         {story.links.length > 0 && (
           <section className={section}>
-            <h2 className={h2}><Link2 className="w-5 h-5 text-orange-600" /> ติดตามเพิ่มเติม</h2>
+            <h2 className={h2}><Link2 className="w-5 h-5 text-gray-900" /> ติดตามเพิ่มเติม</h2>
             <LinkList links={story.links} />
           </section>
         )}
 
         {partners.length > 0 && (
           <section className={section}>
-            <h2 className={h2}><Handshake className="w-5 h-5 text-orange-600" /> ภาคีที่ร่วมขับเคลื่อน</h2>
+            <h2 className={h2}><Handshake className="w-5 h-5 text-gray-900" /> ภาคีที่ร่วมขับเคลื่อน</h2>
             <div className="flex flex-wrap gap-1.5">
               {partners.map((p) => (
-                <span key={p} className="px-3 py-1 rounded-full bg-orange-50 border border-orange-100 text-sm text-gray-700">{p}</span>
+                <span key={p} className="px-3 py-1 rounded-full bg-gray-50 border border-gray-200 text-sm text-gray-700">{p}</span>
               ))}
             </div>
           </section>
         )}
 
         {story.storyLessons && (
-          <section className={`${section} rounded-2xl bg-orange-50/60 border border-orange-100 p-5`}>
+          <section className={`${section} rounded-2xl bg-gray-50/60 border border-gray-200 p-5`}>
             <h2 className={h2}>💡 ปัจจัยสำเร็จ / ข้อควรระวัง</h2>
             <p className="text-[15px] text-gray-700 leading-relaxed whitespace-pre-wrap">{story.storyLessons}</p>
           </section>
@@ -298,8 +298,8 @@ export default async function StoryPage({ params }: { params: Promise<{ id: stri
 
         {/* อ่านต่อในชุดนี้ — ทุกเรื่องในชุด เรื่องปัจจุบันเน้นสี */}
         {story.series && seriesItems.length > 1 && (
-          <section className={`${section} rounded-2xl border border-orange-200 p-5`} aria-label="อ่านต่อในชุดนี้">
-            <p className="text-xs font-medium text-orange-700 flex items-center gap-1.5">
+          <section className={`${section} rounded-2xl border border-gray-300 p-5`} aria-label="อ่านต่อในชุดนี้">
+            <p className="text-xs font-medium text-gray-900 flex items-center gap-1.5">
               <Layers className="w-4 h-4" /> ชุดกรณีศึกษา · {seriesItems.length} เรื่อง
             </p>
             <h2 className="mt-1 text-base font-bold text-gray-800">{story.series.title}</h2>
@@ -307,11 +307,11 @@ export default async function StoryPage({ params }: { params: Promise<{ id: stri
               {seriesItems.map((x, i) => (
                 <li key={x.id}>
                   {x.id === story.id ? (
-                    <span className="flex items-start gap-2 rounded-lg bg-orange-50 px-2 py-1.5 text-sm font-semibold text-orange-800" aria-current="page">
+                    <span className="flex items-start gap-2 rounded-lg bg-gray-50 px-2 py-1.5 text-sm font-semibold text-gray-900" aria-current="page">
                       <span className="w-5 shrink-0 text-right">{i + 1}.</span> {x.title}
                     </span>
                   ) : (
-                    <Link href={`/stories/${x.id}`} className="flex items-start gap-2 rounded-lg px-2 py-1.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-800">
+                    <Link href={`/stories/${x.id}`} className="flex items-start gap-2 rounded-lg px-2 py-1.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-gray-600">
                       <span className="w-5 shrink-0 text-right text-gray-400">{i + 1}.</span>
                       <span className="flex-1">{x.title}</span>
                       <span className="shrink-0 text-xs text-gray-400">จ.{x.province}</span>
@@ -320,7 +320,7 @@ export default async function StoryPage({ params }: { params: Promise<{ id: stri
                 </li>
               ))}
             </ol>
-            <Link href={`/stories/series/${story.series.id}`} className="mt-3 inline-block text-sm font-medium text-orange-700 underline">
+            <Link href={`/stories/series/${story.series.id}`} className="mt-3 inline-block text-sm font-medium text-gray-900 underline">
               ดูทั้งชุด
             </Link>
           </section>
@@ -329,27 +329,27 @@ export default async function StoryPage({ params }: { params: Promise<{ id: stri
         {/* เรื่องงานศพ → ชี้ไปเครื่องมือ "ส่งด้วยใจ" + สื่อรณรงค์ 3D
             (เงื่อนไข: ประเด็นย่อยงานศพปลอดเหล้า หรือชื่อเรื่องมีคำว่างานศพ เช่น #151 ที่อยู่หมวด Civic Space) */}
         {(story.subCategory?.name === FUNERAL_SUB || story.title.includes('งานศพ')) && (
-          <section className={`${section} rounded-2xl bg-orange-50/60 border border-orange-100 p-5`} aria-label="ส่งด้วยใจ">
+          <section className={`${section} rounded-2xl bg-gray-50/60 border border-gray-200 p-5`} aria-label="ส่งด้วยใจ">
             <p className="flex items-center gap-2 text-base font-bold text-gray-800">
-              <ChanFlowerIcon className="w-5 h-5 text-orange-600" /> ส่งด้วยใจ — วางแผนงานศพด้วยตัวเอง
+              <ChanFlowerIcon className="w-5 h-5 text-gray-900" /> ส่งด้วยใจ — วางแผนงานศพด้วยตัวเอง
             </p>
             <p className="mt-1 text-sm text-gray-600">
               เครื่องมือให้ครอบครัววางแผนทีละขั้น ค้นข้อตกลงในตำบล และพิมพ์ป้าย &ldquo;ไม่เลี้ยงเหล้า&rdquo; ได้เลย ไม่ต้องสมัครสมาชิก
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
-              <Link href="/farewell" className="inline-flex items-center gap-1.5 min-h-10 px-4 rounded-full bg-orange-600 text-sm font-medium text-white hover:bg-orange-700">
+              <Link href="/farewell" className="inline-flex items-center gap-1.5 min-h-10 px-4 rounded-full bg-gray-900 text-sm font-medium text-white hover:bg-gray-700">
                 เปิดส่งด้วยใจ
               </Link>
-              {JOURNEY_PUBLIC && <Link href="/farewell/journey" className="inline-flex items-center gap-1.5 min-h-10 px-4 rounded-full border border-orange-200 text-sm font-medium text-orange-700 hover:bg-white">
+              {JOURNEY_PUBLIC && <Link href="/farewell/journey" className="inline-flex items-center gap-1.5 min-h-10 px-4 rounded-full border border-gray-300 text-sm font-medium text-gray-900 hover:bg-white">
                 ชมสื่อรณรงค์ เส้นทางสุดท้าย (3D)
               </Link>}
             </div>
           </section>
         )}
 
-        <section className={`${section} pt-6 border-t border-orange-100 flex flex-wrap items-center justify-between gap-3`}>
+        <section className={`${section} pt-6 border-t border-gray-200 flex flex-wrap items-center justify-between gap-3`}>
           <p className="text-sm text-gray-600">
-            สนใจทำในพื้นที่ของคุณ? <Link href="/auth/signup" className="font-medium text-orange-700 underline">เข้าร่วมเครือข่ายงดเหล้า</Link>
+            สนใจทำในพื้นที่ของคุณ? <Link href="/auth/signup" className="font-medium text-gray-900 underline">เข้าร่วมเครือข่ายงดเหล้า</Link>
           </p>
           {!preview && <ShareButtons title={story.title} />}
         </section>
@@ -359,7 +359,7 @@ export default async function StoryPage({ params }: { params: Promise<{ id: stri
             <h2 className="text-base font-bold text-gray-800 mb-3">กรณีศึกษาใกล้เคียง</h2>
             <div className="grid sm:grid-cols-3 gap-3">
               {related.map((r) => (
-                <Link key={r.id} href={`/stories/${r.id}`} className="block rounded-xl border border-orange-100 p-3 hover:border-orange-300">
+                <Link key={r.id} href={`/stories/${r.id}`} className="block rounded-xl border border-gray-200 p-3 hover:border-gray-400">
                   <p className="text-sm font-medium text-gray-800 line-clamp-2">{r.title}</p>
                   <p className="mt-1 text-xs text-gray-500">จ.{r.province}</p>
                 </Link>

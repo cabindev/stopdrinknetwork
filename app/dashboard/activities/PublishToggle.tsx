@@ -41,8 +41,8 @@ export default function PublishToggle({ activityId, initial }: { activityId: num
       title={on ? 'เผยแพร่อยู่ — กดเพื่อยกเลิก' : 'ยังไม่เผยแพร่ — กดเพื่อเผยแพร่'}
       onClick={handleToggle}
       disabled={saving}
-      className={`relative inline-flex h-5 w-9 flex-shrink-0 items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 disabled:opacity-60 ${
-        on ? 'bg-orange-600' : 'bg-gray-200'
+      className={`relative inline-flex h-5 w-9 flex-shrink-0 items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-400 disabled:opacity-60 ${
+        on ? 'bg-gray-900' : 'bg-gray-200'
       }`}
     >
       <span

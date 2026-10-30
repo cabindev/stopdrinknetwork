@@ -18,7 +18,7 @@ export interface ProfileInitial {
 }
 
 const inputCls =
-  'w-full px-3 py-2.5 text-sm text-gray-900 bg-white border border-orange-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-orange-400 transition-all';
+  'w-full px-3 py-2.5 text-sm text-gray-900 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-gray-500 transition-all';
 const labelCls = 'block text-gray-700 text-sm font-medium mb-1';
 
 export default function ProfileForm({ initial }: { initial: ProfileInitial }) {
@@ -102,7 +102,7 @@ export default function ProfileForm({ initial }: { initial: ProfileInitial }) {
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* รูปโปรไฟล์ */}
-      <section className="bg-white rounded-2xl border border-orange-100 p-6">
+      <section className="bg-white rounded-2xl border border-gray-200 p-6">
         <h2 className="text-base font-semibold text-gray-800 mb-4">รูปโปรไฟล์</h2>
         <div className="flex items-center gap-5">
           {preview && !removeImage ? (
@@ -110,11 +110,11 @@ export default function ProfileForm({ initial }: { initial: ProfileInitial }) {
             <img
               src={preview}
               alt="รูปโปรไฟล์"
-              className="w-24 h-24 rounded-full object-cover border-2 border-orange-100"
+              className="w-24 h-24 rounded-full object-cover border-2 border-gray-200"
             />
           ) : (
-            <span className="flex w-24 h-24 rounded-full bg-orange-50 border-2 border-orange-100 items-center justify-center">
-              <User className="w-10 h-10 text-orange-300" />
+            <span className="flex w-24 h-24 rounded-full bg-gray-50 border-2 border-gray-200 items-center justify-center">
+              <User className="w-10 h-10 text-gray-400" />
             </span>
           )}
 
@@ -122,7 +122,7 @@ export default function ProfileForm({ initial }: { initial: ProfileInitial }) {
             <button
               type="button"
               onClick={() => fileRef.current?.click()}
-              className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-orange-200 text-orange-700 text-sm font-medium hover:bg-orange-50 transition-colors"
+              className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-300 text-gray-900 text-sm font-medium hover:bg-gray-50 transition-colors"
             >
               <Camera className="w-4 h-4" /> เลือกรูปใหม่
             </button>
@@ -158,7 +158,7 @@ export default function ProfileForm({ initial }: { initial: ProfileInitial }) {
       </section>
 
       {/* ข้อมูลส่วนตัว */}
-      <section className="bg-white rounded-2xl border border-orange-100 p-6">
+      <section className="bg-white rounded-2xl border border-gray-200 p-6">
         <h2 className="text-base font-semibold text-gray-800 mb-4">ข้อมูลส่วนตัว</h2>
         <div className="grid sm:grid-cols-2 gap-4">
           <div>
@@ -225,7 +225,7 @@ export default function ProfileForm({ initial }: { initial: ProfileInitial }) {
         type="submit"
         disabled={saving}
         className={`w-full py-3 rounded-lg font-medium text-white transition-all ${
-          saving ? 'bg-orange-400 cursor-not-allowed' : 'bg-orange-600 hover:bg-orange-700'
+          saving ? 'bg-gray-700 cursor-not-allowed' : 'bg-gray-900 hover:bg-gray-700'
         }`}
       >
         <span className="inline-flex items-center gap-2">

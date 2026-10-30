@@ -12,7 +12,7 @@ import LocationField from './LocationField';
 import type { PinValue } from './LocationPicker';
 
 const inputCls =
-  'w-full px-3 py-2 text-sm text-gray-900 bg-white border border-orange-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-orange-400';
+  'w-full px-3 py-2 text-sm text-gray-900 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-gray-500';
 
 export default function ExtraAreasField({ value, onChange }: { value: ExtraAreaInput[]; onChange: (v: ExtraAreaInput[]) => void }) {
   const [adding, setAdding] = useState(false);
@@ -61,9 +61,9 @@ export default function ExtraAreasField({ value, onChange }: { value: ExtraAreaI
   const update = (i: number, patch: Partial<ExtraAreaInput>) => onChange(value.map((a, j) => (j === i ? { ...a, ...patch } : a)));
 
   return (
-    <div className="mt-6 pt-5 border-t border-orange-100">
+    <div className="mt-6 pt-5 border-t border-gray-200">
       <div className="flex items-center gap-2">
-        <MapPinned className="w-4 h-4 text-orange-600" />
+        <MapPinned className="w-4 h-4 text-gray-900" />
         <span className="text-sm font-semibold text-gray-800">พื้นที่ที่เกี่ยวข้อง</span>
         <span className="text-xs text-gray-400">(ไม่บังคับ · {value.length}/{MAX_EXTRA_AREAS})</span>
       </div>
@@ -75,9 +75,9 @@ export default function ExtraAreasField({ value, onChange }: { value: ExtraAreaI
       {value.length > 0 && (
         <ul className="mt-3 space-y-2">
           {value.map((a, i) => (
-            <li key={`${a.district}|${a.amphoe}|${a.province}|${a.areaName}`} className="rounded-xl border border-orange-100 bg-orange-50/40 p-3">
+            <li key={`${a.district}|${a.amphoe}|${a.province}|${a.areaName}`} className="rounded-xl border border-gray-200 bg-gray-50/40 p-3">
               <div className="flex items-start gap-2">
-                <span className="mt-0.5 w-5 h-5 shrink-0 rounded-full bg-orange-600 text-white text-[11px] font-semibold flex items-center justify-center">
+                <span className="mt-0.5 w-5 h-5 shrink-0 rounded-full bg-gray-900 text-white text-[11px] font-semibold flex items-center justify-center">
                   {i + 1}
                 </span>
                 <div className="min-w-0 flex-1">
@@ -109,7 +109,7 @@ export default function ExtraAreasField({ value, onChange }: { value: ExtraAreaI
       )}
 
       {adding ? (
-        <div className="mt-3 rounded-xl border border-orange-200 p-3 space-y-3">
+        <div className="mt-3 rounded-xl border border-gray-300 p-3 space-y-3">
           <LocationField
             location={location}
             pin={pin}
@@ -134,7 +134,7 @@ export default function ExtraAreasField({ value, onChange }: { value: ExtraAreaI
               type="button"
               onClick={add}
               disabled={!location}
-              className="inline-flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg bg-orange-600 text-white hover:bg-orange-700 disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg bg-gray-900 text-white hover:bg-gray-700 disabled:opacity-50"
             >
               <Plus className="w-4 h-4" /> เพิ่มพื้นที่นี้
             </button>
@@ -144,7 +144,7 @@ export default function ExtraAreasField({ value, onChange }: { value: ExtraAreaI
                 resetDraft();
                 setAdding(false);
               }}
-              className="px-3 py-2 text-sm rounded-lg border border-orange-200 text-gray-600 hover:bg-orange-50"
+              className="px-3 py-2 text-sm rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-50"
             >
               ยกเลิก
             </button>
@@ -155,7 +155,7 @@ export default function ExtraAreasField({ value, onChange }: { value: ExtraAreaI
           <button
             type="button"
             onClick={() => setAdding(true)}
-            className="mt-3 inline-flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg border border-orange-200 text-orange-700 hover:bg-orange-50"
+            className="mt-3 inline-flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg border border-gray-300 text-gray-900 hover:bg-gray-50"
           >
             <Plus className="w-4 h-4" /> เพิ่มพื้นที่ที่เกี่ยวข้อง
           </button>

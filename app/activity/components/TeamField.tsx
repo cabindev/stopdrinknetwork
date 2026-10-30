@@ -17,7 +17,7 @@ const Avatar = ({ p, size = 'w-6 h-6' }: { p: TeamPerson; size?: string }) =>
     // eslint-disable-next-line @next/next/no-img-element
     <img src={p.image} alt="" className={`${size} rounded-full object-cover`} />
   ) : (
-    <span className={`${size} rounded-full bg-orange-100 text-orange-700 flex items-center justify-center`}>
+    <span className={`${size} rounded-full bg-gray-100 text-gray-900 flex items-center justify-center`}>
       <UserRound className="w-3.5 h-3.5" />
     </span>
   );
@@ -56,9 +56,9 @@ export default function TeamField({
   };
 
   return (
-    <section className="bg-white rounded-2xl border border-orange-100 p-6">
+    <section className="bg-white rounded-2xl border border-gray-200 p-6">
       <div className="flex items-center gap-2">
-        <UsersRound className="w-5 h-5 text-orange-600" />
+        <UsersRound className="w-5 h-5 text-gray-900" />
         <h2 className="text-base font-semibold text-gray-800">ทีมงาน</h2>
         <span className="text-xs text-gray-400">(ไม่บังคับ)</span>
       </div>
@@ -68,16 +68,16 @@ export default function TeamField({
 
       <div className="mt-3 flex flex-wrap items-center gap-2" data-testid="team-chips">
         {owner && (
-          <span className="inline-flex items-center gap-1.5 pl-1 pr-3 py-1 rounded-full bg-orange-600 text-white text-sm">
+          <span className="inline-flex items-center gap-1.5 pl-1 pr-3 py-1 rounded-full bg-gray-900 text-white text-sm">
             <Avatar p={owner} /> {owner.name}
-            <span className="text-[10px] text-orange-100">ผู้เขียน</span>
+            <span className="text-[10px] text-gray-100">ผู้เขียน</span>
           </span>
         )}
         {value.map((id) => {
           const p = byId.get(id);
           if (!p) return null;
           return (
-            <span key={id} className="inline-flex items-center gap-1.5 pl-1 pr-1.5 py-1 rounded-full bg-orange-50 border border-orange-200 text-sm text-gray-800">
+            <span key={id} className="inline-flex items-center gap-1.5 pl-1 pr-1.5 py-1 rounded-full bg-gray-50 border border-gray-300 text-sm text-gray-800">
               <Avatar p={p} /> {p.name}
               <button
                 type="button"
@@ -93,7 +93,7 @@ export default function TeamField({
       </div>
 
       <div className="relative mt-3">
-        <Plus className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-orange-400" />
+        <Plus className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
         <input
           ref={inputRef}
           data-testid="team-search"
@@ -119,10 +119,10 @@ export default function TeamField({
             } else if (e.key === 'Escape') setOpen(false);
           }}
           placeholder="พิมพ์ชื่อเพื่อเพิ่มเพื่อนร่วมทีม"
-          className="w-full pl-9 pr-3 py-2.5 text-sm text-gray-900 bg-white border border-orange-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400"
+          className="w-full pl-9 pr-3 py-2.5 text-sm text-gray-900 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400"
         />
         {open && options.length > 0 && (
-          <ul role="listbox" className="absolute z-20 left-0 right-0 mt-1 bg-white rounded-xl border border-orange-200 shadow-lg max-h-64 overflow-y-auto">
+          <ul role="listbox" className="absolute z-20 left-0 right-0 mt-1 bg-white rounded-xl border border-gray-300 shadow-lg max-h-64 overflow-y-auto">
             {options.map((p, i) => (
               <li key={p.id} role="option" aria-selected={i === active}>
                 <button
@@ -130,7 +130,7 @@ export default function TeamField({
                   onMouseDown={(e) => e.preventDefault()}
                   onMouseEnter={() => setActive(i)}
                   onClick={() => add(p.id)}
-                  className={`w-full text-left px-3 py-2 flex items-center gap-2 ${i === active ? 'bg-orange-50' : ''}`}
+                  className={`w-full text-left px-3 py-2 flex items-center gap-2 ${i === active ? 'bg-gray-50' : ''}`}
                 >
                   <Avatar p={p} size="w-7 h-7" />
                   <span className="min-w-0">

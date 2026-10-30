@@ -35,7 +35,7 @@ const ROLE_LABEL: Record<string, string> = {
 };
 
 const inputCls =
-  'px-3 py-2 text-sm text-gray-800 bg-white border border-orange-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400';
+  'px-3 py-2 text-sm text-gray-800 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400';
 
 const esc = (v: unknown) =>
   String(v ?? '').replace(/[&<>"']/g, (c) =>
@@ -136,7 +136,7 @@ export default function PeopleTable({ people }: { people: PersonRow[] }) {
         p.meta{font-size:12px;color:#6b7280;margin:0 0 18px}
         table{width:100%;border-collapse:collapse;font-size:13px}
         th,td{border:1px solid #d1d5db;padding:8px 10px;vertical-align:middle}
-        th{background:#fff7ed;text-align:left;font-weight:600}
+        th{background:#f3f4f6;text-align:left;font-weight:600}
         td.c{text-align:center}
         tr{height:38px}
         @media print{@page{size:A4;margin:14mm}}
@@ -165,7 +165,7 @@ export default function PeopleTable({ people }: { people: PersonRow[] }) {
   return (
     <div>
       {/* ตัวกรอง */}
-      <div className="bg-white rounded-2xl border border-orange-100 p-4">
+      <div className="bg-white rounded-2xl border border-gray-200 p-4">
         <div className="grid sm:grid-cols-[1fr_auto] gap-2">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -188,47 +188,47 @@ export default function PeopleTable({ people }: { people: PersonRow[] }) {
             type="checkbox"
             checked={onlyWithPhone}
             onChange={(e) => setOnlyWithPhone(e.target.checked)}
-            className="accent-orange-600"
+            className="accent-gray-900"
           />
           เฉพาะคนที่มีเบอร์โทร
         </label>
       </div>
 
       {/* แถบเลือก + การกระทำ */}
-      <div className="mt-3 flex flex-wrap items-center justify-between gap-3 bg-orange-50 border border-orange-100 rounded-xl px-4 py-2.5">
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-3 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5">
         <span className="text-sm text-gray-700">
-          เลือกแล้ว <span className="font-bold text-orange-700">{selectedPeople.length}</span> คน
+          เลือกแล้ว <span className="font-bold text-gray-900">{selectedPeople.length}</span> คน
           <span className="text-gray-400"> · แสดง {filtered.length} จาก {people.length} คน</span>
           {selectedPeople.length > 0 && (
             <button
               onClick={() => setSelected(new Set())}
-              className="ml-2 text-xs text-gray-500 hover:text-orange-700 underline"
+              className="ml-2 text-xs text-gray-500 hover:text-gray-600 underline"
             >
               ล้างที่เลือก
             </button>
           )}
         </span>
         <div className="flex flex-wrap gap-2">
-          <button onClick={copyList} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-orange-200 bg-white text-orange-700 text-xs font-medium hover:bg-orange-50 transition-colors">
+          <button onClick={copyList} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-300 bg-white text-gray-900 text-xs font-medium hover:bg-gray-50 transition-colors">
             <Copy className="w-4 h-4" /> คัดลอกรายชื่อ
           </button>
-          <button onClick={exportExcel} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-orange-200 bg-white text-orange-700 text-xs font-medium hover:bg-orange-50 transition-colors">
+          <button onClick={exportExcel} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-300 bg-white text-gray-900 text-xs font-medium hover:bg-gray-50 transition-colors">
             <FileSpreadsheet className="w-4 h-4" /> ส่งออก Excel
           </button>
-          <button onClick={printSignSheet} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-orange-600 text-white text-xs font-medium hover:bg-orange-700 transition-colors">
+          <button onClick={printSignSheet} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-gray-900 text-white text-xs font-medium hover:bg-gray-700 transition-colors">
             <Printer className="w-4 h-4" /> พิมพ์ใบลงชื่อ
           </button>
         </div>
       </div>
 
       {/* ตาราง */}
-      <div className="mt-3 bg-white rounded-2xl border border-orange-100 overflow-hidden">
+      <div className="mt-3 bg-white rounded-2xl border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-orange-50/60 text-gray-600">
+            <thead className="bg-gray-50/60 text-gray-600">
               <tr>
                 <th className="px-3 py-3 w-10">
-                  <button onClick={toggleAll} aria-label="เลือกทั้งหมด" className="text-orange-600">
+                  <button onClick={toggleAll} aria-label="เลือกทั้งหมด" className="text-gray-900">
                     {allFilteredSelected ? <CheckSquare className="w-4 h-4" /> : <Square className="w-4 h-4 text-gray-300" />}
                   </button>
                 </th>
@@ -238,7 +238,7 @@ export default function PeopleTable({ people }: { people: PersonRow[] }) {
                 <th className="text-left font-medium px-3 py-3 whitespace-nowrap">อีเมล</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-orange-50">
+            <tbody className="divide-y divide-gray-100">
               {filtered.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="px-4 py-12 text-center text-gray-400">
@@ -252,11 +252,11 @@ export default function PeopleTable({ people }: { people: PersonRow[] }) {
                     <tr
                       key={p.id}
                       onClick={() => toggleOne(p.id)}
-                      className={`cursor-pointer ${isSel ? 'bg-orange-50/70' : 'hover:bg-orange-50/30'}`}
+                      className={`cursor-pointer ${isSel ? 'bg-gray-50/70' : 'hover:bg-gray-50/30'}`}
                     >
                       <td className="px-3 py-3">
                         {isSel ? (
-                          <CheckSquare className="w-4 h-4 text-orange-600" />
+                          <CheckSquare className="w-4 h-4 text-gray-900" />
                         ) : (
                           <Square className="w-4 h-4 text-gray-300" />
                         )}
@@ -266,7 +266,7 @@ export default function PeopleTable({ people }: { people: PersonRow[] }) {
                           {p.firstName} {p.lastName}
                         </span>
                         {p.role !== 'member' && (
-                          <span className="ml-2 inline-flex px-2 py-0.5 rounded-full bg-orange-100 text-orange-700 text-[10px]">
+                          <span className="ml-2 inline-flex px-2 py-0.5 rounded-full bg-gray-100 text-gray-900 text-[10px]">
                             {ROLE_LABEL[p.role]}
                           </span>
                         )}
@@ -281,7 +281,7 @@ export default function PeopleTable({ people }: { people: PersonRow[] }) {
                           <a
                             href={`tel:${p.phone}`}
                             onClick={(e) => e.stopPropagation()}
-                            className="inline-flex items-center gap-1 text-orange-700 hover:underline"
+                            className="inline-flex items-center gap-1 text-gray-900 hover:underline"
                           >
                             <Phone className="w-3 h-3" />
                             {p.phone}
@@ -294,7 +294,7 @@ export default function PeopleTable({ people }: { people: PersonRow[] }) {
                         <a
                           href={`mailto:${p.email}`}
                           onClick={(e) => e.stopPropagation()}
-                          className="inline-flex items-center gap-1 text-gray-500 hover:text-orange-700"
+                          className="inline-flex items-center gap-1 text-gray-500 hover:text-gray-600"
                         >
                           <Mail className="w-3 h-3" />
                           {p.email}

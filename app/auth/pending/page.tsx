@@ -23,14 +23,14 @@ export default async function PendingPage() {
       <div className="max-w-md mx-auto text-center">
         {approved ? (
           <>
-            <CheckCircle2 className="w-12 h-12 text-orange-600 mx-auto" />
+            <CheckCircle2 className="w-12 h-12 text-gray-900 mx-auto" />
             <h1 className="mt-4 text-xl font-bold text-gray-800">บัญชีได้รับอนุมัติแล้ว</h1>
             <p className="mt-2 text-sm text-gray-500">เข้าใช้งานส่วนของทีมได้แล้ว</p>
             <RefreshSessionButton />
           </>
         ) : (
           <>
-            <Clock className="w-12 h-12 text-orange-600 mx-auto" />
+            <Clock className="w-12 h-12 text-gray-900 mx-auto" />
             <h1 className="mt-4 text-xl font-bold text-gray-800">บัญชีรอผู้ดูแลระบบอนุมัติ</h1>
             <p className="mt-2 text-sm text-gray-500 leading-relaxed">
               บัญชี <span className="font-medium text-gray-700">{user?.email}</span> สมัครเรียบร้อยแล้ว
@@ -38,13 +38,13 @@ export default async function PendingPage() {
               ระหว่างนี้ดูแผนที่และกรณีศึกษาที่เผยแพร่ได้ตามปกติ
             </p>
             <div className="mt-6 flex flex-wrap justify-center gap-2">
-              <Link href="/map" className="px-4 py-2.5 rounded-xl bg-orange-600 text-white text-sm font-medium hover:bg-orange-700">
+              <Link href="/map" className="px-4 py-2.5 rounded-xl bg-gray-900 text-white text-sm font-medium hover:bg-gray-700">
                 ดูแผนที่
               </Link>
-              <Link href="/stories" className="px-4 py-2.5 rounded-xl border border-orange-200 text-orange-700 text-sm font-medium hover:bg-orange-50">
+              <Link href="/stories" className="px-4 py-2.5 rounded-xl border border-gray-300 text-gray-900 text-sm font-medium hover:bg-gray-50">
                 อ่านกรณีศึกษา
               </Link>
-              <Link href="/profile/edit" className="px-4 py-2.5 rounded-xl border border-orange-200 text-orange-700 text-sm font-medium hover:bg-orange-50">
+              <Link href="/profile/edit" className="px-4 py-2.5 rounded-xl border border-gray-300 text-gray-900 text-sm font-medium hover:bg-gray-50">
                 กรอกข้อมูลโปรไฟล์
               </Link>
             </div>

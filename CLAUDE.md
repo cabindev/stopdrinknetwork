@@ -11,9 +11,13 @@
 **Local DB**: `StopDrinkNetwork` (MySQL, MAMP)
 
 ## Design Theme
-- **สีหลัก**: ส้ม–ขาว–ดำ เท่านั้น **สีพื้นล้วน ห้ามใช้ gradient ทุกชนิด**
-- ปุ่ม/element หลัก: `bg-orange-600 text-white hover:bg-orange-700` — พื้นหลังหน้า: `bg-white`
-- Card ขาว `rounded-2xl border border-orange-100`, tint อ่อน `bg-orange-50`, ข้อความ gray-800/500 (โทนดำ)
+- **ธีมขาว-ดำ + สีส้มเป็นสีเน้นสีเดียว** (ผู้ใช้เลือก 30 ต.ค. 2026 — เดิมส้ม-ขาว-ดำ) · **สีพื้นล้วน ห้ามใช้ gradient ทุกชนิด**
+  - ปุ่มหลัก: `bg-gray-900 text-white hover:bg-gray-700` · ปุ่มรอง: `border border-gray-300 hover:bg-gray-50` · พื้นหลังหน้า: `bg-white`
+  - Card ขาว `rounded-2xl border border-gray-200`, tint อ่อน `bg-gray-50`, ข้อความ gray-900/600/500, ลิงก์ gray-900 (+ underline เมื่อจำเป็น)
+  - **สีส้ม (orange-600 / #ea580c) ใช้เฉพาะจุดเน้น:** โลโก้ Network, จุด/หมุดข้อมูลบนแผนที่ (หน้าแรก halftone, /map, แผนที่ข้อตกลง),
+    ป้าย/ชิป "ใหม่", คำเน้นในหัวหน้าแรก ("Areas") · ห้ามใช้ส้มกับปุ่ม กรอบ พื้นหลัง ลิงก์ทั่วไป
+  - แปลงทั้งเว็บด้วยตารางเดียว (ส้ม→เทา/ดำ) แล้วคืนส้มเฉพาะจุดข้างบน · หน้าส่งด้วยใจ/งานศพเป็นขาวดำอยู่แล้ว
+  - แถบข้างแดชบอร์ด: หัวพื้นขาว + โลโก้สี (เดิมพื้นส้มทึบ)
 - Font: **IBM Plex Sans Thai** ทั้งเว็บ (ผู้ใช้ขอ 30 ต.ค. 2026) — `next/font/google` ใน app/layout.tsx → `--font-ibm` บน `<html>`
   ใช้ใน globals.css (body) + tailwind fontFamily.sans · **ยกเว้นหน้าที่ใช้เสาชิงช้า** (คลาส `.sao` ใน farewell: หน้าแรก/3D/ข้อตกลง/ป้าย) ใช้ต่อตามเดิม
   · canvas (ภาพแผนที่ PNG, ใบสรุปแผน) อ่านฟอนต์จาก getComputedStyle ไม่เขียนชื่อฟอนต์ตายตัว
@@ -149,7 +153,8 @@ app/
 ├── utils/healthZones.ts          # โซนพื้นที่ 10 โซน (จาก sdn-mapportal) — จังหวัด→zone slug + ชื่อไทย + สี
 ├── dashboard/                    # Admin only (proxy.ts role=admin) — โครงสร้างเดียวกับ buddhistlent
 │   ├── layout.tsx                # DashboardProvider + TopNavProvider + DashboardClient + Toaster
-│   ├── page.tsx                  # Greeting + StatsOverview + QuickActions (?year= กรองปี)
+│   ├── page.tsx                  # Greeting + StatsOverview (ส่วนที่ 2 = PolicyOverview พายนโยบายงานศพ → /dashboard/policies?level=) + QuickActions (?year= กรองปี)
+│   ├── components/PolicyPie.tsx  # พาย SVG ฝั่ง server ใช้ร่วม: หน้าแรกแดชบอร์ด + /dashboard/policies
 │   ├── components/StatsOverview.tsx  # สถิติผู้บริหาร: ตัวเลขรวม, ช่องว่างพื้นที่, พื้นที่ทับซ้อน,
 │   │                             #   เทียบปีก่อน (YoY), แนวโน้ม 12 เดือน, งานรายประเด็น/รายโซน,
 │   │                             #   ตาราง % ความครอบคลุมรายจังหวัด (อำเภอที่มีงาน ÷ อำเภอทั้งหมด)

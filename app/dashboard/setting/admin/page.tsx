@@ -178,13 +178,13 @@ const AdminManagementPage: React.FC = () => {
         <div className="container mx-auto px-6 py-8">
           <div className="max-w-7xl mx-auto">
             <div className="animate-pulse space-y-6">
-              <div className="h-8 bg-orange-50 w-1/3 rounded"></div>
+              <div className="h-8 bg-gray-50 w-1/3 rounded"></div>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 {[...Array(4)].map((_, i) => (
-                  <div key={i} className="bg-orange-50 h-24 rounded-xl"></div>
+                  <div key={i} className="bg-gray-50 h-24 rounded-xl"></div>
                 ))}
               </div>
-              <div className="bg-orange-50 h-96 rounded-xl"></div>
+              <div className="bg-gray-50 h-96 rounded-xl"></div>
             </div>
           </div>
         </div>
@@ -200,7 +200,7 @@ const AdminManagementPage: React.FC = () => {
           <button
             type="button"
             onClick={fetchUsers}
-            className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors text-sm"
+            className="bg-gray-900 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors text-sm"
           >
             ลองใหม่
           </button>
@@ -218,13 +218,13 @@ const AdminManagementPage: React.FC = () => {
             <div className="flex items-center gap-6 mb-4">
               <Link
                 href="/dashboard"
-                className="flex items-center text-gray-500 hover:text-orange-600 transition-colors"
+                className="flex items-center text-gray-500 hover:text-gray-600 transition-colors"
               >
                 <ArrowLeft className="w-3 h-3 mr-2" />
                 <span className="text-sm font-light">กลับ</span>
               </Link>
               <h1 className="text-2xl font-semibold text-gray-900 flex items-center gap-3">
-                <ShieldCheck className="w-6 h-6 text-orange-600" />
+                <ShieldCheck className="w-6 h-6 text-gray-900" />
                 จัดการผู้ดูแลระบบ
               </h1>
             </div>
@@ -236,29 +236,29 @@ const AdminManagementPage: React.FC = () => {
           {/* Stats */}
           {stats && (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-              <div className="bg-white border border-orange-100 rounded-xl p-4">
+              <div className="bg-white border border-gray-200 rounded-xl p-4">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-xs font-light text-gray-500 mb-1">ผู้ใช้ทั้งหมด</p>
                     <p className="text-xl font-semibold text-gray-900">{stats.totalUsers}</p>
                   </div>
-                  <span className="flex w-9 h-9 rounded-lg bg-orange-50 items-center justify-center">
-                    <Users className="w-5 h-5 text-orange-500" />
+                  <span className="flex w-9 h-9 rounded-lg bg-gray-50 items-center justify-center">
+                    <Users className="w-5 h-5 text-gray-600" />
                   </span>
                 </div>
               </div>
-              <div className="bg-white border border-orange-100 rounded-xl p-4">
+              <div className="bg-white border border-gray-200 rounded-xl p-4">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-xs font-light text-gray-500 mb-1">ผู้ดูแลระบบ</p>
                     <p className="text-xl font-semibold text-gray-900">{stats.totalAdmins}</p>
                   </div>
-                  <span className="flex w-9 h-9 rounded-lg bg-orange-50 items-center justify-center">
-                    <ShieldCheck className="w-5 h-5 text-orange-500" />
+                  <span className="flex w-9 h-9 rounded-lg bg-gray-50 items-center justify-center">
+                    <ShieldCheck className="w-5 h-5 text-gray-600" />
                   </span>
                 </div>
               </div>
-              <div className="bg-white border border-orange-100 rounded-xl p-4">
+              <div className="bg-white border border-gray-200 rounded-xl p-4">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-xs font-light text-gray-500 mb-1">ผู้ใช้ทั่วไป</p>
@@ -269,7 +269,7 @@ const AdminManagementPage: React.FC = () => {
                   </span>
                 </div>
               </div>
-              <div className="bg-white border border-orange-100 rounded-xl p-4">
+              <div className="bg-white border border-gray-200 rounded-xl p-4">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-xs font-light text-gray-500 mb-1">ผู้ใช้ใหม่ (7 วัน)</p>
@@ -284,7 +284,7 @@ const AdminManagementPage: React.FC = () => {
           )}
 
           {/* Role Tabs */}
-          <div className="flex items-center gap-1 border-b border-orange-100 mb-6">
+          <div className="flex items-center gap-1 border-b border-gray-200 mb-6">
             {([
               { key: 'all', label: 'ทั้งหมด', count: stats?.totalUsers ?? users.length },
               { key: 'pending', label: 'รออนุมัติ', count: stats?.totalPending ?? users.filter(u => u.role === 'pending').length },
@@ -297,12 +297,12 @@ const AdminManagementPage: React.FC = () => {
                 onClick={() => setFilterRole(tab.key)}
                 className={`relative px-4 py-2.5 text-sm transition-colors -mb-px border-b-2 ${
                   filterRole === tab.key
-                    ? 'border-orange-500 text-orange-700 font-medium'
+                    ? 'border-gray-700 text-gray-900 font-medium'
                     : 'border-transparent text-gray-400 hover:text-gray-700'
                 }`}
               >
                 {tab.label}
-                <span className={`ml-1.5 text-xs ${filterRole === tab.key ? 'text-orange-400' : 'text-gray-300'}`}>
+                <span className={`ml-1.5 text-xs ${filterRole === tab.key ? 'text-gray-400' : 'text-gray-300'}`}>
                   {tab.count}
                 </span>
               </button>
@@ -318,37 +318,37 @@ const AdminManagementPage: React.FC = () => {
                 placeholder="ค้นหาชื่อ, นามสกุล, อีเมล..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 border border-orange-100 rounded-lg bg-white text-gray-900 focus:border-orange-400 focus:outline-none transition-colors font-light text-sm"
+                className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg bg-white text-gray-900 focus:border-gray-500 focus:outline-none transition-colors font-light text-sm"
               />
             </div>
           </div>
 
           {/* Users Table */}
-          <div className="bg-white border border-orange-100 rounded-xl overflow-hidden">
+          <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-orange-50/60 border-b border-orange-100">
+                <thead className="bg-gray-50/60 border-b border-gray-200">
                   <tr>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-orange-700 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-900 uppercase tracking-wider">
                       ผู้ใช้
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-orange-700 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-900 uppercase tracking-wider">
                       อีเมล
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-orange-700 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-900 uppercase tracking-wider">
                       สิทธิ์
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-orange-700 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-900 uppercase tracking-wider">
                       วันที่สมัคร
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-orange-700 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-900 uppercase tracking-wider">
                       การดำเนินการ
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-orange-50">
+                <tbody className="divide-y divide-gray-100">
                   {filteredUsers.map((user) => (
-                    <tr key={user.id} className={`transition-colors ${user.role === 'admin' ? 'bg-orange-50/40 hover:bg-orange-50' : 'hover:bg-orange-50/40'}`}>
+                    <tr key={user.id} className={`transition-colors ${user.role === 'admin' ? 'bg-gray-50/40 hover:bg-gray-50' : 'hover:bg-gray-50/40'}`}>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <div className="flex-shrink-0 h-10 w-10">
@@ -359,8 +359,8 @@ const AdminManagementPage: React.FC = () => {
                                 alt={`${user.firstName} ${user.lastName}`}
                               />
                             ) : (
-                              <div className="h-10 w-10 rounded-full bg-orange-100 flex items-center justify-center">
-                                <span className="text-sm font-medium text-orange-700">
+                              <div className="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center">
+                                <span className="text-sm font-medium text-gray-900">
                                   {user.firstName.charAt(0)}{user.lastName.charAt(0)}
                                 </span>
                               </div>
@@ -385,10 +385,10 @@ const AdminManagementPage: React.FC = () => {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                           user.role === 'pending'
-                            ? 'bg-white text-orange-700 border border-dashed border-orange-400'
+                            ? 'bg-white text-gray-900 border border-dashed border-gray-500'
                             : user.role === 'admin'
-                            ? 'bg-orange-100 text-orange-800'
-                            : 'bg-orange-50 text-orange-700'
+                            ? 'bg-gray-100 text-gray-900'
+                            : 'bg-gray-50 text-gray-900'
                         }`}>
                           {user.role === 'pending' ? (
                             <>
@@ -421,10 +421,10 @@ const AdminManagementPage: React.FC = () => {
                           disabled={updatingUsers.has(user.id)}
                           className={`inline-flex items-center px-3 py-1 border rounded-lg text-xs font-medium transition-colors ${
                             user.role === 'pending'
-                              ? 'border-orange-600 text-white bg-orange-600 hover:bg-orange-700'
+                              ? 'border-gray-900 text-white bg-gray-900 hover:bg-gray-700'
                               : user.role === 'admin'
                               ? 'border-red-200 text-red-600 bg-red-50 hover:bg-red-100'
-                              : 'border-orange-200 text-orange-700 bg-orange-50 hover:bg-orange-100'
+                              : 'border-gray-300 text-gray-900 bg-gray-50 hover:bg-gray-100'
                           } ${
                             updatingUsers.has(user.id)
                               ? 'opacity-50 cursor-not-allowed'
@@ -479,7 +479,7 @@ const AdminManagementPage: React.FC = () => {
             {/* No Results */}
             {filteredUsers.length === 0 && (
               <div className="text-center py-12">
-                <Users className="w-12 h-12 text-orange-200 mx-auto mb-4" />
+                <Users className="w-12 h-12 text-gray-200 mx-auto mb-4" />
                 <h3 className="text-lg font-light text-gray-600 mb-2">ไม่พบผู้ใช้</h3>
                 <p className="text-gray-400 font-light text-sm">ลองปรับเปลี่ยนเงื่อนไขการค้นหา</p>
               </div>

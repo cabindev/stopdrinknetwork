@@ -20,12 +20,12 @@ import { provinceAreaTotals, TOTAL_PROVINCES } from '@/app/lib/areaCoverage';
 const THAI_MONTHS = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
 
 const STATUS_META: Record<string, { text: string; cls: string }> = {
-  ACTIVE: { text: 'กำลังดำเนินการ', cls: 'bg-orange-100 text-orange-700' },
+  ACTIVE: { text: 'กำลังดำเนินการ', cls: 'bg-gray-100 text-gray-900' },
   PLANNING: { text: 'วางแผน', cls: 'bg-gray-100 text-gray-600' },
   COMPLETED: { text: 'เสร็จสิ้น', cls: 'bg-green-50 text-green-700' },
 };
 
-export default async function StatsOverview({ year }: { year?: number }) {
+export default async function StatsOverview({ year, second }: { year?: number; second?: React.ReactNode }) {
   const rows = await prisma.activity.findMany({
     where: FOCUS_WHERE, // เน้นงานศพปลอดเหล้า (lib/focus.ts)
     select: {
@@ -144,7 +144,7 @@ export default async function StatsOverview({ year }: { year?: number }) {
         <Link
           href={yearHref()}
           className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-            !year ? 'bg-orange-600 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-orange-50'
+            !year ? 'bg-gray-900 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
           }`}
         >
           ทุกปี
@@ -154,7 +154,7 @@ export default async function StatsOverview({ year }: { year?: number }) {
             key={y}
             href={yearHref(y)}
             className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-              year === y ? 'bg-orange-600 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-orange-50'
+              year === y ? 'bg-gray-900 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
             }`}
           >
             พ.ศ. {y + 543}
@@ -165,8 +165,8 @@ export default async function StatsOverview({ year }: { year?: number }) {
       {/* ตัวเลขรวม */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {stats.map(({ icon: Icon, label, value, sub }) => (
-          <div key={label} className="bg-white rounded-2xl border border-orange-100 p-4">
-            <Icon className="w-5 h-5 text-orange-500" />
+          <div key={label} className="bg-white rounded-2xl border border-gray-200 p-4">
+            <Icon className="w-5 h-5 text-gray-600" />
             <p className="mt-2 text-3xl font-bold text-gray-800">{value}</p>
             <p className="text-xs text-gray-600">{label}</p>
             <p className="text-[11px] text-gray-400 mt-0.5">{sub}</p>
@@ -174,9 +174,12 @@ export default async function StatsOverview({ year }: { year?: number }) {
         ))}
       </div>
 
+      {/* ส่วนที่ 2 (ต่อจากตัวเลขรวม): พายนโยบายงานศพ — ส่งมาจาก page.tsx (ผู้ใช้ขอ 30 ต.ค. 2026) */}
+      {second}
+
       {/* สัญญาณที่ผู้บริหารต้องเห็น */}
       <div className="grid sm:grid-cols-3 gap-3">
-        <div className="bg-white rounded-2xl border border-orange-100 p-4">
+        <div className="bg-white rounded-2xl border border-gray-200 p-4">
           <p className="flex items-center gap-1.5 text-xs text-gray-500">
             <MapPinOff className="w-4 h-4 text-gray-400" /> ช่องว่างพื้นที่
           </p>
@@ -188,9 +191,9 @@ export default async function StatsOverview({ year }: { year?: number }) {
           </p>
         </div>
 
-        <div className="bg-white rounded-2xl border border-orange-100 p-4">
+        <div className="bg-white rounded-2xl border border-gray-200 p-4">
           <p className="flex items-center gap-1.5 text-xs text-gray-500">
-            <Users2 className="w-4 h-4 text-orange-500" /> พื้นที่ทำงานทับซ้อน
+            <Users2 className="w-4 h-4 text-gray-600" /> พื้นที่ทำงานทับซ้อน
           </p>
           <p className="mt-1 text-2xl font-bold text-gray-800">
             {overlapProvinces.length} <span className="text-sm font-normal text-gray-500">จังหวัด</span>
@@ -200,9 +203,9 @@ export default async function StatsOverview({ year }: { year?: number }) {
           </p>
         </div>
 
-        <div className="bg-white rounded-2xl border border-orange-100 p-4">
+        <div className="bg-white rounded-2xl border border-gray-200 p-4">
           <p className="flex items-center gap-1.5 text-xs text-gray-500">
-            <TrendingUp className="w-4 h-4 text-orange-500" /> เทียบปีก่อน
+            <TrendingUp className="w-4 h-4 text-gray-600" /> เทียบปีก่อน
           </p>
           <p className="mt-1 text-2xl font-bold text-gray-800">
             {thisYearCount}
@@ -220,7 +223,7 @@ export default async function StatsOverview({ year }: { year?: number }) {
       </div>
 
       {/* แนวโน้มรายเดือน */}
-      <section className="bg-white rounded-2xl border border-orange-100 p-5">
+      <section className="bg-white rounded-2xl border border-gray-200 p-5">
         <h2 className="text-sm font-semibold text-gray-800">แนวโน้มการบันทึกงาน 12 เดือนล่าสุด</h2>
         <p className="text-[11px] text-gray-400 mb-4">นับตามวันเริ่มดำเนินการ (ถ้าไม่ระบุใช้วันที่บันทึก)</p>
         <div className="flex items-end gap-1.5 h-32">
@@ -228,7 +231,7 @@ export default async function StatsOverview({ year }: { year?: number }) {
             <div key={i} className="flex-1 flex flex-col items-center gap-1">
               <span className="text-[10px] text-gray-500">{m.count || ''}</span>
               <div
-                className="w-full rounded-t bg-orange-500"
+                className="w-full rounded-t bg-gray-800"
                 style={{ height: `${Math.max(2, (m.count / maxMonth) * 88)}px` }}
                 title={`${THAI_MONTHS[m.m]} ${m.y + 543}: ${m.count} งาน`}
               />
@@ -240,7 +243,7 @@ export default async function StatsOverview({ year }: { year?: number }) {
 
       {/* ประเด็นงาน + ภาค */}
       <div className="grid lg:grid-cols-2 gap-3">
-        <section className="bg-white rounded-2xl border border-orange-100 p-5">
+        <section className="bg-white rounded-2xl border border-gray-200 p-5">
           <h2 className="text-sm font-semibold text-gray-800 mb-3">งานรายประเด็น</h2>
           {catRows.length === 0 ? (
             <p className="text-sm text-gray-400">ยังไม่มีข้อมูล</p>
@@ -263,7 +266,7 @@ export default async function StatsOverview({ year }: { year?: number }) {
           )}
         </section>
 
-        <section className="bg-white rounded-2xl border border-orange-100 p-5">
+        <section className="bg-white rounded-2xl border border-gray-200 p-5">
           <h2 className="text-sm font-semibold text-gray-800 mb-3">งานรายภาค</h2>
           <ul className="space-y-2">
             {zoneRows.map((z) => (
@@ -271,7 +274,7 @@ export default async function StatsOverview({ year }: { year?: number }) {
                 <span className="text-xs text-gray-700 w-20 truncate">{z.label}</span>
                 <span className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
                   <span
-                    className="block h-full rounded-full bg-orange-500"
+                    className="block h-full rounded-full bg-gray-800"
                     style={{ width: `${(z.count / maxZone) * 100}%` }}
                   />
                 </span>
@@ -283,7 +286,7 @@ export default async function StatsOverview({ year }: { year?: number }) {
       </div>
 
       {/* ความหนาแน่นการทำงานรายจังหวัด */}
-      <section className="bg-white rounded-2xl border border-orange-100 p-5">
+      <section className="bg-white rounded-2xl border border-gray-200 p-5">
         <h2 className="text-sm font-semibold text-gray-800">ความหนาแน่นการทำงานรายจังหวัด</h2>
         <p className="text-[11px] text-gray-400 mb-4">
           เรียงจากจังหวัดที่มีงานมากที่สุด — คอลัมน์ท้ายบอกว่าภายในจังหวัดนั้นลงลึกกี่อำเภอแล้ว
@@ -305,7 +308,7 @@ export default async function StatsOverview({ year }: { year?: number }) {
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-orange-50">
+              <tbody className="divide-y divide-gray-100">
                 {coverageRows.map((c, i) => (
                   <tr key={c.province}>
                     <td className="py-2 text-gray-400 tabular-nums">{i + 1}</td>
@@ -314,7 +317,7 @@ export default async function StatsOverview({ year }: { year?: number }) {
                       <span className="flex items-center gap-2">
                         <span className="flex-1 h-2.5 bg-gray-100 rounded-full overflow-hidden">
                           <span
-                            className="block h-full rounded-full bg-orange-500"
+                            className="block h-full rounded-full bg-gray-800"
                             style={{ width: `${Math.max(3, (c.activities / maxProvinceActivities) * 100)}%` }}
                           />
                         </span>
@@ -337,7 +340,7 @@ export default async function StatsOverview({ year }: { year?: number }) {
       </section>
 
       {/* สถานะ + ทางลัด */}
-      <section className="bg-white rounded-2xl border border-orange-100 p-5">
+      <section className="bg-white rounded-2xl border border-gray-200 p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap gap-2">
             {Object.entries(STATUS_META).map(([key, s]) => (
@@ -352,20 +355,20 @@ export default async function StatsOverview({ year }: { year?: number }) {
           <div className="flex flex-wrap gap-2">
             <Link
               href="/dashboard/activities"
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-orange-600 text-white text-xs font-medium hover:bg-orange-700 transition-colors"
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-gray-900 text-white text-xs font-medium hover:bg-gray-700 transition-colors"
             >
               <Table2 className="w-4 h-4" /> ตารางงานทั้งหมด
             </Link>
             <Link
               href="/map"
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-orange-200 text-orange-700 text-xs font-medium hover:bg-orange-50 transition-colors"
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-300 text-gray-900 text-xs font-medium hover:bg-gray-50 transition-colors"
             >
               <MapIcon className="w-4 h-4" /> แผนที่รวม
             </Link>
             {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- ดาวน์โหลดไฟล์จาก API ต้องเป็น <a> ไม่ใช่ <Link> */}
             <a
               href="/api/activities/export"
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-orange-200 text-orange-700 text-xs font-medium hover:bg-orange-50 transition-colors"
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-300 text-gray-900 text-xs font-medium hover:bg-gray-50 transition-colors"
             >
               <FileSpreadsheet className="w-4 h-4" /> Excel
             </a>

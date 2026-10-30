@@ -114,7 +114,7 @@ export default async function AgreementMapSection({ className = '' }: { classNam
         {byRegion.length > 0 && <> — {byRegion.map((g) => `${g.label} ${g.count}`).join(' · ')}</>}
       </p>
 
-      <div className="mt-5 rounded-2xl border border-orange-100 bg-orange-50/50 p-3 sm:p-5">
+      <div className="mt-5 rounded-2xl border border-gray-200 bg-gray-50/50 p-3 sm:p-5">
         <svg
           viewBox={`${box.x0.toFixed(1)} ${box.y0.toFixed(1)} ${vbW.toFixed(1)} ${(box.y1 - box.y0).toFixed(1)}`}
           role="img"
@@ -160,13 +160,13 @@ export default async function AgreementMapSection({ className = '' }: { classNam
           })}
         </svg>
         <p className="mt-3 flex items-center justify-center gap-1.5 text-xs text-gray-500">
-          <span className="inline-block w-2.5 h-2.5 rounded-full bg-orange-600" /> ชุมชนที่มีข้อตกลงงานศพปลอดเหล้า (ตำแหน่งระดับตำบล)
+          <span className="inline-block w-2.5 h-2.5 rounded-full bg-gray-900" /> ชุมชนที่มีข้อตกลงงานศพปลอดเหล้า (ตำแหน่งระดับตำบล)
         </p>
       </div>
 
       <Link
         href="/farewell/local"
-        className="mt-4 inline-flex items-center gap-2 min-h-11 text-sm font-medium text-orange-700 hover:text-orange-800"
+        className="mt-4 inline-flex items-center gap-2 min-h-11 text-sm font-medium text-gray-900 hover:text-gray-600"
       >
         <MapPin className="w-4 h-4" /> ดูว่าตำบลของคุณมีข้อตกลงแล้วหรือยัง
       </Link>

@@ -34,7 +34,7 @@ interface FileItem {
 }
 
 const areaCls =
-  'w-full px-3 py-2.5 text-sm text-gray-900 bg-white border border-orange-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400';
+  'w-full px-3 py-2.5 text-sm text-gray-900 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400';
 
 export default function PublishForm({
   activityId,
@@ -107,7 +107,7 @@ export default function PublishForm({
 
   return (
     <div className="space-y-6">
-      <section className="bg-white rounded-2xl border border-orange-100 p-6 space-y-5">
+      <section className="bg-white rounded-2xl border border-gray-200 p-6 space-y-5">
         <h2 className="text-base font-semibold text-gray-800">เนื้อหาหน้ากรณีศึกษา</h2>
         {sections.map(([k, label, hint]) => (
           <div key={k}>
@@ -127,14 +127,14 @@ export default function PublishForm({
         </p>
       </section>
 
-      <section className="bg-white rounded-2xl border border-orange-100 p-6">
+      <section className="bg-white rounded-2xl border border-gray-200 p-6">
         <h2 className="text-base font-semibold text-gray-800">รูปและไฟล์ที่เปิดเผย</h2>
         <p className="text-xs text-gray-400 mt-1 mb-4">
           ติ๊กเฉพาะรูปที่ได้รับอนุญาตจากคนในภาพแล้ว (ระวังรูปเด็ก/หน้าบุคคลชัด ๆ) · ไฟล์นโยบายคือกติกาที่คนอื่นดาวน์โหลดไปปรับใช้ได้
         </p>
         {coverHidden && coverFile && (
-          <div role="alert" className="mb-4 flex flex-wrap items-start gap-2 rounded-xl border border-orange-300 bg-orange-50 p-3 text-sm text-gray-700">
-            <AlertTriangle className="w-4 h-4 mt-0.5 text-orange-600 shrink-0" />
+          <div role="alert" className="mb-4 flex flex-wrap items-start gap-2 rounded-xl border border-gray-400 bg-gray-50 p-3 text-sm text-gray-700">
+            <AlertTriangle className="w-4 h-4 mt-0.5 text-gray-900 shrink-0" />
             <p className="flex-1 min-w-0">
               รูปปก &quot;{coverFile.caption || coverFile.fileName}&quot; ยังไม่เปิดเผย — หน้ากรณีศึกษาจะ
               {fallbackCover ? <>ใช้ &quot;{fallbackCover.caption || fallbackCover.fileName}&quot; เป็นปกแทน</> : 'ไม่มีรูปปก (ใช้โลโก้ประเด็นแทน)'}
@@ -142,7 +142,7 @@ export default function PublishForm({
             <button
               type="button"
               onClick={() => setPicked((prev) => new Set(prev).add(coverFile.id))}
-              className="px-3 py-1 rounded-lg bg-orange-600 text-white text-xs font-medium hover:bg-orange-700"
+              className="px-3 py-1 rounded-lg bg-gray-900 text-white text-xs font-medium hover:bg-gray-700"
             >
               เปิดเผยรูปปก
             </button>
@@ -163,15 +163,15 @@ export default function PublishForm({
                       <li key={f.id}>
                         <label
                           className={`block rounded-xl border overflow-hidden cursor-pointer ${
-                            on ? 'border-orange-500 ring-2 ring-orange-200' : 'border-orange-100'
+                            on ? 'border-gray-700 ring-2 ring-gray-300' : 'border-gray-200'
                           }`}
                         >
                           {f.kind === 'IMAGE' ? (
                             // eslint-disable-next-line @next/next/no-img-element
                             <img src={f.src} alt={f.caption || f.fileName} className={`w-full h-24 object-cover ${on ? '' : 'opacity-60'}`} />
                           ) : (
-                            <div className="h-24 flex flex-col items-center justify-center gap-1 bg-orange-50/60 px-2">
-                              <FileText className="w-6 h-6 text-orange-600" />
+                            <div className="h-24 flex flex-col items-center justify-center gap-1 bg-gray-50/60 px-2">
+                              <FileText className="w-6 h-6 text-gray-900" />
                               <span className="text-[11px] text-gray-600 text-center line-clamp-2">{f.fileName}</span>
                             </div>
                           )}
@@ -188,7 +188,7 @@ export default function PublishForm({
                                 })
                               }
                               aria-label={`เปิดเผย ${f.fileName}`}
-                              className="accent-orange-600"
+                              className="accent-gray-900"
                             />
                             <span className="truncate">{on ? 'เปิดเผย' : 'ไม่เปิดเผย'}{f.isCover ? ' · ปก' : ''}</span>
                           </span>
@@ -203,7 +203,7 @@ export default function PublishForm({
       </section>
 
       {links.length > 0 && (
-        <section className="bg-white rounded-2xl border border-orange-100 p-6" data-testid="publish-links">
+        <section className="bg-white rounded-2xl border border-gray-200 p-6" data-testid="publish-links">
           <h2 className="text-base font-semibold text-gray-800">ลิงก์ที่แสดงบนหน้าสาธารณะ</h2>
           <p className="text-xs text-gray-400 mt-1 mb-4">
             ลิงก์ Google Drive ไม่ติ๊กให้ตั้งต้น — ตรวจก่อนว่าไฟล์ตั้งแชร์สาธารณะและไม่มีข้อมูลส่วนตัว
@@ -213,7 +213,7 @@ export default function PublishForm({
               const on = pickedLinks.has(l.id);
               return (
                 <li key={l.id}>
-                  <label className={`flex items-center gap-3 rounded-xl border px-3 py-2.5 cursor-pointer ${on ? 'border-orange-500 bg-orange-50/60' : 'border-orange-100'}`}>
+                  <label className={`flex items-center gap-3 rounded-xl border px-3 py-2.5 cursor-pointer ${on ? 'border-gray-700 bg-gray-50/60' : 'border-gray-200'}`}>
                     <input
                       type="checkbox"
                       checked={on}
@@ -226,14 +226,14 @@ export default function PublishForm({
                         })
                       }
                       aria-label={`เปิดเผยลิงก์ ${linkDisplayName(l.url, l.title)}`}
-                      className="accent-orange-600"
+                      className="accent-gray-900"
                     />
-                    <span className="text-orange-600 shrink-0"><LinkKindIcon kind={l.kind} /></span>
+                    <span className="text-gray-900 shrink-0"><LinkKindIcon kind={l.kind} /></span>
                     <span className="min-w-0 flex-1">
                       <span className="block text-sm text-gray-800 truncate">{linkDisplayName(l.url, l.title)}</span>
                       <span className="block text-[11px] text-gray-400 truncate">{l.url}</span>
                     </span>
-                    <a href={l.url} target="_blank" rel="noopener noreferrer" className="p-1 text-gray-400 hover:text-orange-700" aria-label="เปิดลิงก์">
+                    <a href={l.url} target="_blank" rel="noopener noreferrer" className="p-1 text-gray-400 hover:text-gray-600" aria-label="เปิดลิงก์">
                       <ExternalLink className="w-4 h-4" />
                     </a>
                   </label>
@@ -251,7 +251,7 @@ export default function PublishForm({
           type="button"
           onClick={() => save(true, 'publish')}
           disabled={!!busy}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-orange-600 text-white text-sm font-medium hover:bg-orange-700 disabled:opacity-60"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-gray-900 text-white text-sm font-medium hover:bg-gray-700 disabled:opacity-60"
         >
           {busy === 'publish' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Globe className="w-4 h-4" />}
           {isPublished ? 'บันทึกและเผยแพร่ต่อ' : 'เผยแพร่เป็นกรณีศึกษา'}
@@ -261,7 +261,7 @@ export default function PublishForm({
             <a
               href={`/stories/${activityId}`}
               target="_blank"
-              className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg border border-orange-200 text-sm text-orange-700 hover:bg-orange-50"
+              className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg border border-gray-300 text-sm text-gray-900 hover:bg-gray-50"
             >
               <ExternalLink className="w-4 h-4" /> ดูหน้าสาธารณะ
             </a>
@@ -280,7 +280,7 @@ export default function PublishForm({
             type="button"
             onClick={() => save(false, 'draft')}
             disabled={!!busy}
-            className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg border border-orange-200 text-sm text-orange-700 hover:bg-orange-50 disabled:opacity-60"
+            className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg border border-gray-300 text-sm text-gray-900 hover:bg-gray-50 disabled:opacity-60"
           >
             {busy === 'draft' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             บันทึกร่าง (ยังไม่เผยแพร่)

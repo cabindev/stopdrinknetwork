@@ -102,18 +102,18 @@ export default function ImageGallery({
               type="button"
               onClick={() => setIndex(i)}
               aria-label={`ดูรูปขนาดใหญ่: ${img.caption || img.alt}`}
-              className="block w-full group focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 rounded-xl"
+              className="block w-full group focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-400 rounded-xl"
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={img.thumb}
                 alt={img.alt}
                 loading="lazy"
-                className={`${thumbClassName} rounded-xl border border-orange-100 bg-orange-50 group-hover:opacity-90 transition-opacity cursor-zoom-in`}
+                className={`${thumbClassName} rounded-xl border border-gray-200 bg-gray-50 group-hover:opacity-90 transition-opacity cursor-zoom-in`}
               />
             </button>
             {img.caption && <figcaption className="mt-1 text-xs text-gray-600 leading-snug">{img.caption}</figcaption>}
-            {img.badge && <p className="mt-0.5 text-[10px] font-semibold text-orange-600">{img.badge}</p>}
+            {img.badge && <p className="mt-0.5 text-[10px] font-semibold text-gray-900">{img.badge}</p>}
           </figure>
         ))}
       </div>
@@ -123,7 +123,7 @@ export default function ImageGallery({
           type="button"
           onClick={() => scrollStrip(-1)}
           aria-label="เลื่อนดูรูปก่อนหน้า"
-          className="hidden sm:flex absolute left-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/95 border border-orange-100 shadow text-gray-800 hover:bg-orange-50"
+          className="hidden sm:flex absolute left-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/95 border border-gray-200 shadow text-gray-800 hover:bg-gray-50"
         >
           <ChevronLeft className="w-5 h-5" />
         </button>
@@ -133,7 +133,7 @@ export default function ImageGallery({
           type="button"
           onClick={() => scrollStrip(1)}
           aria-label="เลื่อนดูรูปถัดไป"
-          className="hidden sm:flex absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/95 border border-orange-100 shadow text-gray-800 hover:bg-orange-50"
+          className="hidden sm:flex absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/95 border border-gray-200 shadow text-gray-800 hover:bg-gray-50"
         >
           <ChevronRight className="w-5 h-5" />
         </button>
@@ -235,7 +235,7 @@ export default function ImageGallery({
                     aria-label={`ไปรูปที่ ${i + 1}`}
                     aria-current={i === index}
                     className={`shrink-0 rounded-md overflow-hidden border-2 ${
-                      i === index ? 'border-orange-500' : 'border-transparent opacity-60 hover:opacity-100'
+                      i === index ? 'border-gray-700' : 'border-transparent opacity-60 hover:opacity-100'
                     }`}
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}

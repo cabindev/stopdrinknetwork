@@ -57,7 +57,7 @@ export default async function HomePage() {
             </span>
           </h1>
 
-          <dl className="mt-7 flex justify-center md:justify-start divide-x divide-orange-100">
+          <dl className="mt-7 flex justify-center md:justify-start divide-x divide-gray-200">
             {stats.map(({ value, label }) => (
               <div key={label} className="px-5 first:pl-0 last:pr-0">
                 <dt className="sr-only">{label}</dt>
@@ -70,24 +70,24 @@ export default async function HomePage() {
           <div className="mt-8 flex flex-col sm:flex-row items-center justify-center md:justify-start gap-3">
             <Link
               href="/map"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-orange-600 text-white text-sm font-medium hover:bg-orange-700 transition-colors"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-gray-900 text-white text-sm font-medium hover:bg-gray-700 transition-colors"
             >
               <MapIcon className="w-4 h-4" /> ดูแผนที่งานทั่วประเทศ
             </Link>
             <Link
               href="/stories"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-full border border-orange-200 text-orange-700 text-sm font-medium hover:bg-orange-50 transition-colors"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-full border border-gray-300 text-gray-900 text-sm font-medium hover:bg-gray-50 transition-colors"
             >
               <BookOpen className="w-4 h-4" /> อ่านกรณีศึกษา
             </Link>
           </div>
           {!session && <p className="mt-6 text-sm text-gray-500">
             เจ้าหน้าที่เครือข่าย{' '}
-            <Link href="/auth/signin" className="font-medium text-orange-700 hover:text-orange-800">
+            <Link href="/auth/signin" className="font-medium text-gray-900 hover:text-gray-600">
               เข้าสู่ระบบ
             </Link>{' '}
             หรือ{' '}
-            <Link href="/auth/signup" className="font-medium text-orange-700 hover:text-orange-800">
+            <Link href="/auth/signup" className="font-medium text-gray-900 hover:text-gray-600">
               สมัครสมาชิก
             </Link>
           </p>}
@@ -121,7 +121,7 @@ export default async function HomePage() {
               />
             ))}
           </svg>
-          <span className="absolute bottom-2 right-0 inline-flex items-center gap-1 rounded-full bg-white/95 border border-orange-100 px-3 py-1.5 text-xs font-medium text-gray-700 group-hover:text-orange-700">
+          <span className="absolute bottom-2 right-0 inline-flex items-center gap-1 rounded-full bg-white/95 border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-700 group-hover:text-gray-600">
             เปิดแผนที่เต็ม <ArrowRight className="w-3.5 h-3.5" />
           </span>
         </Link>
@@ -132,7 +132,7 @@ export default async function HomePage() {
 ทำ        พื้นที่ที่มีงาน (ตำแหน่งโดยประมาณ){pulses.length > 0 && <> · วงกระเพื่อม = มีงานใหม่ใน {RECENT_DAYS} วัน</>}
       </p>
 
-      <footer className="mt-auto border-t border-orange-100 py-6">
+      <footer className="mt-auto border-t border-gray-200 py-6">
         <p className="text-center text-xs text-gray-400">
           &copy; {new Date().getFullYear()} Stop Drink Network — เครือข่ายงดเหล้า
         </p>

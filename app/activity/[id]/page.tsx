@@ -39,7 +39,7 @@ import HistorySection from './HistorySection';
 
 const STATUS_LABEL: Record<string, { text: string; cls: string }> = {
   PLANNING: { text: 'วางแผน', cls: 'bg-gray-100 text-gray-600' },
-  ACTIVE: { text: 'กำลังดำเนินการ', cls: 'bg-orange-100 text-orange-700' },
+  ACTIVE: { text: 'กำลังดำเนินการ', cls: 'bg-gray-100 text-gray-900' },
   COMPLETED: { text: 'เสร็จสิ้น', cls: 'bg-green-50 text-green-700' },
 };
 
@@ -114,7 +114,7 @@ export default async function ActivityDetailPage({
       <div className="max-w-3xl mx-auto">
         <Link
           href="/activity"
-          className="inline-flex items-center gap-1.5 text-sm text-orange-700 hover:text-orange-800 mb-6"
+          className="inline-flex items-center gap-1.5 text-sm text-gray-900 hover:text-gray-600 mb-6"
         >
           <ArrowLeft className="w-4 h-4" /> งานของฉัน
         </Link>
@@ -122,7 +122,7 @@ export default async function ActivityDetailPage({
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <div className="flex items-center gap-2">
-              <span className="inline-flex px-2.5 py-0.5 rounded-full bg-orange-50 text-orange-700 text-xs font-medium">
+              <span className="inline-flex px-2.5 py-0.5 rounded-full bg-gray-50 text-gray-900 text-xs font-medium">
                 {activity.category.name}
                 {activity.subCategory && <> › {activity.subCategory.name}</>}
               </span>
@@ -139,8 +139,8 @@ export default async function ActivityDetailPage({
                   href={`/activity/${activity.id}/publish`}
                   className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                     activity.isPublished
-                      ? 'bg-orange-50 border border-orange-200 text-orange-700 hover:bg-orange-100'
-                      : 'border border-orange-200 text-orange-700 hover:bg-orange-50'
+                      ? 'bg-gray-50 border border-gray-300 text-gray-900 hover:bg-gray-100'
+                      : 'border border-gray-300 text-gray-900 hover:bg-gray-50'
                   }`}
                   title={activity.isPublished ? 'เผยแพร่แล้ว — แก้เนื้อหา/ยกเลิกได้' : 'เผยแพร่เป็นกรณีศึกษาสาธารณะ'}
                 >
@@ -150,14 +150,14 @@ export default async function ActivityDetailPage({
               {/* งานเดียวกันหลายพื้นที่ → คัดลอกแล้วเลือกพื้นที่ใหม่ (1 รายการต่อ 1 พื้นที่) */}
               <Link
                 href={`/activity/new?copy=${activity.id}`}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-orange-200 text-orange-700 text-xs font-medium hover:bg-orange-50 transition-colors"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-300 text-gray-900 text-xs font-medium hover:bg-gray-50 transition-colors"
                 title="สร้างงานใหม่จากงานนี้ — สำหรับงานเดียวกันในพื้นที่อื่น"
               >
                 <Copy className="w-3.5 h-3.5" /> คัดลอกงานนี้
               </Link>
               <Link
                 href={`/activity/${activity.id}/edit`}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-orange-600 text-white text-xs font-medium hover:bg-orange-700 transition-colors"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-900 text-white text-xs font-medium hover:bg-gray-700 transition-colors"
               >
                 <SquarePen className="w-3.5 h-3.5" /> แก้ไข
               </Link>
@@ -168,25 +168,25 @@ export default async function ActivityDetailPage({
 
         {/* ข้อมูลสรุป */}
         <div className="mt-5 grid sm:grid-cols-3 gap-3 text-sm">
-          <div className="bg-white rounded-xl border border-orange-100 p-3">
+          <div className="bg-white rounded-xl border border-gray-200 p-3">
             <p className="flex items-center gap-1.5 text-xs text-gray-400 mb-1">
-              <MapPin className="w-3.5 h-3.5 text-orange-500" /> พื้นที่ดำเนินงาน
+              <MapPin className="w-3.5 h-3.5 text-gray-600" /> พื้นที่ดำเนินงาน
             </p>
             <p className="text-gray-800">
               {activity.areaName && <>{activity.areaName}<br /></>}
               ต.{activity.district} อ.{activity.amphoe}<br />
               จ.{activity.province} · {getRegionLabel(activity.region as HealthZone)}
               {(activity.areaScope === 'DISTRICT' || activity.areaScope === 'PROVINCE') && (
-                <span className="mt-1 block w-fit px-2 py-0.5 rounded-full bg-orange-50 border border-orange-100 text-xs text-orange-700">
+                <span className="mt-1 block w-fit px-2 py-0.5 rounded-full bg-gray-50 border border-gray-200 text-xs text-gray-900">
                   ครอบคลุม{activity.areaScope === 'DISTRICT' ? `ทั้ง อ.${activity.amphoe}` : `ทั้ง จ.${activity.province}`}
                 </span>
               )}
               {coverage.length > 0 && <span className="mt-1 block text-xs text-gray-500">{coverage.join(' · ')}</span>}
             </p>
           </div>
-          <div className="bg-white rounded-xl border border-orange-100 p-3">
+          <div className="bg-white rounded-xl border border-gray-200 p-3">
             <p className="flex items-center gap-1.5 text-xs text-gray-400 mb-1">
-              <CalendarDays className="w-3.5 h-3.5 text-orange-500" /> ช่วงเวลา
+              <CalendarDays className="w-3.5 h-3.5 text-gray-600" /> ช่วงเวลา
             </p>
             <p className="text-gray-800">
               {formatStartDate(activity.startDate, activity.startDatePrecision) ?? 'ไม่ระบุ'}
@@ -194,9 +194,9 @@ export default async function ActivityDetailPage({
               {fmtDate(activity.endDate) ?? 'ต่อเนื่อง'}
             </p>
           </div>
-          <div className="bg-white rounded-xl border border-orange-100 p-3">
+          <div className="bg-white rounded-xl border border-gray-200 p-3">
             <p className="flex items-center gap-1.5 text-xs text-gray-400 mb-1">
-              <User className="w-3.5 h-3.5 text-orange-500" /> ผู้รับผิดชอบ
+              <User className="w-3.5 h-3.5 text-gray-600" /> ผู้รับผิดชอบ
             </p>
             <p className="text-gray-800">
               {activity.user.firstName} {activity.user.lastName}
@@ -210,12 +210,12 @@ export default async function ActivityDetailPage({
         </div>
 
         {/* นำทาง — เปิด Google Maps (บนมือถือเด้งเข้าแอปและเริ่มนำทาง) */}
-        <div className="mt-3 flex flex-wrap items-center gap-3 bg-orange-50 rounded-xl border border-orange-100 px-3 py-2.5">
+        <div className="mt-3 flex flex-wrap items-center gap-3 bg-gray-50 rounded-xl border border-gray-200 px-3 py-2.5">
           <a
             href={navigationUrl(activity)}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-orange-600 text-white text-xs font-medium hover:bg-orange-700 transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-900 text-white text-xs font-medium hover:bg-gray-700 transition-colors"
           >
             <Navigation className="w-3.5 h-3.5" /> นำทางด้วย Google Maps
           </a>
@@ -230,14 +230,14 @@ export default async function ActivityDetailPage({
 
         {/* พื้นที่ที่เกี่ยวข้อง (ActivityArea) — หมุดรองบนแผนที่ สถิติยังนับจากพื้นที่หลัก */}
         {activity.areas.length > 0 && (
-          <section className="mt-3 bg-white rounded-xl border border-orange-100 p-3">
+          <section className="mt-3 bg-white rounded-xl border border-gray-200 p-3">
             <p className="flex items-center gap-1.5 text-xs text-gray-400 mb-2">
-              <MapPin className="w-3.5 h-3.5 text-orange-500" /> พื้นที่ที่เกี่ยวข้อง ({activity.areas.length} แห่ง)
+              <MapPin className="w-3.5 h-3.5 text-gray-600" /> พื้นที่ที่เกี่ยวข้อง ({activity.areas.length} แห่ง)
             </p>
             <ul className="space-y-2 text-sm">
               {activity.areas.map((a, i) => (
                 <li key={a.id} className="flex items-start gap-2">
-                  <span className="mt-0.5 w-5 h-5 shrink-0 rounded-full bg-orange-100 text-orange-700 text-[11px] font-semibold flex items-center justify-center">
+                  <span className="mt-0.5 w-5 h-5 shrink-0 rounded-full bg-gray-100 text-gray-900 text-[11px] font-semibold flex items-center justify-center">
                     {i + 1}
                   </span>
                   <div className="min-w-0 flex-1">
@@ -250,7 +250,7 @@ export default async function ActivityDetailPage({
                     href={navigationUrl(a)}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="shrink-0 inline-flex items-center gap-1 text-xs text-orange-700 hover:text-orange-800"
+                    className="shrink-0 inline-flex items-center gap-1 text-xs text-gray-900 hover:text-gray-600"
                     aria-label={`นำทางไป ${a.areaName || `ต.${a.district}`}`}
                   >
                     <Navigation className="w-3.5 h-3.5" /> นำทาง
@@ -262,7 +262,7 @@ export default async function ActivityDetailPage({
         )}
 
         {/* รายละเอียด */}
-        <section className="mt-6 bg-white rounded-2xl border border-orange-100 p-5">
+        <section className="mt-6 bg-white rounded-2xl border border-gray-200 p-5">
           <h2 className="text-sm font-semibold text-gray-800 mb-2">รายละเอียดการดำเนินงาน</h2>
           <p className="text-sm text-gray-600 whitespace-pre-wrap leading-relaxed">
             {activity.description}
@@ -271,12 +271,12 @@ export default async function ActivityDetailPage({
 
         {/* ผลลัพธ์ ภาคี ผู้ประสานงาน */}
         {hasExtra && (
-          <section className="mt-6 bg-white rounded-2xl border border-orange-100 p-5 grid sm:grid-cols-2 gap-5 text-sm">
+          <section className="mt-6 bg-white rounded-2xl border border-gray-200 p-5 grid sm:grid-cols-2 gap-5 text-sm">
             {(activity.participantCount != null || partners.length > 0) && (
               <div>
                 {activity.participantCount != null && (
                   <p className="flex items-center gap-1.5 text-gray-800">
-                    <Users className="w-4 h-4 text-orange-500" />
+                    <Users className="w-4 h-4 text-gray-600" />
                     ผู้เข้าร่วม <b>{activity.participantCount.toLocaleString('th-TH')}</b> คน
                   </p>
                 )}
@@ -285,7 +285,7 @@ export default async function ActivityDetailPage({
                     <p className="mt-3 text-xs text-gray-400 mb-1.5">ภาคีที่ร่วมงาน</p>
                     <div className="flex flex-wrap gap-1.5">
                       {partners.map((p) => (
-                        <span key={p} className="px-2 py-0.5 rounded-full bg-orange-50 border border-orange-100 text-xs text-gray-700">
+                        <span key={p} className="px-2 py-0.5 rounded-full bg-gray-50 border border-gray-200 text-xs text-gray-700">
                           {p}
                         </span>
                       ))}
@@ -308,13 +308,13 @@ export default async function ActivityDetailPage({
                     {activity.coordinatorPhone && (
                       <a
                         href={`tel:${activity.coordinatorPhone.replace(/[^0-9+]/g, '')}`}
-                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-orange-600 text-white font-medium hover:bg-orange-700"
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-gray-900 text-white font-medium hover:bg-gray-700"
                       >
                         <Phone className="w-3.5 h-3.5" /> {activity.coordinatorPhone}
                       </a>
                     )}
                     {activity.coordinatorLine && (
-                      <span className="inline-flex items-center px-2.5 py-1 rounded-lg border border-orange-200 text-gray-700">
+                      <span className="inline-flex items-center px-2.5 py-1 rounded-lg border border-gray-300 text-gray-700">
                         LINE: {activity.coordinatorLine}
                       </span>
                     )}
@@ -334,14 +334,14 @@ export default async function ActivityDetailPage({
 
         {/* นโยบาย/ข้อตกลง */}
         {policies.length > 0 && (
-          <section className="mt-6 bg-white rounded-2xl border border-orange-100 p-5">
+          <section className="mt-6 bg-white rounded-2xl border border-gray-200 p-5">
             <h2 className="flex items-center gap-2 text-sm font-semibold text-gray-800 mb-3">
-              <ScrollText className="w-4 h-4 text-orange-600" /> นโยบาย/ข้อตกลงที่เกิดขึ้น
+              <ScrollText className="w-4 h-4 text-gray-900" /> นโยบาย/ข้อตกลงที่เกิดขึ้น
             </h2>
             <ul className="space-y-2">
               {policies.map(({ level, detail, files }) => (
                 <li key={level} className="flex flex-wrap items-start gap-2">
-                  <span className="shrink-0 px-2.5 py-0.5 rounded-full bg-orange-600 text-white text-xs font-medium">
+                  <span className="shrink-0 px-2.5 py-0.5 rounded-full bg-gray-900 text-white text-xs font-medium">
                     ระดับ{POLICY_LABEL[level]}
                   </span>
                   {detail && <span className="text-sm text-gray-800 pt-px">{detail}</span>}
@@ -355,9 +355,9 @@ export default async function ActivityDetailPage({
                           href={`/api/files/${f.filePath}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg border border-orange-100 text-xs text-gray-700 hover:bg-orange-50"
+                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg border border-gray-200 text-xs text-gray-700 hover:bg-gray-50"
                         >
-                          <FileText className="w-3.5 h-3.5 text-orange-600" />
+                          <FileText className="w-3.5 h-3.5 text-gray-900" />
                           <span className="max-w-[220px] truncate">{f.fileName}</span>
                         </a>
                       ))}
@@ -371,9 +371,9 @@ export default async function ActivityDetailPage({
 
         {/* แบบสำรวจ */}
         {activity.hasSurvey && (
-          <section className="mt-6 bg-white rounded-2xl border border-orange-100 p-5">
+          <section className="mt-6 bg-white rounded-2xl border border-gray-200 p-5">
             <h2 className="flex items-center gap-2 text-sm font-semibold text-gray-800 mb-3">
-              <ClipboardCheck className="w-4 h-4 text-orange-600" /> แบบสำรวจ
+              <ClipboardCheck className="w-4 h-4 text-gray-900" /> แบบสำรวจ
               {surveyFiles.length > 1 && <span className="text-xs font-normal text-gray-400">({surveyFiles.length} ชุด)</span>}
             </h2>
             {surveyFiles.length === 0 ? (
@@ -386,10 +386,10 @@ export default async function ActivityDetailPage({
                       href={`/api/files/${f.filePath}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-2 px-3 py-2 rounded-lg border border-orange-100 text-sm text-gray-700 hover:bg-orange-50"
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 text-sm text-gray-700 hover:bg-gray-50"
                     >
                       <span className="shrink-0 w-5 text-xs text-gray-400 tabular-nums">{i + 1}.</span>
-                      <FileText className="w-4 h-4 shrink-0 text-orange-600" />
+                      <FileText className="w-4 h-4 shrink-0 text-gray-900" />
                       <span className="truncate">{f.fileName}</span>
                     </a>
                   </li>
@@ -401,7 +401,7 @@ export default async function ActivityDetailPage({
 
         {/* รูปภาพ */}
         {images.length > 0 && (
-          <section className="mt-6 bg-white rounded-2xl border border-orange-100 p-5">
+          <section className="mt-6 bg-white rounded-2xl border border-gray-200 p-5">
             <h2 className="text-sm font-semibold text-gray-800 mb-3">
               รูปภาพกิจกรรม ({images.length})
             </h2>
@@ -421,7 +421,7 @@ export default async function ActivityDetailPage({
 
         {/* ลิงก์ที่เกี่ยวข้อง */}
         {activity.links.length > 0 && (
-          <section className="mt-6 bg-white rounded-2xl border border-orange-100 p-5">
+          <section className="mt-6 bg-white rounded-2xl border border-gray-200 p-5">
             <h2 className="text-sm font-semibold text-gray-800 mb-3">ลิงก์ที่เกี่ยวข้อง ({activity.links.length})</h2>
             <LinkList links={activity.links} />
           </section>
@@ -429,7 +429,7 @@ export default async function ActivityDetailPage({
 
         {/* เอกสาร */}
         {documents.length > 0 && (
-          <section className="mt-6 bg-white rounded-2xl border border-orange-100 p-5">
+          <section className="mt-6 bg-white rounded-2xl border border-gray-200 p-5">
             <h2 className="text-sm font-semibold text-gray-800 mb-3">
               เอกสาร/นโยบาย ({documents.length})
             </h2>
@@ -440,10 +440,10 @@ export default async function ActivityDetailPage({
                     href={`/api/files/${doc.filePath}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl border border-orange-100 hover:bg-orange-50 transition-colors"
+                    className="flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors"
                   >
                     <span className="flex items-center gap-2 min-w-0">
-                      <FileText className="w-4 h-4 text-orange-600 shrink-0" />
+                      <FileText className="w-4 h-4 text-gray-900 shrink-0" />
                       <span className="text-sm text-gray-700 truncate">{doc.fileName}</span>
                     </span>
                     <span className="flex items-center gap-1.5 text-xs text-gray-400 shrink-0">

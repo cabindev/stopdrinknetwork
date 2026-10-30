@@ -12,19 +12,19 @@ export default function StoryCard({ story: s, badge }: { story: StoryRow; badge?
   return (
     <Link
       href={`/stories/${s.id}`}
-      className="group flex flex-col rounded-2xl border border-orange-100 overflow-hidden hover:border-orange-300 hover:shadow-sm transition"
+      className="group flex flex-col rounded-2xl border border-gray-200 overflow-hidden hover:border-gray-400 hover:shadow-sm transition"
     >
       {cover ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
           src={publicFileUrl(cover.id, 'card')}
           alt={cover.caption || s.title}
-          className="w-full aspect-video object-cover bg-orange-50"
+          className="w-full aspect-video object-cover bg-gray-50"
           loading="lazy"
         />
       ) : (
         // ยังไม่มีรูปเปิดเผย → โลโก้ประเด็นกลางกรอบ 16:9 (จนกว่าแอดมินจะติ๊กรูป)
-        <div className="w-full aspect-video bg-orange-50 flex items-center justify-center">
+        <div className="w-full aspect-video bg-gray-50 flex items-center justify-center">
           {storyLogoUrl(s) ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -34,16 +34,16 @@ export default function StoryCard({ story: s, badge }: { story: StoryRow; badge?
               loading="lazy"
             />
           ) : (
-            <BookOpen className="w-8 h-8 text-orange-300" />
+            <BookOpen className="w-8 h-8 text-gray-400" />
           )}
         </div>
       )}
       <div className="p-4 flex-1 flex flex-col">
-        <p className="text-[11px] font-medium text-orange-700">
-          {badge && <span className="mr-1.5 px-1.5 py-0.5 rounded bg-orange-600 text-white">{badge}</span>}
+        <p className="text-[11px] font-medium text-gray-900">
+          {badge && <span className="mr-1.5 px-1.5 py-0.5 rounded bg-gray-900 text-white">{badge}</span>}
           {s.subCategory?.name ?? s.category.name}
         </p>
-        <h2 className="mt-1 text-sm font-semibold text-gray-800 line-clamp-2 group-hover:text-orange-700">{s.title}</h2>
+        <h2 className="mt-1 text-sm font-semibold text-gray-800 line-clamp-2 group-hover:text-gray-600">{s.title}</h2>
         <p className="mt-2 text-xs text-gray-500 line-clamp-3">{storyExcerpt(s, 140)}</p>
         <p className="mt-auto pt-3 flex items-center gap-1 text-[11px] text-gray-400">
           <MapPin className="w-3 h-3" /> {storyPlace(s)}

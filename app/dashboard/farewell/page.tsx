@@ -86,19 +86,19 @@ export default async function FarewellStatsPage({ searchParams }: { searchParams
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900">
-            <ChanFlowerIcon className="w-7 h-7 text-orange-600" /> สถิติส่งด้วยใจ
+            <ChanFlowerIcon className="w-7 h-7 text-gray-900" /> สถิติส่งด้วยใจ
           </h1>
           <p className="mt-1 text-sm text-gray-500">
             ยอดรวมแบบไม่ระบุตัวตน — ไม่มีชื่อ ตำบล หรือตัวเลขงบของครอบครัวใดในระบบ
           </p>
         </div>
-        <nav aria-label="ช่วงเวลา" className="flex gap-1 rounded-full border border-orange-100 p-1 bg-white">
+        <nav aria-label="ช่วงเวลา" className="flex gap-1 rounded-full border border-gray-200 p-1 bg-white">
           {PERIODS.map((p) => (
             <Link
               key={p.key}
               href={`/dashboard/farewell?p=${p.key}`}
               aria-current={p.key === period.key ? 'page' : undefined}
-              className={`px-3 py-1.5 rounded-full text-sm ${p.key === period.key ? 'bg-orange-600 text-white' : 'text-gray-600 hover:bg-orange-50'}`}
+              className={`px-3 py-1.5 rounded-full text-sm ${p.key === period.key ? 'bg-gray-900 text-white' : 'text-gray-600 hover:bg-gray-50'}`}
             >
               {p.label}
             </Link>
@@ -108,9 +108,9 @@ export default async function FarewellStatsPage({ searchParams }: { searchParams
 
       <section className="grid grid-cols-2 lg:grid-cols-3 gap-3">
         {cards.map(({ icon: Icon, label, value, sub }) => (
-          <div key={label} className="rounded-2xl border border-orange-100 bg-white p-4">
+          <div key={label} className="rounded-2xl border border-gray-200 bg-white p-4">
             <p className="flex items-center gap-1.5 text-xs text-gray-500">
-              <Icon className="w-4 h-4 text-orange-600" /> {label}
+              <Icon className="w-4 h-4 text-gray-900" /> {label}
             </p>
             <p className="mt-1 text-2xl font-bold text-gray-900">{value}</p>
             {sub && <p className="mt-0.5 text-xs text-gray-500">{sub}</p>}
@@ -119,7 +119,7 @@ export default async function FarewellStatsPage({ searchParams }: { searchParams
       </section>
 
       <div className="grid gap-6 lg:grid-cols-3">
-        <section className="lg:col-span-2 rounded-2xl border border-orange-100 bg-white p-5">
+        <section className="lg:col-span-2 rounded-2xl border border-gray-200 bg-white p-5">
           <h2 className="text-base font-semibold text-gray-900">ครอบครัวเลือกอะไร</h2>
           <p className="mt-0.5 text-xs text-gray-500">จากแผนที่ทำจนถึงหน้าสรุป {num(done)} แผน · ข้อที่ข้ามไม่นับ</p>
           {done === 0 ? (
@@ -137,8 +137,8 @@ export default async function FarewellStatsPage({ searchParams }: { searchParams
                         <span className="truncate text-gray-600" title={o.label}>
                           {o.label}
                         </span>
-                        <span className="h-2.5 rounded-full bg-orange-50 overflow-hidden">
-                          <span className={`block h-full rounded-full ${o.lighter ? 'bg-orange-600' : 'bg-gray-400'}`} style={{ width: `${pct(n, answered)}%` }} />
+                        <span className="h-2.5 rounded-full bg-gray-50 overflow-hidden">
+                          <span className={`block h-full rounded-full ${o.lighter ? 'bg-gray-900' : 'bg-gray-400'}`} style={{ width: `${pct(n, answered)}%` }} />
                         </span>
                         <span className="text-right tabular-nums text-gray-700">{pct(n, answered)}%</span>
                       </li>
@@ -151,7 +151,7 @@ export default async function FarewellStatsPage({ searchParams }: { searchParams
           )}
         </section>
 
-        <section className="rounded-2xl border border-orange-100 bg-white p-5">
+        <section className="rounded-2xl border border-gray-200 bg-white p-5">
           <h2 className="text-base font-semibold text-gray-900">มาจากที่ไหน</h2>
           <p className="mt-0.5 text-xs text-gray-500">จังหวัดที่ครอบครัวเลือก (เริ่มวางแผน/ทำแผน/ค้นข้อตกลง)</p>
           {provinces.length === 0 ? (

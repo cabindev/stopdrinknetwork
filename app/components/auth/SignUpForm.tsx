@@ -102,7 +102,7 @@ export default function SignUpForm() {
       footer={
         <>
           มีบัญชีอยู่แล้ว?{" "}
-          <Link href="/auth/signin" className="text-gray-900 font-semibold hover:text-orange-600 transition-colors">
+          <Link href="/auth/signin" className="text-gray-900 font-semibold hover:text-gray-600 transition-colors">
             เข้าสู่ระบบ
           </Link>
         </>
@@ -160,14 +160,14 @@ export default function SignUpForm() {
               รูปโปรไฟล์ <span className="font-normal text-gray-400">(ไม่บังคับ)</span>
             </p>
             <label className="flex items-center gap-4 cursor-pointer group">
-              <span className="flex-shrink-0 w-14 h-14 rounded-full overflow-hidden bg-orange-50 border border-orange-100 flex items-center justify-center">
+              <span className="flex-shrink-0 w-14 h-14 rounded-full overflow-hidden bg-gray-50 border border-gray-200 flex items-center justify-center">
                 {imagePreview ? (
                   <img src={imagePreview} alt="" className="w-full h-full object-cover" />
                 ) : (
-                  <User size={22} className="text-orange-300" />
+                  <User size={22} className="text-gray-400" />
                 )}
               </span>
-              <span className="text-sm font-semibold text-gray-900 group-hover:text-orange-600 transition-colors">
+              <span className="text-sm font-semibold text-gray-900 group-hover:text-gray-600 transition-colors">
                 {imagePreview ? "เปลี่ยนรูป" : "เลือกรูปภาพ"}
               </span>
               <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />

@@ -26,7 +26,7 @@ export default function ShareButtons({ title }: { title: string }) {
           setCopied(true);
           setTimeout(() => setCopied(false), 2000);
         }}
-        className={`${btn} border-orange-200 text-orange-700 hover:bg-orange-50`}
+        className={`${btn} border-gray-300 text-gray-900 hover:bg-gray-50`}
       >
         {copied ? <Check className="w-3.5 h-3.5" /> : <Link2 className="w-3.5 h-3.5" />}
         {copied ? 'คัดลอกแล้ว' : 'คัดลอกลิงก์'}

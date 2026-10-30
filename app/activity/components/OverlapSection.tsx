@@ -15,8 +15,8 @@ type MatchLevel = 'tambon' | 'amphoe' | 'province';
 
 const LEVEL_ORDER: Record<MatchLevel, number> = { tambon: 0, amphoe: 1, province: 2 };
 const LEVEL_BADGE: Record<MatchLevel, { text: string; cls: string }> = {
-  tambon: { text: 'ตำบลเดียวกับคุณ', cls: 'bg-orange-600 text-white' },
-  amphoe: { text: 'อำเภอเดียวกับคุณ', cls: 'bg-orange-100 text-orange-700' },
+  tambon: { text: 'ตำบลเดียวกับคุณ', cls: 'bg-gray-900 text-white' },
+  amphoe: { text: 'อำเภอเดียวกับคุณ', cls: 'bg-gray-100 text-gray-900' },
   province: { text: 'จังหวัดเดียวกับคุณ', cls: 'bg-gray-100 text-gray-600' },
 };
 
@@ -100,7 +100,7 @@ export default async function OverlapSection({
   return (
     <section className="mt-10">
       <div className="flex items-center gap-2 mb-1">
-        <Users className="w-5 h-5 text-orange-600" />
+        <Users className="w-5 h-5 text-gray-900" />
         <h2 className="text-lg font-bold text-gray-800">เพื่อนร่วมพื้นที่ของคุณ</h2>
       </div>
       <p className="text-sm text-gray-500 mb-4">
@@ -109,15 +109,15 @@ export default async function OverlapSection({
 
       <div className="space-y-4">
         {provinceBlocks.map(({ province, people }) => (
-          <div key={province} className="bg-white rounded-2xl border border-orange-100 p-5">
+          <div key={province} className="bg-white rounded-2xl border border-gray-200 p-5">
             <h3 className="flex items-center gap-1.5 text-sm font-semibold text-gray-800 mb-3">
-              <MapPin className="w-4 h-4 text-orange-500" /> จ.{province}
+              <MapPin className="w-4 h-4 text-gray-600" /> จ.{province}
             </h3>
             <div className="space-y-4">
               {people.map((p) => {
                 const badge = LEVEL_BADGE[p.best];
                 return (
-                  <div key={p.name} className="border-t border-orange-50 pt-3 first:border-t-0 first:pt-0">
+                  <div key={p.name} className="border-t border-gray-100 pt-3 first:border-t-0 first:pt-0">
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="text-sm font-medium text-gray-800">{p.name}</span>
                       <span className={`inline-flex px-2 py-0.5 rounded-full text-[11px] font-medium ${badge.cls}`}>
@@ -130,7 +130,7 @@ export default async function OverlapSection({
                         {p.contact}
                         {p.contact && p.phone && ' · '}
                         {p.phone && (
-                          <a href={`tel:${p.phone}`} className="text-orange-700 hover:underline">
+                          <a href={`tel:${p.phone}`} className="text-gray-900 hover:underline">
                             {p.phone}
                           </a>
                         )}
@@ -141,7 +141,7 @@ export default async function OverlapSection({
                         <li key={a.id}>
                           <Link
                             href={`/activity/${a.id}`}
-                            className="flex flex-wrap items-baseline gap-x-2 text-xs rounded-lg px-2 py-1.5 -mx-2 hover:bg-orange-50 transition-colors"
+                            className="flex flex-wrap items-baseline gap-x-2 text-xs rounded-lg px-2 py-1.5 -mx-2 hover:bg-gray-50 transition-colors"
                           >
                             <span className="text-gray-700 font-medium">{a.title}</span>
                             <span className="text-gray-400">

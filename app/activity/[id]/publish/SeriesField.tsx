@@ -20,7 +20,7 @@ export interface SeriesValue {
 }
 
 const inputCls =
-  'w-full px-3 py-2 text-sm text-gray-900 bg-white border border-orange-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400';
+  'w-full px-3 py-2 text-sm text-gray-900 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400';
 
 export default function SeriesField({
   options,
@@ -42,9 +42,9 @@ export default function SeriesField({
   const current = value?.id != null ? options.find((o) => o.id === value.id) : null;
 
   return (
-    <section className="bg-white rounded-2xl border border-orange-100 p-6">
+    <section className="bg-white rounded-2xl border border-gray-200 p-6">
       <h2 className="flex items-center gap-2 text-base font-semibold text-gray-800">
-        <Layers className="w-5 h-5 text-orange-600" /> ชุดกรณีศึกษา <span className="text-xs font-normal text-gray-400">(ไม่บังคับ)</span>
+        <Layers className="w-5 h-5 text-gray-900" /> ชุดกรณีศึกษา <span className="text-xs font-normal text-gray-400">(ไม่บังคับ)</span>
       </h2>
       <p className="text-xs text-gray-400 mt-1 mb-4">
         หลายเรื่องที่อ่านต่อกันได้ เช่น &quot;สงกรานต์ 6 พื้นที่ต้นแบบ 2569&quot; — ท้ายแต่ละเรื่องจะมีรายการเรื่องอื่นในชุด และมีหน้ารวมของชุด

@@ -34,15 +34,15 @@ export default async function SeriesPage({ params }: { params: Promise<{ id: str
   return (
     <main className="min-h-screen bg-white pt-20 pb-16 px-4">
       <div className="max-w-5xl mx-auto">
-        <Link href="/stories" className="inline-flex items-center gap-1.5 text-sm text-orange-700 hover:text-orange-800">
+        <Link href="/stories" className="inline-flex items-center gap-1.5 text-sm text-gray-900 hover:text-gray-600">
           <ArrowLeft className="w-4 h-4" /> กรณีศึกษาทั้งหมด
         </Link>
         <div className="mt-4 flex items-start gap-3">
-          <span className="flex shrink-0 w-11 h-11 rounded-xl bg-orange-50 border border-orange-100 items-center justify-center">
-            <Layers className="w-5 h-5 text-orange-600" />
+          <span className="flex shrink-0 w-11 h-11 rounded-xl bg-gray-50 border border-gray-200 items-center justify-center">
+            <Layers className="w-5 h-5 text-gray-900" />
           </span>
           <div className="min-w-0">
-            <p className="text-xs font-medium text-orange-700">ชุดกรณีศึกษา · {stories.length} เรื่อง</p>
+            <p className="text-xs font-medium text-gray-900">ชุดกรณีศึกษา · {stories.length} เรื่อง</p>
             <h1 className="text-2xl font-bold text-gray-900">{series.title}</h1>
           </div>
         </div>

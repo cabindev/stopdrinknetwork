@@ -29,10 +29,10 @@ export default function LinkList({ links }: { links: LinkRow[] }) {
             href={l.url}
             target="_blank"
             rel="noopener noreferrer nofollow"
-            className="flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl border border-orange-100 hover:bg-orange-50 transition-colors"
+            className="flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors"
           >
             <span className="flex items-center gap-2 min-w-0">
-              <span className="text-orange-600 shrink-0">
+              <span className="text-gray-900 shrink-0">
                 <LinkKindIcon kind={l.kind} />
               </span>
               <span className="min-w-0">

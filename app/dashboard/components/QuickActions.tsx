@@ -27,9 +27,9 @@ export default function QuickActions({ isAdmin }: QuickActionsProps) {
     {
       label: 'จัดการระบบ',
       sub: 'เมนูหลัก',
-      accent: 'text-orange-600',
-      ring: 'hover:border-orange-300',
-      iconBg: 'bg-orange-50',
+      accent: 'text-gray-900',
+      ring: 'hover:border-gray-400',
+      iconBg: 'bg-gray-50',
       actions: [
         { title: 'จัดการผู้ดูแลระบบ', description: 'ตั้งค่าสิทธิ์ผู้ใช้และผู้ดูแลระบบ', href: '/dashboard/setting/admin', icon: UserCheck, requireAdmin: true },
         { title: 'โปรไฟล์ของฉัน', description: 'ดูข้อมูลบัญชีผู้ใช้ของคุณ', href: '/profile', icon: User },
@@ -38,9 +38,9 @@ export default function QuickActions({ isAdmin }: QuickActionsProps) {
     {
       label: 'เว็บไซต์',
       sub: 'หน้าสาธารณะ',
-      accent: 'text-orange-600',
-      ring: 'hover:border-orange-300',
-      iconBg: 'bg-orange-50',
+      accent: 'text-gray-900',
+      ring: 'hover:border-gray-400',
+      iconBg: 'bg-gray-50',
       actions: [
         { title: 'หน้าหลักเว็บไซต์', description: 'กลับไปยังหน้าแรกของ Stop Drink Network', href: '/', icon: Home },
         { title: 'สมัครสมาชิกใหม่', description: 'เพิ่มสมาชิกเข้าร่วมเครือข่ายงดเหล้า', href: '/auth/signup', icon: HeartHandshake },
@@ -68,7 +68,7 @@ export default function QuickActions({ isAdmin }: QuickActionsProps) {
                   <Link
                     key={action.href}
                     href={action.href}
-                    className={`group relative bg-white rounded-2xl border border-orange-100 p-5 transition-all hover:shadow-md ${group.ring} active:scale-[0.99]`}
+                    className={`group relative bg-white rounded-2xl border border-gray-200 p-5 transition-all hover:shadow-md ${group.ring} active:scale-[0.99]`}
                   >
                     <div className="flex items-start justify-between mb-4">
                       <div className={`w-10 h-10 rounded-xl ${group.iconBg} flex items-center justify-center`}>

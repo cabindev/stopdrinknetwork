@@ -53,7 +53,7 @@ export default async function StoriesPage({
 
   const chip = (active: boolean) =>
     `px-3 py-1 rounded-full border text-xs whitespace-nowrap transition-colors ${
-      active ? 'bg-orange-600 border-orange-600 text-white' : 'bg-white border-orange-200 text-gray-700 hover:bg-orange-50'
+      active ? 'bg-gray-900 border-gray-900 text-white' : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
     }`;
   const qs = (p: Record<string, string>) => {
     const q = new URLSearchParams(Object.entries({ sub, province, ...p }).filter(([, v]) => v));
@@ -64,8 +64,8 @@ export default async function StoriesPage({
     <main className="min-h-screen bg-white pt-20 pb-16 px-4">
       <div className="max-w-5xl mx-auto">
         <div className="flex items-center gap-3">
-          <span className="flex w-11 h-11 rounded-xl bg-orange-50 border border-orange-100 items-center justify-center">
-            <BookOpen className="w-5 h-5 text-orange-600" />
+          <span className="flex w-11 h-11 rounded-xl bg-gray-50 border border-gray-200 items-center justify-center">
+            <BookOpen className="w-5 h-5 text-gray-900" />
           </span>
           <div>
             <h1 className="text-2xl font-bold text-gray-900">กรณีศึกษา</h1>
@@ -76,13 +76,13 @@ export default async function StoriesPage({
         {seriesList.length > 0 && (
           <div className="mt-6 flex items-center gap-2 overflow-x-auto pb-1">
             <span className="shrink-0 inline-flex items-center gap-1 text-xs font-medium text-gray-500">
-              <Layers className="w-3.5 h-3.5 text-orange-600" /> ชุดกรณีศึกษา
+              <Layers className="w-3.5 h-3.5 text-gray-900" /> ชุดกรณีศึกษา
             </span>
             {seriesList.map((x) => (
               <Link
                 key={x.id}
                 href={`/stories/series/${x.id}`}
-                className="px-3 py-1 rounded-full border border-orange-300 bg-orange-50 text-xs text-orange-800 whitespace-nowrap hover:bg-orange-100"
+                className="px-3 py-1 rounded-full border border-gray-400 bg-gray-50 text-xs text-gray-900 whitespace-nowrap hover:bg-gray-100"
               >
                 {x.title} <span className="opacity-70">{x._count.activities}</span>
               </Link>
@@ -112,7 +112,7 @@ export default async function StoriesPage({
 
         <p className="mt-5 text-sm text-gray-500">{stories.length} เรื่อง</p>
         {stories.length === 0 ? (
-          <div className="mt-6 rounded-2xl border border-dashed border-orange-200 p-10 text-center text-sm text-gray-400">
+          <div className="mt-6 rounded-2xl border border-dashed border-gray-300 p-10 text-center text-sm text-gray-400">
             ยังไม่มีกรณีศึกษา{sub || province ? 'ที่ตรงกับตัวกรอง' : ''}
           </div>
         ) : (

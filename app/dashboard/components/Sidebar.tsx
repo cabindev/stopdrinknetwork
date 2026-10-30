@@ -107,33 +107,33 @@ export default function Sidebar({ user }: SidebarProps) {
 
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-40 flex flex-col bg-white border-r border-orange-100 transition-all duration-200",
+          "fixed inset-y-0 left-0 z-40 flex flex-col bg-white border-r border-gray-200 transition-all duration-200",
           sidebarCollapsed ? "w-16" : "w-64",
           "lg:translate-x-0",
           isMobileSidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
         {/* Sidebar header */}
-        <div className="flex h-14 items-center justify-between border-b border-orange-100 px-3 bg-orange-600">
+        <div className="flex h-14 items-center justify-between border-b border-gray-200 px-3 bg-white">
           {!sidebarCollapsed ? (
             <div className="flex items-center">
               <Link href="/dashboard" aria-label="แดชบอร์ด Stop Drink Network">
-                <Image src="/brand/network-logo-horizontal-white.svg" alt="" width={86} height={20} unoptimized className="h-5 w-auto" />
+                <Image src="/brand/network-logo-horizontal-color.svg" alt="" width={86} height={20} unoptimized className="h-5 w-auto" />
               </Link>
-              <Link href="/" className="ml-2.5 border-l border-white/40 pl-2.5">
-                <span className="whitespace-nowrap text-white/90 font-medium text-xs">เครือข่ายงดเหล้า</span>
+              <Link href="/" className="ml-2.5 border-l border-gray-200 pl-2.5">
+                <span className="whitespace-nowrap text-gray-600 font-medium text-xs">เครือข่ายงดเหล้า</span>
               </Link>
             </div>
           ) : (
             <Link href="/dashboard" className="mx-auto" aria-label="แดชบอร์ด Stop Drink Network">
-              <Image src="/brand/network-symbol-small-white.svg" alt="" width={24} height={24} unoptimized className="h-6 w-auto" />
+              <Image src="/brand/network-symbol-small-color.svg" alt="" width={24} height={24} unoptimized className="h-6 w-auto" />
             </Link>
           )}
 
           {/* ปุ่มปิดบนมือถือ */}
           <button
             onClick={() => toggleMobileSidebar(false)}
-            className="p-1.5 rounded text-white/80 hover:text-white hover:bg-white/15 lg:hidden"
+            className="p-1.5 rounded text-gray-500 hover:text-gray-900 hover:bg-gray-100 lg:hidden"
             aria-label="ปิดเมนู"
           >
             <X className="h-4 w-4" />
@@ -142,7 +142,7 @@ export default function Sidebar({ user }: SidebarProps) {
           {/* ปุ่มย่อ/ขยายบนจอใหญ่ */}
           <button
             onClick={toggleSidebar}
-            className="p-1.5 rounded text-white/80 hover:text-white hover:bg-white/15 hidden lg:block"
+            className="p-1.5 rounded text-gray-500 hover:text-gray-900 hover:bg-gray-100 hidden lg:block"
             aria-label={sidebarCollapsed ? "ขยายเมนู" : "ย่อเมนู"}
           >
             {sidebarCollapsed ? (
@@ -157,7 +157,7 @@ export default function Sidebar({ user }: SidebarProps) {
         <div className="flex-1 overflow-y-auto py-4">
           <div className="mt-2">
             {!sidebarCollapsed && (
-              <h4 className="px-2 text-base text-center font-semibold text-orange-700 uppercase tracking-wide mb-2">
+              <h4 className="px-2 text-base text-center font-semibold text-gray-900 uppercase tracking-wide mb-2">
                 ADMIN PANEL
               </h4>
             )}
@@ -169,8 +169,8 @@ export default function Sidebar({ user }: SidebarProps) {
                 className={cn(
                   "group flex items-center w-full p-2 rounded-lg text-sm transition-colors focus:outline-none",
                   pathname === "/dashboard"
-                    ? "bg-orange-50 text-orange-700"
-                    : "text-gray-700 hover:bg-orange-50/60",
+                    ? "bg-gray-50 text-gray-900"
+                    : "text-gray-700 hover:bg-gray-50/60",
                   sidebarCollapsed && "justify-center"
                 )}
                 title={sidebarCollapsed ? "Dashboard" : ""}
@@ -197,8 +197,8 @@ export default function Sidebar({ user }: SidebarProps) {
                   className={cn(
                     "group flex items-center w-full p-2 rounded-lg text-sm transition-colors focus:outline-none",
                     pathname?.startsWith("/dashboard/activities")
-                      ? "bg-orange-50 text-orange-700"
-                      : "text-gray-700 hover:bg-orange-50/60",
+                      ? "bg-gray-50 text-gray-900"
+                      : "text-gray-700 hover:bg-gray-50/60",
                     sidebarCollapsed && "justify-center"
                   )}
                   title={sidebarCollapsed ? "งานทั้งหมด" : ""}
@@ -226,8 +226,8 @@ export default function Sidebar({ user }: SidebarProps) {
                   className={cn(
                     "group flex items-center w-full p-2 rounded-lg text-sm transition-colors focus:outline-none",
                     pathname?.startsWith("/dashboard/policies")
-                      ? "bg-orange-50 text-orange-700"
-                      : "text-gray-700 hover:bg-orange-50/60",
+                      ? "bg-gray-50 text-gray-900"
+                      : "text-gray-700 hover:bg-gray-50/60",
                     sidebarCollapsed && "justify-center"
                   )}
                   title={sidebarCollapsed ? "นโยบายงานศพ" : ""}
@@ -255,8 +255,8 @@ export default function Sidebar({ user }: SidebarProps) {
                   className={cn(
                     "group flex items-center w-full p-2 rounded-lg text-sm transition-colors focus:outline-none",
                     pathname?.startsWith("/dashboard/farewell")
-                      ? "bg-orange-50 text-orange-700"
-                      : "text-gray-700 hover:bg-orange-50/60",
+                      ? "bg-gray-50 text-gray-900"
+                      : "text-gray-700 hover:bg-gray-50/60",
                     sidebarCollapsed && "justify-center"
                   )}
                   title={sidebarCollapsed ? "สถิติส่งด้วยใจ" : ""}
@@ -283,8 +283,8 @@ export default function Sidebar({ user }: SidebarProps) {
                 className={cn(
                   "group flex items-center w-full p-2 rounded-lg text-sm transition-colors focus:outline-none",
                   pathname === "/profile"
-                    ? "bg-orange-50 text-orange-700"
-                    : "text-gray-700 hover:bg-orange-50/60",
+                    ? "bg-gray-50 text-gray-900"
+                    : "text-gray-700 hover:bg-gray-50/60",
                   sidebarCollapsed && "justify-center"
                 )}
                 title={sidebarCollapsed ? "โปรไฟล์" : ""}
@@ -311,8 +311,8 @@ export default function Sidebar({ user }: SidebarProps) {
                   className={cn(
                     "group flex items-center w-full p-2 rounded-lg text-sm transition-colors focus:outline-none",
                     pathname?.startsWith("/dashboard/setting")
-                      ? "bg-orange-50 text-orange-700"
-                      : "text-gray-700 hover:bg-orange-50/60",
+                      ? "bg-gray-50 text-gray-900"
+                      : "text-gray-700 hover:bg-gray-50/60",
                     sidebarCollapsed && "justify-center"
                   )}
                   title={sidebarCollapsed ? settingsMenu.name : ""}
@@ -358,8 +358,8 @@ export default function Sidebar({ user }: SidebarProps) {
                                 href={subMenu.href}
                                 className={`flex items-center p-2 text-sm rounded-lg transition-colors focus:outline-none ${
                                   isSubActive
-                                    ? "bg-orange-100 text-orange-800"
-                                    : "text-gray-600 hover:bg-orange-50/60 hover:text-gray-900"
+                                    ? "bg-gray-100 text-gray-900"
+                                    : "text-gray-600 hover:bg-gray-50/60 hover:text-gray-900"
                                 }`}
                               >
                                 <Icon className="w-4 h-4 mr-2" />
@@ -377,7 +377,7 @@ export default function Sidebar({ user }: SidebarProps) {
             {/* กลับหน้าหลักเว็บไซต์ */}
             {!sidebarCollapsed && (
               <div className="px-3 mt-6 mb-1">
-                <div className="border-t border-orange-100 pt-3">
+                <div className="border-t border-gray-200 pt-3">
                   <span className="text-[10px] text-gray-300 uppercase tracking-widest">เว็บไซต์</span>
                 </div>
               </div>
@@ -386,7 +386,7 @@ export default function Sidebar({ user }: SidebarProps) {
               <Link
                 href="/"
                 className={cn(
-                  "group flex items-center w-full p-2 rounded-lg text-sm text-gray-500 hover:bg-orange-50/60 hover:text-orange-700 transition-colors focus:outline-none",
+                  "group flex items-center w-full p-2 rounded-lg text-sm text-gray-500 hover:bg-gray-50/60 hover:text-gray-600 transition-colors focus:outline-none",
                   sidebarCollapsed && "justify-center"
                 )}
                 title={sidebarCollapsed ? "กลับหน้าหลัก" : ""}
@@ -408,15 +408,15 @@ export default function Sidebar({ user }: SidebarProps) {
         </div>
 
         {/* User info & logout */}
-        <div className="border-t border-orange-100 p-3 bg-orange-50/50">
+        <div className="border-t border-gray-200 p-3 bg-gray-50/50">
           <div
             className={cn(
-              "flex items-center bg-white p-2 rounded-lg border border-orange-100",
+              "flex items-center bg-white p-2 rounded-lg border border-gray-200",
               sidebarCollapsed && "justify-center"
             )}
           >
             <div className="flex-shrink-0">
-              <div className="h-8 w-8 rounded-full bg-orange-100 flex items-center justify-center border border-orange-200">
+              <div className="h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center border border-gray-300">
                 {user?.image ? (
                   <img
                     src={user.image}
@@ -424,7 +424,7 @@ export default function Sidebar({ user }: SidebarProps) {
                     className="w-full h-full rounded-full object-cover"
                   />
                 ) : (
-                  <span className="text-xs font-medium text-orange-700">
+                  <span className="text-xs font-medium text-gray-900">
                     {user?.firstName?.charAt(0) || "U"}
                   </span>
                 )}
@@ -436,7 +436,7 @@ export default function Sidebar({ user }: SidebarProps) {
                   {user?.firstName || ""} {user?.lastName || ""}
                 </p>
                 <p className="text-xs text-gray-500">{user?.email || ""}</p>
-                <p className="text-xs mt-1 bg-orange-100 text-orange-700 inline-block px-2 py-0.5 rounded-full border border-orange-200">
+                <p className="text-xs mt-1 bg-gray-100 text-gray-900 inline-block px-2 py-0.5 rounded-full border border-gray-300">
                   {user?.role === "admin" ? "ผู้ดูแลระบบ" : "ผู้ใช้งาน"}
                 </p>
               </div>

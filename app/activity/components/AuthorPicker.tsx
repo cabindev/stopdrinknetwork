@@ -71,7 +71,7 @@ export default function AuthorPicker({
   };
 
   return (
-    <div ref={boxRef} className="relative mb-6 flex items-center gap-3 rounded-2xl border border-orange-100 bg-orange-50/50 px-4 py-3">
+    <div ref={boxRef} className="relative mb-6 flex items-center gap-3 rounded-2xl border border-gray-200 bg-gray-50/50 px-4 py-3">
       <span className="text-sm text-gray-500 w-20 shrink-0">ผู้เขียน</span>
       <button
         type="button"
@@ -82,13 +82,13 @@ export default function AuthorPicker({
           setActive(0);
         }}
         disabled={saving}
-        className="inline-flex items-center gap-2 min-w-0 text-sm font-medium text-orange-700 hover:text-orange-800 hover:underline underline-offset-2 disabled:opacity-60"
+        className="inline-flex items-center gap-2 min-w-0 text-sm font-medium text-gray-900 hover:text-gray-600 hover:underline underline-offset-2 disabled:opacity-60"
       >
         {author.image ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={author.image} alt="" className="w-6 h-6 rounded-full object-cover" />
         ) : (
-          <UserRound className="w-5 h-5 text-orange-400" />
+          <UserRound className="w-5 h-5 text-gray-400" />
         )}
         <span className="truncate">{author.name}</span>
         {saving && <Loader2 className="w-4 h-4 animate-spin" />}
@@ -96,7 +96,7 @@ export default function AuthorPicker({
       <span className="ml-auto hidden sm:block text-[11px] text-gray-400">เฉพาะ superadmin · งานจะย้ายไป “งานของฉัน” ของคนนั้น</span>
 
       {open && (
-        <div className="absolute left-4 right-4 sm:left-24 sm:right-auto sm:w-80 top-full mt-1 z-30 bg-white rounded-xl border border-orange-200 shadow-xl">
+        <div className="absolute left-4 right-4 sm:left-24 sm:right-auto sm:w-80 top-full mt-1 z-30 bg-white rounded-xl border border-gray-300 shadow-xl">
           <div className="flex items-center justify-between px-3 pt-3 pb-2">
             <span className="text-sm font-semibold text-gray-800">ผู้เขียน</span>
             <button type="button" onClick={() => setOpen(false)} aria-label="ปิด" className="p-1 text-gray-400 hover:text-gray-700">
@@ -125,7 +125,7 @@ export default function AuthorPicker({
                 } else if (e.key === 'Escape') setOpen(false);
               }}
               placeholder="ค้นชื่อหรืออีเมล"
-              className="w-full px-3 py-2 text-sm border border-orange-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400"
+              className="w-full px-3 py-2 text-sm border border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400"
             />
           </div>
           <ul role="listbox" className="max-h-64 overflow-y-auto pb-2">
@@ -137,12 +137,12 @@ export default function AuthorPicker({
                   onMouseEnter={() => setActive(i)}
                   onClick={() => choose(u)}
                   className={`w-full text-left px-4 py-2 flex items-center gap-2 ${
-                    i === active ? 'bg-orange-600 text-white' : 'text-gray-800'
+                    i === active ? 'bg-gray-900 text-white' : 'text-gray-800'
                   }`}
                 >
                   <span className="min-w-0 flex-1">
                     <span className="block text-sm truncate">{u.name}</span>
-                    <span className={`block text-[11px] truncate ${i === active ? 'text-orange-100' : 'text-gray-400'}`}>{u.email}</span>
+                    <span className={`block text-[11px] truncate ${i === active ? 'text-gray-100' : 'text-gray-400'}`}>{u.email}</span>
                   </span>
                   {u.id === author.id && <Check className="w-4 h-4 shrink-0" />}
                 </button>

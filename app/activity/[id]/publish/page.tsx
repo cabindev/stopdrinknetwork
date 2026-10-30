@@ -35,7 +35,7 @@ export default async function PublishStoryPage({ params }: { params: Promise<{ i
       <div className="max-w-3xl mx-auto">
         <Link
           href={`/activity/${activity.id}`}
-          className="inline-flex items-center gap-1.5 text-sm text-orange-700 hover:text-orange-800 mb-6"
+          className="inline-flex items-center gap-1.5 text-sm text-gray-900 hover:text-gray-600 mb-6"
         >
           <ArrowLeft className="w-4 h-4" /> กลับไปหน้างาน
         </Link>

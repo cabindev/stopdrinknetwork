@@ -30,7 +30,7 @@ import Pagination from '@/app/components/Pagination';
 
 const STATUS_LABEL: Record<string, { text: string; cls: string; dot: string }> = {
   PLANNING: { text: 'วางแผน', cls: 'bg-gray-100 text-gray-600', dot: 'bg-gray-400' },
-  ACTIVE: { text: 'กำลังดำเนินการ', cls: 'bg-orange-100 text-orange-700', dot: 'bg-orange-500' },
+  ACTIVE: { text: 'กำลังดำเนินการ', cls: 'bg-gray-100 text-gray-900', dot: 'bg-gray-800' },
   COMPLETED: { text: 'เสร็จสิ้น', cls: 'bg-green-50 text-green-700', dot: 'bg-green-600' },
 };
 const STATUSES = ['ACTIVE', 'PLANNING', 'COMPLETED'] as const;
@@ -160,7 +160,7 @@ export default async function MyActivitiesPage({
               // eslint-disable-next-line @next/next/no-html-link-for-pages -- ดาวน์โหลดไฟล์จาก API ต้องเป็น <a> ไม่ใช่ <Link>
               <a
                 href="/api/activities/export?mine=1"
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-orange-200 text-orange-700 text-sm font-medium hover:bg-orange-50 transition-colors"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-300 text-gray-900 text-sm font-medium hover:bg-gray-50 transition-colors"
               >
                 <FileSpreadsheet className="w-4 h-4" /> Excel
               </a>
@@ -168,7 +168,7 @@ export default async function MyActivitiesPage({
             {canCreate && (
               <Link
                 href="/activity/new"
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-orange-600 text-white text-sm font-medium hover:bg-orange-700 shadow-lg shadow-orange-500/30 transition-all"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gray-900 text-white text-sm font-medium hover:bg-gray-700 shadow-lg shadow-gray-200/30 transition-all"
               >
                 <Plus className="w-4 h-4" /> บันทึกงานใหม่
               </Link>
@@ -179,9 +179,9 @@ export default async function MyActivitiesPage({
         {allCount > 0 && (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
             {stats.map(({ label, value, icon: Icon }) => (
-              <div key={label} className="rounded-2xl border border-orange-100 bg-orange-50/60 px-4 py-3">
+              <div key={label} className="rounded-2xl border border-gray-200 bg-gray-50/60 px-4 py-3">
                 <div className="flex items-center gap-1.5 text-xs text-gray-500">
-                  <Icon className="w-3.5 h-3.5 text-orange-500" /> {label}
+                  <Icon className="w-3.5 h-3.5 text-gray-600" /> {label}
                 </div>
                 <div className="mt-1 text-2xl font-bold text-gray-800 tabular-nums">{value.toLocaleString('th-TH')}</div>
               </div>
@@ -199,13 +199,13 @@ export default async function MyActivitiesPage({
                   href={t.key ? `/activity?status=${t.key}` : '/activity'}
                   className={`shrink-0 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-sm border transition-colors ${
                     active
-                      ? 'bg-orange-600 border-orange-600 text-white'
-                      : 'bg-white border-orange-100 text-gray-600 hover:border-orange-300'
+                      ? 'bg-gray-900 border-gray-900 text-white'
+                      : 'bg-white border-gray-200 text-gray-600 hover:border-gray-400'
                   }`}
                 >
                   {t.key && <span className={`w-1.5 h-1.5 rounded-full ${active ? 'bg-white' : STATUS_LABEL[t.key].dot}`} />}
                   {t.label}
-                  <span className={`tabular-nums ${active ? 'text-orange-100' : 'text-gray-400'}`}>{t.count}</span>
+                  <span className={`tabular-nums ${active ? 'text-gray-100' : 'text-gray-400'}`}>{t.count}</span>
                 </Link>
               );
             })}
@@ -219,8 +219,8 @@ export default async function MyActivitiesPage({
         )}
 
         {activities.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-orange-100 p-12 text-center mt-4">
-            <ClipboardList className="w-12 h-12 text-orange-200 mx-auto mb-4" />
+          <div className="bg-white rounded-2xl border border-gray-200 p-12 text-center mt-4">
+            <ClipboardList className="w-12 h-12 text-gray-200 mx-auto mb-4" />
             {allCount === 0 ? (
               <>
                 <p className="text-gray-600 font-medium">ยังไม่มีการดำเนินงานที่บันทึกไว้</p>
@@ -239,7 +239,7 @@ export default async function MyActivitiesPage({
             {groups.map((g) => (
               <section key={g.month}>
                 <h2 className="sticky top-16 z-10 -mx-1 px-1 py-2 bg-white/95 backdrop-blur text-sm font-semibold text-gray-800 flex items-center gap-2">
-                  <CalendarDays className="w-4 h-4 text-orange-500" /> {g.month}
+                  <CalendarDays className="w-4 h-4 text-gray-600" /> {g.month}
                   <span className="text-xs font-normal text-gray-400">{g.items.length} งาน</span>
                 </h2>
                 <ul className="space-y-3">
@@ -259,10 +259,10 @@ export default async function MyActivitiesPage({
                       <li key={a.id}>
                         <Link
                           href={`/activity/${a.id}`}
-                          className="group flex gap-4 p-3 sm:p-4 bg-white rounded-2xl border border-orange-100 hover:border-orange-300 hover:shadow-md hover:shadow-orange-100 transition-all"
+                          className="group flex gap-4 p-3 sm:p-4 bg-white rounded-2xl border border-gray-200 hover:border-gray-400 hover:shadow-md hover:shadow-gray-200 transition-all"
                         >
                           {/* ภาพประจำงาน 16:9 (ปกออกแบบเป็น 16:9 เห็นครบ): รูปปก → โลโก้ประเด็น → ตัวอักษรแรกบนสีประจำประเด็น */}
-                          <div className="relative shrink-0 self-start w-28 sm:w-40 aspect-video rounded-xl overflow-hidden bg-orange-50 flex items-center justify-center">
+                          <div className="relative shrink-0 self-start w-28 sm:w-40 aspect-video rounded-xl overflow-hidden bg-gray-50 flex items-center justify-center">
                             {cover ? (
                               // eslint-disable-next-line @next/next/no-img-element
                               <img
@@ -308,7 +308,7 @@ export default async function MyActivitiesPage({
                               </span>
                             </div>
 
-                            <h3 className="mt-1 font-semibold text-gray-800 leading-snug line-clamp-2 group-hover:text-orange-700 transition-colors">
+                            <h3 className="mt-1 font-semibold text-gray-800 leading-snug line-clamp-2 group-hover:text-gray-600 transition-colors">
                               {isNew && (
                                 <span className="mr-1.5 align-middle inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-orange-600 text-white text-[10px] font-semibold">
                                   <Sparkles className="w-3 h-3" /> ใหม่
@@ -321,7 +321,7 @@ export default async function MyActivitiesPage({
 
                             <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500">
                               <span className="inline-flex items-center gap-1 min-w-0">
-                                <MapPin className="w-3.5 h-3.5 shrink-0 text-orange-500" />
+                                <MapPin className="w-3.5 h-3.5 shrink-0 text-gray-600" />
                                 <span className="truncate">
                                   {a.areaName ? `${a.areaName} · ` : ''}ต.{a.district} จ.{a.province}
                                   <span className="hidden sm:inline"> ({getRegionLabel(a.region as HealthZone)})</span>
@@ -338,13 +338,13 @@ export default async function MyActivitiesPage({
                                 </span>
                               )}
                               {a.isPublished && (
-                                <span className="inline-flex items-center gap-1 text-orange-700">
+                                <span className="inline-flex items-center gap-1 text-gray-900">
                                   <Globe className="w-3.5 h-3.5" /> เผยแพร่แล้ว
                                 </span>
                               )}
                             </div>
 
-                            <div className="mt-2 pt-2 border-t border-dashed border-orange-100 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-gray-400">
+                            <div className="mt-2 pt-2 border-t border-dashed border-gray-200 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-gray-400">
                               <span className="inline-flex items-center gap-1" title={a.createdAt.toISOString()}>
                                 <Clock className="w-3 h-3" />
                                 บันทึกเมื่อ {fmtDate.format(a.createdAt)} {fmtTime.format(a.createdAt)} น.

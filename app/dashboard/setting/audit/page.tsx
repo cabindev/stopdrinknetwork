@@ -12,7 +12,7 @@ const PER_PAGE = 25;
 
 const ACTION_META: Record<string, { text: string; cls: string; Icon: typeof Plus }> = {
   CREATE: { text: 'สร้าง', cls: 'bg-green-50 text-green-700', Icon: Plus },
-  UPDATE: { text: 'แก้ไข', cls: 'bg-orange-50 text-orange-700', Icon: SquarePen },
+  UPDATE: { text: 'แก้ไข', cls: 'bg-gray-50 text-gray-900', Icon: SquarePen },
   DELETE: { text: 'ลบ', cls: 'bg-red-50 text-red-600', Icon: Trash2 },
 };
 
@@ -47,14 +47,14 @@ export default async function AuditPage({
 
   const tabCls = (active: boolean) =>
     `px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-      active ? 'bg-orange-600 text-white' : 'text-gray-600 hover:bg-orange-50'
+      active ? 'bg-gray-900 text-white' : 'text-gray-600 hover:bg-gray-50'
     }`;
 
   return (
     <div className="p-6 max-w-4xl">
       <div className="flex items-center gap-3 mb-1">
-        <span className="flex w-10 h-10 rounded-xl bg-orange-50 border border-orange-100 items-center justify-center">
-          <History className="w-5 h-5 text-orange-600" />
+        <span className="flex w-10 h-10 rounded-xl bg-gray-50 border border-gray-200 items-center justify-center">
+          <History className="w-5 h-5 text-gray-900" />
         </span>
         <div>
           <h1 className="text-xl font-bold text-gray-800">ประวัติการเปลี่ยนแปลง</h1>
@@ -64,7 +64,7 @@ export default async function AuditPage({
         </div>
       </div>
 
-      <div className="mt-5 flex items-center gap-1 bg-white border border-orange-100 rounded-xl p-1 w-fit">
+      <div className="mt-5 flex items-center gap-1 bg-white border border-gray-200 rounded-xl p-1 w-fit">
         <Link href="/dashboard/setting/audit" className={tabCls(!actionFilter)}>
           ทั้งหมด
         </Link>
@@ -79,7 +79,7 @@ export default async function AuditPage({
         ))}
       </div>
 
-      <div className="mt-4 bg-white rounded-2xl border border-orange-100 divide-y divide-orange-50">
+      <div className="mt-4 bg-white rounded-2xl border border-gray-200 divide-y divide-gray-100">
         {logs.length === 0 ? (
           <p className="p-10 text-center text-sm text-gray-400">ยังไม่มีประวัติ</p>
         ) : (
@@ -100,7 +100,7 @@ export default async function AuditPage({
                   ) : (
                     <Link
                       href={`/activity/${log.entityId}`}
-                      className="inline-flex items-center gap-1 text-sm font-medium text-gray-800 hover:text-orange-700"
+                      className="inline-flex items-center gap-1 text-sm font-medium text-gray-800 hover:text-gray-600"
                     >
                       {log.entityName}
                       <ExternalLink className="w-3 h-3 text-gray-300" />

@@ -17,7 +17,7 @@ const PER_PAGE = 20;
 
 const STATUS_META: Record<string, { text: string; cls: string }> = {
   PLANNING: { text: 'วางแผน', cls: 'bg-gray-100 text-gray-600' },
-  ACTIVE: { text: 'กำลังดำเนินการ', cls: 'bg-orange-100 text-orange-700' },
+  ACTIVE: { text: 'กำลังดำเนินการ', cls: 'bg-gray-100 text-gray-900' },
   COMPLETED: { text: 'เสร็จสิ้น', cls: 'bg-green-50 text-green-700' },
 };
 
@@ -25,7 +25,7 @@ const fmt = (d: Date | null) =>
   d ? new Intl.DateTimeFormat('th-TH', { dateStyle: 'medium' }).format(d) : '—';
 
 const selCls =
-  'px-3 py-2 text-sm text-gray-800 bg-white border border-orange-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400';
+  'px-3 py-2 text-sm text-gray-800 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400';
 
 export default async function AllActivitiesPage({
   searchParams,
@@ -151,8 +151,8 @@ export default async function AllActivitiesPage({
     <div className="p-6 max-w-6xl">
       <div className="flex flex-wrap items-start justify-between gap-3 mb-1">
         <div className="flex items-center gap-3">
-          <span className="flex w-10 h-10 rounded-xl bg-orange-50 border border-orange-100 items-center justify-center">
-            <Table2 className="w-5 h-5 text-orange-600" />
+          <span className="flex w-10 h-10 rounded-xl bg-gray-50 border border-gray-200 items-center justify-center">
+            <Table2 className="w-5 h-5 text-gray-900" />
           </span>
           <div>
             <h1 className="text-xl font-bold text-gray-800">งานทั้งหมดในระบบ</h1>
@@ -164,14 +164,14 @@ export default async function AllActivitiesPage({
         </div>
         <a
           href={`/api/activities/export${exportQuery ? `?${exportQuery}` : ''}`}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-orange-200 text-orange-700 text-sm font-medium hover:bg-orange-50 transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-300 text-gray-900 text-sm font-medium hover:bg-gray-50 transition-colors"
         >
           <FileSpreadsheet className="w-4 h-4" /> ส่งออกตามตัวกรอง
         </a>
       </div>
 
       {/* ตัวกรอง — ใช้ GET form เพื่อให้ URL แชร์/บุ๊กมาร์กได้ */}
-      <form method="get" className="mt-5 bg-white rounded-2xl border border-orange-100 p-4">
+      <form method="get" className="mt-5 bg-white rounded-2xl border border-gray-200 p-4">
         <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-2">
           <div className="relative lg:col-span-2">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -239,12 +239,12 @@ export default async function AllActivitiesPage({
         <div className="mt-2 flex items-center gap-2">
           <button
             type="submit"
-            className="px-4 py-2 rounded-lg bg-orange-600 text-white text-xs font-medium hover:bg-orange-700 transition-colors"
+            className="px-4 py-2 rounded-lg bg-gray-900 text-white text-xs font-medium hover:bg-gray-700 transition-colors"
           >
             ค้นหา
           </button>
           {Object.values(activeFilters).some(Boolean) && (
-            <Link href="/dashboard/activities" className="px-3 py-2 text-xs text-gray-500 hover:text-orange-700">
+            <Link href="/dashboard/activities" className="px-3 py-2 text-xs text-gray-500 hover:text-gray-600">
               ล้างตัวกรอง
             </Link>
           )}
@@ -253,10 +253,10 @@ export default async function AllActivitiesPage({
 
       {/* ตาราง — superadmin ติ๊กเลือกแล้วโอนให้ผู้รับผิดชอบคนอื่นได้ (แถบลอยด้านล่าง) */}
       <TransferProvider>
-      <div className="mt-4 bg-white rounded-2xl border border-orange-100 overflow-hidden">
+      <div className="mt-4 bg-white rounded-2xl border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-orange-50/60 text-gray-600">
+            <thead className="bg-gray-50/60 text-gray-600">
               <tr>
                 {canTransfer && (
                   <th className="pl-4 py-3 w-8">
@@ -273,7 +273,7 @@ export default async function AllActivitiesPage({
                 <th className="px-4 py-3" />
               </tr>
             </thead>
-            <tbody className="divide-y divide-orange-50">
+            <tbody className="divide-y divide-gray-100">
               {activities.length === 0 ? (
                 <tr>
                   <td colSpan={canTransfer ? 9 : 8} className="px-4 py-12 text-center text-gray-400">
@@ -282,7 +282,7 @@ export default async function AllActivitiesPage({
                 </tr>
               ) : (
                 activities.map((a) => (
-                  <tr key={a.id} className="hover:bg-orange-50/40">
+                  <tr key={a.id} className="hover:bg-gray-50/40">
                     {canTransfer && (
                       <td className="pl-4 py-3 align-top">
                         <RowCheck id={a.id} />
@@ -291,7 +291,7 @@ export default async function AllActivitiesPage({
                     <td className="px-4 py-3">
                       <Link
                         href={`/activity/${a.id}`}
-                        className="font-medium text-gray-800 hover:text-orange-700 inline-flex items-center gap-1"
+                        className="font-medium text-gray-800 hover:text-gray-600 inline-flex items-center gap-1"
                       >
                         {a.title}
                         <ExternalLink className="w-3 h-3 text-gray-300" />
@@ -345,7 +345,7 @@ export default async function AllActivitiesPage({
                       <Link
                         href={`/activity/${a.id}/edit`}
                         title="แก้ไข"
-                        className="inline-flex p-1.5 rounded-lg text-gray-400 hover:text-orange-700 hover:bg-orange-50"
+                        className="inline-flex p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-50"
                       >
                         <SquarePen className="w-4 h-4" />
                       </Link>

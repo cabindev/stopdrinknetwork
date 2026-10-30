@@ -219,7 +219,7 @@ export default function JourneyScroll() {
       <section ref={sectionRef} aria-label="เส้นทางสุดท้าย ภาพเคลื่อนไหวตามการเลื่อนหน้า" className="relative h-[520svh] md:h-[600svh]">
         <a
           href="#learn"
-          className="sr-only focus:not-sr-only focus:absolute focus:top-20 focus:left-3 focus:z-30 focus:px-4 focus:py-2 focus:rounded-md focus:bg-orange-600 focus:text-white focus:text-sm"
+          className="sr-only focus:not-sr-only focus:absolute focus:top-20 focus:left-3 focus:z-30 focus:px-4 focus:py-2 focus:rounded-md focus:bg-gray-800 focus:text-white focus:text-sm"
         >
           ข้ามไปอ่านเนื้อหา
         </a>
@@ -284,12 +284,12 @@ export default function JourneyScroll() {
                 aria-label={`ขั้นที่ ${index + 1}: ${copy.label}`}
                 aria-current={stage === index ? 'step' : undefined}
                 title={copy.label}
-                className="group w-11 h-11 flex items-center justify-center rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange-500"
+                className="group w-11 h-11 flex items-center justify-center rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-gray-900"
               >
                 <span
                   className={`block rounded-full transition-all duration-300 ${
                     stage === index
-                      ? `w-2.5 h-2.5 ${dark ? 'bg-orange-400' : 'bg-orange-600'}`
+                      ? `w-2.5 h-2.5 ${dark ? 'bg-gray-700' : 'bg-gray-900'}`
                       : `w-2 h-2 ${dark ? 'bg-white/40 group-hover:bg-white/70' : 'bg-gray-900/25 group-hover:bg-gray-900/50'}`
                   }`}
                 />

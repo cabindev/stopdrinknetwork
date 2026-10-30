@@ -78,7 +78,7 @@ export default function SignInForm() {
       footer={
         <>
           ยังไม่มีบัญชี?{" "}
-          <Link href="/auth/signup" className="text-gray-900 font-semibold hover:text-orange-600 transition-colors">
+          <Link href="/auth/signup" className="text-gray-900 font-semibold hover:text-gray-600 transition-colors">
             สมัครสมาชิก
           </Link>
         </>
@@ -95,7 +95,7 @@ export default function SignInForm() {
             <PasswordField label="รหัสผ่าน" name="password" required autoComplete="current-password" placeholder="••••••" />
             <Link
               href="/auth/forgot-password"
-              className="inline-block mt-2 text-[13px] font-semibold text-gray-400 hover:text-orange-600 transition-colors"
+              className="inline-block mt-2 text-[13px] font-semibold text-gray-400 hover:text-gray-600 transition-colors"
             >
               ลืมรหัสผ่าน?
             </Link>

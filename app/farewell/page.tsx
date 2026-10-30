@@ -51,8 +51,8 @@ export default function FarewellPage() {
       <div className="max-w-3xl mx-auto">
         {/* เปิดหน้า */}
         <section className="pt-4 sm:pt-10">
-          <span className="flex w-12 h-12 rounded-2xl bg-orange-50 border border-orange-100 items-center justify-center">
-            <ChanFlowerIcon className="w-7 h-7 text-orange-600" />
+          <span className="flex w-12 h-12 rounded-2xl bg-gray-50 border border-gray-200 items-center justify-center">
+            <ChanFlowerIcon className="w-7 h-7 text-gray-900" />
           </span>
           <h1 className="mt-5 text-3xl sm:text-4xl font-bold text-gray-900">{SITE_NAME}</h1>
           <p className="mt-2 text-lg text-gray-700">{SITE_TAGLINE}</p>
@@ -64,7 +64,7 @@ export default function FarewellPage() {
             <StartButton />
           </div>
           <p className="mt-4 inline-flex items-center gap-1.5 text-xs text-gray-500">
-            <ShieldCheck className="w-4 h-4 text-orange-600" />
+            <ShieldCheck className="w-4 h-4 text-gray-900" />
             ไม่ต้องสมัครสมาชิก ชื่อและตัวเลขในแผนเก็บในเครื่องนี้เท่านั้น
           </p>
         </section>
@@ -75,10 +75,10 @@ export default function FarewellPage() {
             <Link
               key={href}
               href={href}
-              className="flex items-start gap-3 rounded-2xl border border-orange-100 p-5 hover:border-orange-300 transition-colors"
+              className="flex items-start gap-3 rounded-2xl border border-gray-200 p-5 hover:border-gray-400 transition-colors"
             >
-              <span className="flex w-10 h-10 shrink-0 items-center justify-center rounded-xl bg-orange-50">
-                <Icon className="w-5 h-5 text-orange-600" />
+              <span className="flex w-10 h-10 shrink-0 items-center justify-center rounded-xl bg-gray-50">
+                <Icon className="w-5 h-5 text-gray-900" />
               </span>
               <span>
                 <span className="block text-base font-semibold text-gray-900">{title}</span>
@@ -100,7 +100,7 @@ export default function FarewellPage() {
           </p>
           <dl className="mt-6 grid gap-3 sm:grid-cols-2">
             {FACTS.map((f) => (
-              <div key={f.value} className="rounded-2xl bg-orange-50 p-4">
+              <div key={f.value} className="rounded-2xl bg-gray-50 p-4">
                 <dt className="text-2xl font-bold text-gray-900">{f.value}</dt>
                 <dd className="mt-1 text-sm leading-relaxed text-gray-700">{f.text}</dd>
               </div>
@@ -111,7 +111,7 @@ export default function FarewellPage() {
           </p>
           <Link
             href="/stories?sub=งานศพปลอดเหล้า"
-            className="mt-5 inline-flex items-center gap-2 min-h-11 text-sm font-medium text-orange-700 hover:text-orange-800"
+            className="mt-5 inline-flex items-center gap-2 min-h-11 text-sm font-medium text-gray-900 hover:text-gray-600"
           >
             <BookOpen className="w-4 h-4" /> อ่านเรื่องเล่าจากพื้นที่ที่ทำได้จริง
           </Link>
@@ -120,7 +120,7 @@ export default function FarewellPage() {
         {/* สื่อรณรงค์ — ลิงก์เล็ก ไม่ดึงความสนใจจากเครื่องมือของครอบครัว */}
         {JOURNEY_PUBLIC && <p className="mt-12 border-t border-gray-100 pt-6 text-sm text-gray-500">
           สื่อรณรงค์สำหรับคนทั่วไป:{' '}
-          <Link href="/farewell/journey" className="inline-flex items-center gap-1 font-medium text-orange-700 hover:text-orange-800">
+          <Link href="/farewell/journey" className="inline-flex items-center gap-1 font-medium text-gray-900 hover:text-gray-600">
             <Sparkles className="w-4 h-4" /> เส้นทางสุดท้าย (ภาพ 3D)
           </Link>
         </p>}

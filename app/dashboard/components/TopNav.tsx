@@ -24,14 +24,14 @@ export default function TopNav({ user }: TopNavProps) {
   };
 
   return (
-    <header className="bg-white/80 backdrop-blur h-12 flex items-center justify-between px-6 relative z-[100] shadow-sm border-b border-orange-100">
+    <header className="bg-white/80 backdrop-blur h-12 flex items-center justify-between px-6 relative z-[100] shadow-sm border-b border-gray-200">
       {/* Left side - Mobile hamburger + Brand */}
       <div className="flex items-center space-x-4">
         {/* Mobile hamburger button */}
         <button
           type="button"
           onClick={handleMenuToggle}
-          className="p-1 text-gray-700 hover:bg-orange-50 rounded lg:hidden transition-colors"
+          className="p-1 text-gray-700 hover:bg-gray-50 rounded lg:hidden transition-colors"
           aria-label="เปิดเมนู"
         >
           <Menu className="h-4 w-4" />
@@ -55,7 +55,7 @@ export default function TopNav({ user }: TopNavProps) {
           <input
             type="text"
             placeholder="Search everything..."
-            className="w-full pl-10 pr-4 py-1.5 text-sm bg-orange-50/60 border border-orange-100 rounded-md focus:outline-none focus:bg-white focus:border-orange-400 transition-all"
+            className="w-full pl-10 pr-4 py-1.5 text-sm bg-gray-50/60 border border-gray-200 rounded-md focus:outline-none focus:bg-white focus:border-gray-500 transition-all"
           />
         </div>
       </div>
@@ -67,7 +67,7 @@ export default function TopNav({ user }: TopNavProps) {
           <button
             type="button"
             onClick={onSelectAll}
-            className="px-3 py-1.5 text-sm text-orange-600 hover:bg-orange-50 rounded transition-colors font-medium"
+            className="px-3 py-1.5 text-sm text-gray-900 hover:bg-gray-50 rounded transition-colors font-medium"
             aria-label="เลือกทั้งหมด"
           >
             {selectedCount === totalCount ? 'Clear all' : `Select all (${totalCount})`}
@@ -76,7 +76,7 @@ export default function TopNav({ user }: TopNavProps) {
 
         {/* Selection indicator */}
         {selectedCount > 0 && (
-          <span className="px-2 py-1 text-xs bg-orange-100 text-orange-700 rounded-full font-medium">
+          <span className="px-2 py-1 text-xs bg-gray-100 text-gray-900 rounded-full font-medium">
             {selectedCount} selected
           </span>
         )}
@@ -84,7 +84,7 @@ export default function TopNav({ user }: TopNavProps) {
         {/* Settings */}
         <button
           type="button"
-          className="p-1.5 text-gray-600 hover:bg-orange-50 rounded transition-colors"
+          className="p-1.5 text-gray-600 hover:bg-gray-50 rounded transition-colors"
           aria-label="การตั้งค่า"
         >
           <Settings className="w-4 h-4" />
@@ -93,11 +93,11 @@ export default function TopNav({ user }: TopNavProps) {
         {/* Notifications */}
         <button
           type="button"
-          className="p-1.5 text-gray-600 hover:bg-orange-50 rounded transition-colors relative"
+          className="p-1.5 text-gray-600 hover:bg-gray-50 rounded transition-colors relative"
           aria-label="การแจ้งเตือน"
         >
           <Bell className="w-4 h-4" />
-          <span className="absolute -top-1 -right-1 w-2 h-2 bg-orange-400 rounded-full"></span>
+          <span className="absolute -top-1 -right-1 w-2 h-2 bg-gray-700 rounded-full"></span>
         </button>
 
         {/* User Info Display Only */}
@@ -109,7 +109,7 @@ export default function TopNav({ user }: TopNavProps) {
               className="w-6 h-6 rounded-full object-cover"
             />
           ) : (
-            <span className="flex w-6 h-6 rounded-full bg-orange-100 items-center justify-center text-[10px] font-medium text-orange-700">
+            <span className="flex w-6 h-6 rounded-full bg-gray-100 items-center justify-center text-[10px] font-medium text-gray-900">
               {user?.firstName?.charAt(0) || "U"}
             </span>
           )}

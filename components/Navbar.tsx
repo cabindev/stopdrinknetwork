@@ -13,7 +13,7 @@ import { JOURNEY_PUBLIC } from '@/app/farewell/content';
 const FAREWELL_HREF = JOURNEY_PUBLIC ? '/farewell/journey' : '/farewell';
 
 const PILL =
-  'inline-flex items-center gap-1.5 h-9 px-3 rounded-full bg-white/95 backdrop-blur border border-gray-200 shadow-sm text-xs font-medium text-gray-700 hover:bg-white hover:text-orange-700 transition-colors';
+  'inline-flex items-center gap-1.5 h-9 px-3 rounded-full bg-white/95 backdrop-blur border border-gray-200 shadow-sm text-xs font-medium text-gray-700 hover:bg-white hover:text-gray-600 transition-colors';
 
 export default function Navbar() {
   const { data: session, status } = useSession();
@@ -78,7 +78,7 @@ export default function Navbar() {
               )}
               {isPending && (
                 <Link href="/auth/pending" className={PILL} title="บัญชีรอผู้ดูแลระบบอนุมัติ">
-                  <Clock className="w-4 h-4 text-orange-500" />
+                  <Clock className="w-4 h-4 text-gray-600" />
                   รออนุมัติ
                 </Link>
               )}
@@ -105,7 +105,7 @@ export default function Navbar() {
                   setIsUserMenuOpen(!isUserMenuOpen);
                 }}
                 aria-label="เมนูผู้ใช้"
-                className="flex w-9 h-9 rounded-full bg-white/95 backdrop-blur border border-gray-200 shadow-sm items-center justify-center overflow-hidden hover:border-orange-300 transition-colors"
+                className="flex w-9 h-9 rounded-full bg-white/95 backdrop-blur border border-gray-200 shadow-sm items-center justify-center overflow-hidden hover:border-gray-400 transition-colors"
               >
                 {session.user.image ? (
                   <img src={session.user.image} alt="" className="w-full h-full object-cover" />
@@ -123,7 +123,7 @@ export default function Navbar() {
                   </div>
                   <Link
                     href="/profile"
-                    className="flex items-center gap-2 px-4 py-2 text-xs text-gray-600 hover:bg-orange-50 hover:text-orange-700 transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 text-xs text-gray-600 hover:bg-gray-50 hover:text-gray-600 transition-colors"
                     onClick={() => setIsUserMenuOpen(false)}
                   >
                     <User className="w-3.5 h-3.5 text-gray-400" />
@@ -166,21 +166,21 @@ export default function Navbar() {
         <div className="pointer-events-auto sm:hidden mx-3 rounded-2xl bg-white border border-gray-200 shadow-xl p-2">
           <Link
             href="/"
-            className="flex items-center gap-2 px-3 py-2.5 text-xs rounded-xl text-gray-600 hover:bg-orange-50 hover:text-orange-700"
+            className="flex items-center gap-2 px-3 py-2.5 text-xs rounded-xl text-gray-600 hover:bg-gray-50 hover:text-gray-600"
             onClick={() => setIsMenuOpen(false)}
           >
             <Home className="w-4 h-4 text-gray-400" /> หน้าแรก
           </Link>
           <Link
             href="/stories"
-            className="flex items-center gap-2 px-3 py-2.5 text-xs rounded-xl text-gray-600 hover:bg-orange-50 hover:text-orange-700"
+            className="flex items-center gap-2 px-3 py-2.5 text-xs rounded-xl text-gray-600 hover:bg-gray-50 hover:text-gray-600"
             onClick={() => setIsMenuOpen(false)}
           >
             <BookOpen className="w-4 h-4 text-gray-400" /> กรณีศึกษา
           </Link>
           <Link
             href={FAREWELL_HREF}
-            className="flex items-center gap-2 px-3 py-2.5 text-xs rounded-xl text-gray-600 hover:bg-orange-50 hover:text-orange-700"
+            className="flex items-center gap-2 px-3 py-2.5 text-xs rounded-xl text-gray-600 hover:bg-gray-50 hover:text-gray-600"
             onClick={() => setIsMenuOpen(false)}
           >
             <ChanFlowerIcon className="w-4 h-4 text-gray-400" /> ส่งด้วยใจ
@@ -188,7 +188,7 @@ export default function Navbar() {
           {session?.user && !isPending && (
             <Link
               href="/activity"
-              className="flex items-center gap-2 px-3 py-2.5 text-xs rounded-xl text-gray-600 hover:bg-orange-50 hover:text-orange-700"
+              className="flex items-center gap-2 px-3 py-2.5 text-xs rounded-xl text-gray-600 hover:bg-gray-50 hover:text-gray-600"
               onClick={() => setIsMenuOpen(false)}
             >
               <ClipboardList className="w-4 h-4 text-gray-400" /> งานของฉัน
@@ -197,15 +197,15 @@ export default function Navbar() {
           {isPending && (
             <Link
               href="/auth/pending"
-              className="flex items-center gap-2 px-3 py-2.5 text-xs rounded-xl text-gray-600 hover:bg-orange-50 hover:text-orange-700"
+              className="flex items-center gap-2 px-3 py-2.5 text-xs rounded-xl text-gray-600 hover:bg-gray-50 hover:text-gray-600"
               onClick={() => setIsMenuOpen(false)}
             >
-              <Clock className="w-4 h-4 text-orange-500" /> รออนุมัติ
+              <Clock className="w-4 h-4 text-gray-600" /> รออนุมัติ
             </Link>
           )}
           <Link
             href="/map"
-            className="flex items-center gap-2 px-3 py-2.5 text-xs rounded-xl text-gray-600 hover:bg-orange-50 hover:text-orange-700"
+            className="flex items-center gap-2 px-3 py-2.5 text-xs rounded-xl text-gray-600 hover:bg-gray-50 hover:text-gray-600"
             onClick={() => setIsMenuOpen(false)}
           >
             <MapIcon className="w-4 h-4 text-gray-400" /> แผนที่รวม
@@ -213,7 +213,7 @@ export default function Navbar() {
           {isAdmin && (
             <Link
               href="/dashboard"
-              className="flex items-center gap-2 px-3 py-2.5 text-xs rounded-xl text-gray-600 hover:bg-orange-50 hover:text-orange-700"
+              className="flex items-center gap-2 px-3 py-2.5 text-xs rounded-xl text-gray-600 hover:bg-gray-50 hover:text-gray-600"
               onClick={() => setIsMenuOpen(false)}
             >
               <BarChart3 className="w-4 h-4 text-gray-400" /> Dashboard
@@ -225,7 +225,7 @@ export default function Navbar() {
               <>
                 <Link
                   href="/profile"
-                  className="flex items-center gap-2 px-3 py-2.5 text-xs rounded-xl text-gray-600 hover:bg-orange-50 hover:text-orange-700"
+                  className="flex items-center gap-2 px-3 py-2.5 text-xs rounded-xl text-gray-600 hover:bg-gray-50 hover:text-gray-600"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   <User className="w-4 h-4 text-gray-400" /> {session.user.firstName}
@@ -248,7 +248,7 @@ export default function Navbar() {
                   router.push('/auth/signin');
                   setIsMenuOpen(false);
                 }}
-                className="flex items-center gap-2 w-full px-3 py-2.5 text-xs rounded-xl text-gray-600 hover:bg-orange-50 hover:text-orange-700"
+                className="flex items-center gap-2 w-full px-3 py-2.5 text-xs rounded-xl text-gray-600 hover:bg-gray-50 hover:text-gray-600"
               >
                 <User className="w-4 h-4 text-gray-400" /> เข้าสู่ระบบ
               </button>

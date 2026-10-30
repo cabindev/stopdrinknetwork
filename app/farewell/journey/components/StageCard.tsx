@@ -39,7 +39,7 @@ export default function StageCard({ copy, index, dark = false, overlay = false }
         <Image src="/logo/logorip.png" alt="งานศพปลอดเหล้า" width={48} height={41} className="rounded bg-white p-1" />
       </div>}
       {copy.eyebrow && !overlay && (
-        <p className={`text-xs font-medium mb-2 ${dark ? 'text-orange-300' : 'text-orange-700'}`}>{copy.eyebrow}</p>
+        <p className={`text-xs font-medium mb-2 ${dark ? 'text-gray-400' : 'text-gray-900'}`}>{copy.eyebrow}</p>
       )}
       <Heading className={overlay ? styles.headline : `font-bold leading-snug text-balance ${index === 0 ? 'text-3xl sm:text-4xl mb-3' : 'text-lg sm:text-2xl mb-3'}`}>
         {overlay ? POSTER_LINES[index].map(([line, role]) => <span key={line} className={styles[role]}>{line}</span>) : copy.title}
@@ -48,7 +48,7 @@ export default function StageCard({ copy, index, dark = false, overlay = false }
         <p className={overlay ? styles.body : `text-[15px] sm:text-base leading-relaxed ${dark ? 'text-gray-100' : 'text-gray-700'}`}>{copy.body}</p>
       )}
       {copy.quote && (
-        <blockquote className={overlay ? styles.quote : `mt-3 border-l-2 pl-3 text-[15px] ${dark ? 'border-orange-400' : 'border-orange-600'}`}>
+        <blockquote className={overlay ? styles.quote : `mt-3 border-l-2 pl-3 text-[15px] ${dark ? 'border-gray-500' : 'border-gray-900'}`}>
           “{copy.quote.text}”
           <footer className={overlay ? styles.note : `mt-1 text-xs ${dark ? 'text-gray-300' : 'text-gray-500'}`}>{copy.quote.by}</footer>
         </blockquote>
@@ -64,7 +64,7 @@ export default function StageCard({ copy, index, dark = false, overlay = false }
         <a
           href="/farewell/plan"
           tabIndex={tab}
-          className="mt-4 inline-flex items-center gap-2 min-h-11 px-5 rounded-full bg-orange-600 text-sm font-semibold text-white hover:bg-orange-700"
+          className="mt-4 inline-flex items-center gap-2 min-h-11 px-5 rounded-full bg-gray-900 text-sm font-semibold text-white hover:bg-gray-700"
         >
           เริ่มวางแผนงานศพ
           <ArrowRight className="w-4 h-4" />

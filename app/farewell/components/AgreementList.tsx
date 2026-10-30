@@ -21,7 +21,7 @@ function covers(a: LocalAgreement) {
 
 function Item({ a, plain }: { a: LocalAgreement; plain: boolean }) {
   return (
-    <li className={plain ? 'rounded-md border border-gray-200 bg-white p-4' : 'rounded-2xl border border-orange-100 bg-white p-4'}>
+    <li className={plain ? 'rounded-md border border-gray-200 bg-white p-4' : 'rounded-2xl border border-gray-200 bg-white p-4'}>
       <p className="text-xs text-gray-500">
         ต.{a.district} อ.{a.amphoe} จ.{a.province}
       </p>
@@ -34,10 +34,10 @@ function Item({ a, plain }: { a: LocalAgreement; plain: boolean }) {
               className={
                 plain
                   ? 'inline-flex items-center gap-1 rounded border border-gray-200 px-2 py-0.5 text-xs text-gray-700'
-                  : 'inline-flex items-center gap-1 rounded-full bg-orange-50 px-2.5 py-1 text-xs text-gray-700'
+                  : 'inline-flex items-center gap-1 rounded-full bg-gray-50 px-2.5 py-1 text-xs text-gray-700'
               }
             >
-              {!plain && <Landmark className="w-3 h-3 text-orange-600" />}
+              {!plain && <Landmark className="w-3 h-3 text-gray-900" />}
               ระดับ{p.levelLabel}
               {p.type && <span className="text-gray-500">· {p.type}</span>}
               {p.year && <span className="text-gray-500">· ปี {p.year}</span>}
@@ -54,7 +54,7 @@ function Item({ a, plain }: { a: LocalAgreement; plain: boolean }) {
           className={
             plain
               ? 'mt-3 inline-flex items-center min-h-10 text-sm font-medium text-gray-900 underline underline-offset-4 hover:text-gray-600'
-              : 'mt-3 inline-flex items-center gap-1.5 min-h-10 text-sm font-medium text-orange-700 hover:text-orange-800'
+              : 'mt-3 inline-flex items-center gap-1.5 min-h-10 text-sm font-medium text-gray-900 hover:text-gray-600'
           }
         >
           {!plain && <BookOpen className="w-4 h-4" />} อ่านเรื่องเล่าจากพื้นที่นี้

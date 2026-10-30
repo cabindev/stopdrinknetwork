@@ -68,7 +68,7 @@ export default function ResetPasswordForm() {
       title="ตั้งรหัสผ่านใหม่"
       subtitle="กำหนดรหัสผ่านใหม่ของคุณ อย่างน้อย 5 ตัวอักษร"
       footer={
-        <Link href="/auth/signin" className="text-gray-900 font-semibold hover:text-orange-600 transition-colors">
+        <Link href="/auth/signin" className="text-gray-900 font-semibold hover:text-gray-600 transition-colors">
           กลับไปหน้าเข้าสู่ระบบ
         </Link>
       }

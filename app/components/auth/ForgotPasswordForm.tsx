@@ -47,7 +47,7 @@ export default function ForgotPasswordForm() {
       title="ลืมรหัสผ่าน"
       subtitle="กรอกอีเมลที่ใช้สมัคร ระบบจะส่งลิงก์ตั้งรหัสผ่านใหม่ให้"
       footer={
-        <Link href="/auth/signin" className="text-gray-900 font-semibold hover:text-orange-600 transition-colors">
+        <Link href="/auth/signin" className="text-gray-900 font-semibold hover:text-gray-600 transition-colors">
           กลับไปหน้าเข้าสู่ระบบ
         </Link>
       }

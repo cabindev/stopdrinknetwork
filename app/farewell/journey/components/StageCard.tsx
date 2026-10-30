@@ -31,7 +31,7 @@ export default function StageCard({ copy, index, dark = false, overlay = false }
   return (
     <div
       className={overlay ? `${styles.poster} ${index === 5 ? styles.finale : ''}` : `rounded-2xl border px-5 py-4 sm:px-7 sm:py-7 shadow-[0_16px_60px_-30px_rgba(40,30,20,0.35)] backdrop-blur-xl transition-colors duration-500 ${
-        dark ? 'bg-[#24221f]/95 border-white/10 text-white' : 'bg-[#fffdf8]/95 border-white/70 text-[#302d28]'
+        dark ? 'bg-[#24221f]/95 border-white/10 text-white' : 'bg-[#fffdf8]/95 border-white/70 text-gray-900'
       }`}
     >
       {overlay && <div className={styles.masthead}>

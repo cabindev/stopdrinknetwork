@@ -38,13 +38,20 @@ Node.js ผ่าน Passenger + `server.js` (Express ห่อ Next.js) · DNS 
 6. **Google OAuth** — redirect URI `https://network.sdnthailand.com/api/auth/callback/google` ลงทะเบียนไว้แล้ว
    (แอปยังโหมด Testing — ต้อง Publish app ก่อนเปิดให้ทุกคน login ด้วย Google)
 
-## Deploy ครั้งต่อไป
+## Deploy ครั้งต่อไป — อัตโนมัติเมื่อ push (ตั้ง 30 ต.ค. 2026)
 
-1. `git push` ขึ้น GitHub
-2. **ถ้ามีไฟล์ใหม่ใน `prisma/production-sql/`** — Export ฐานข้อมูลก่อน แล้วรัน SQL ใน phpMyAdmin (ดู README ในโฟลเดอร์นั้น)
-   · ต้องทำก่อนขั้น 3 เพราะโค้ดใหม่อ่านตาราง/คอลัมน์ใหม่ทันที
-3. Plesk → Git → **Pull now** → Node.js → **Run script: build** → **Restart App**
-   (`npm run build` = `prisma generate && next build` — ถ้า package.json เปลี่ยน กด NPM install ก่อน)
+`git push` ขึ้น `main` แล้วจบ: GitHub webhook → Plesk ดึงโค้ด (Deployment mode = Automatic) → รัน post deployment actions:
+```bash
+export PATH=$(ls -d /opt/plesk/node/*/bin | sort -V | tail -1):$PATH
+npm install --no-audit --no-fund
+npm run build
+mkdir -p tmp && touch tmp/restart.txt   # Passenger restart แทนปุ่ม Restart App
+```
+- ตั้งที่ Plesk → Git → Repository settings (ต้องเปิด SSH access = /bin/bash ของ subscription ไม่งั้นช่องนี้เป็นสีเทา)
+  + GitHub repo → Settings → Webhooks (URL จากช่อง Webhook URL ใน Plesk, event push)
+- **ถ้ามีไฟล์ใหม่ใน `prisma/production-sql/`** — Export ฐานข้อมูล + รัน SQL ใน phpMyAdmin **ก่อน push** (ดู README ในโฟลเดอร์นั้น)
+  เพราะโค้ดใหม่ขึ้นเองทันทีและอ่านตาราง/คอลัมน์ใหม่เลย
+- build พัง/ไม่อัปเดต → ดู Deployment log ในหน้า Git ของ Plesk · สำรองแบบมือ: Pull now → Node.js Run script build → Restart App
 
 ## ทำไมไม่รัน prisma migrate บนเซิร์ฟเวอร์
 env ที่ตั้งใน Plesk ถูกฉีดเฉพาะตอน Passenger สตาร์ทแอป — ไม่ถึง SSH/Run Node.js commands

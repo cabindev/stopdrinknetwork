@@ -1,25 +1,26 @@
-.poster { color: #292722; position: relative; }
-.masthead { display: flex; align-items: center; gap: 20px; margin-bottom: 22px; font-size: 10px; letter-spacing: .2em; color: #645440; }
+.poster { color: #111111; position: relative; }
+.masthead { display: flex; align-items: center; gap: 20px; margin-bottom: 22px; font-size: 10px; letter-spacing: .2em; color: #525252; }
 .masthead img { width: 38px; height: auto; mix-blend-mode: multiply; background: transparent; padding: 0; border-radius: 0; }
-.headline { font-family: var(--font-sao), Tahoma, sans-serif; font-size: clamp(40px, 4.8vw, 76px); line-height: 1.18; font-weight: 700; letter-spacing: -.015em; margin-bottom: 22px; text-shadow: 0 2px 0 rgb(255 255 255 / .25), 0 10px 28px rgb(25 19 13 / .2); }
+.headline { font-family: var(--font-sao), Tahoma, sans-serif; font-size: clamp(40px, 4.8vw, 76px); line-height: 1.18; font-weight: 700; letter-spacing: -.015em; margin-bottom: 22px; text-shadow: 0 2px 0 rgb(255 255 255 / .25), 0 10px 28px rgb(0 0 0 / .18); }
 .headline span { display: block; }
-.body { max-width: 34em; width: fit-content; border-top: 2px solid #a54b24; padding-top: 14px; font-size: clamp(15px, 1.2vw, 18px); line-height: 1.8; color: #423e37; text-wrap: pretty; }
+.body { max-width: 34em; width: fit-content; border-top: 2px solid #fff; padding-top: 14px; font-size: clamp(15px, 1.2vw, 18px); line-height: 1.8; color: #333333; text-wrap: pretty; }
+/* ตัวหนังสือขาวดำ + เส้นขาว (ผู้ใช้ขอ 30 ต.ค. 2026 — เดิมน้ำตาล/ส้มอิฐ) */
 /* ขนาดรายบรรทัด (ผู้ใช้ 13 ต.ค. 2026: เล็ก–กลาง–ใหญ่ แบบโปสเตอร์) — xl = คำหลักของขั้น, pill = วลีปิดท้ายบนแถบดำ */
-.headline .sm { font-size: .55em; font-weight: 400; letter-spacing: 0; color: #4a443b; }
+.headline .sm { font-size: .55em; font-weight: 400; letter-spacing: 0; color: #404040; }
 .headline .md { font-size: .8em; }
-.headline .xl { font-size: 1.25em; line-height: 1.15; color: #a54b24; text-shadow: 0 1px 0 #f3d3ae, 0 6px 24px rgb(139 67 26 / .25); }
+.headline .xl { font-size: 1.25em; line-height: 1.15; color: #000; text-shadow: 0 1px 0 rgb(255 255 255 / .5), 0 6px 24px rgb(0 0 0 / .18); }
 .headline .pill { display: inline-block; width: fit-content; margin-top: .25em; padding: .1em .55em .22em; border-radius: .28em; background: #000; color: #fff; font-size: .62em; text-shadow: none; }
-.quote { margin-top: 16px; padding-left: 14px; border-left: 2px solid #a54b24; font-size: 15px; line-height: 1.7; }
-.note { font-size: 11px; line-height: 1.7; margin-top: 8px; color: #625b50; }
-.finale { width: min(100%, 920px); color: #fff7e9; }
-.finale .masthead { justify-content: center; color: #e5cfb0; }
+.quote { margin-top: 16px; padding-left: 14px; border-left: 2px solid #fff; font-size: 15px; line-height: 1.7; }
+.note { font-size: 11px; line-height: 1.7; margin-top: 8px; color: #525252; }
+.finale { width: min(100%, 920px); color: #fff; }
+.finale .masthead { justify-content: center; color: #d4d4d4; }
 /* โลโก้บนพื้นมืด: ไม่มีกล่องขาว (ผู้ใช้ขอ 3 ต.ค. 2026) — PNG เส้นดำพื้นใส กลับสีเป็นเส้นขาว */
 .finale .masthead img { mix-blend-mode: normal; background: transparent; padding: 0; border-radius: 0; filter: invert(1); opacity: .9; }
 .finale .headline { font-size: clamp(40px, 6.6vw, 104px); line-height: 1.34; /* ไทยมีสระบน/ล่าง — ต่ำกว่านี้ ญ/ู ชน ั้/ี่ ของบรรทัดถัดไป */ text-shadow: 0 4px 30px #000; }
 /* ฉากสุดท้ายตัวใหญ่อยู่แล้ว (104px) — คำหลักไม่ต้องขยายอีก, บรรทัดเล็กเบาลง */
-.finale .headline .sm { font-size: .5em; font-weight: 300; color: #e7e0d6; }
+.finale .headline .sm { font-size: .5em; font-weight: 300; color: #e5e5e5; }
 .finale .headline .md { font-size: .82em; }
-.finale .headline .xl { font-size: 1em; line-height: inherit; color: #e4b776; text-shadow: 0 3px 22px rgb(0 0 0 / .6); }
+.finale .headline .xl { font-size: 1em; line-height: inherit; color: #fff; text-shadow: 0 3px 22px rgb(0 0 0 / .6); }
 .finale a { font-family: var(--font-sao), Tahoma, sans-serif; font-size: 20px; }
 @media (max-width: 767px) {
   .masthead { margin-bottom: 10px; font-size: 9px; }

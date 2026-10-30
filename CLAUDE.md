@@ -48,6 +48,7 @@
 ```bash
 npm run dev          # Dev server (port 3000)
 npm run build        # Production build
+bash scripts/deploy.sh  # deploy เว็บจริงผ่าน SSH (หลัง git push) — ไม่แตะ DB ดู docs/deploy-plesk.md
 npx prisma generate  # Regenerate client หลังแก้ schema
 npx prisma migrate status   # ดูว่า migration ครบไหม
 npx prisma migrate deploy   # ใช้ migration (ทั้ง dev และ production) — **ห้ามใช้ db push แล้ว** (ดูกับดักข้อ 8)

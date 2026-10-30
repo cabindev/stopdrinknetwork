@@ -38,20 +38,17 @@ Node.js ผ่าน Passenger + `server.js` (Express ห่อ Next.js) · DNS 
 6. **Google OAuth** — redirect URI `https://network.sdnthailand.com/api/auth/callback/google` ลงทะเบียนไว้แล้ว
    (แอปยังโหมด Testing — ต้อง Publish app ก่อนเปิดให้ทุกคน login ด้วย Google)
 
-## Deploy ครั้งต่อไป — อัตโนมัติเมื่อ push (ตั้ง 30 ต.ค. 2026)
+## Deploy ครั้งต่อไป — `bash scripts/deploy.sh` (30 ต.ค. 2026)
 
-`git push` ขึ้น `main` แล้วจบ: GitHub webhook → Plesk ดึงโค้ด (Deployment mode = Automatic) → รัน post deployment actions:
-```bash
-export PATH=$(ls -d /opt/plesk/node/*/bin | sort -V | tail -1):$PATH
-npm install --no-audit --no-fund
-npm run build
-mkdir -p tmp && touch tmp/restart.txt   # Passenger restart แทนปุ่ม Restart App
-```
-- ตั้งที่ Plesk → Git → Repository settings (ต้องเปิด SSH access = /bin/bash ของ subscription ไม่งั้นช่องนี้เป็นสีเทา)
-  + GitHub repo → Settings → Webhooks (URL จากช่อง Webhook URL ใน Plesk, event push)
-- **ถ้ามีไฟล์ใหม่ใน `prisma/production-sql/`** — Export ฐานข้อมูล + รัน SQL ใน phpMyAdmin **ก่อน push** (ดู README ในโฟลเดอร์นั้น)
-  เพราะโค้ดใหม่ขึ้นเองทันทีและอ่านตาราง/คอลัมน์ใหม่เลย
-- build พัง/ไม่อัปเดต → ดู Deployment log ในหน้า Git ของ Plesk · สำรองแบบมือ: Pull now → Node.js Run script build → Restart App
+`git push` แล้วรัน `bash scripts/deploy.sh` จากเครื่อง dev — จบในคำสั่งเดียว ไม่ต้องกดใน Plesk
+- ต่อ SSH host `runludtong` (~/.ssh/config: root@14.207.143.39, key `~/.ssh/id_runludtong` — ตั้งไว้ตั้งแต่ทำ photorun เครื่องเดียวกัน)
+- `plesk ext git --fetch/--deploy` (โฟลเดอร์แอปไม่ใช่ git checkout — Plesk Git เป็นคนวางไฟล์ จึง `git pull` ไม่ได้)
+  → สลับเป็น user ของเว็บ (`sdnthailand`) → `npm install` เฉพาะเมื่อ package-lock เปลี่ยน (`tmp/.lock-hash`)
+  → `npm run build` → `touch tmp/restart.txt` (Passenger รีสตาร์ท = ปุ่ม Restart App)
+- **ไม่แตะฐานข้อมูล** — ถ้ามีไฟล์ใหม่ใน `prisma/production-sql/` ให้ Export ฐานข้อมูล + รัน SQL ใน phpMyAdmin **ก่อน** deploy
+- build ใช้เวลา ~1–2 นาที ระหว่างนั้นเว็บอาจ error แวบหนึ่ง (build ทับ .next ของแอปที่รันอยู่)
+- สำรองแบบมือ: Plesk → Git → Pull now → Node.js → Run script: build → Restart App
+- ลองตั้ง webhook + post deployment actions ของ Plesk แล้วไม่ติด (ช่องไม่ถูกบันทึก) — ใช้สคริปต์นี้แทน
 
 ## ทำไมไม่รัน prisma migrate บนเซิร์ฟเวอร์
 env ที่ตั้งใน Plesk ถูกฉีดเฉพาะตอน Passenger สตาร์ทแอป — ไม่ถึง SSH/Run Node.js commands

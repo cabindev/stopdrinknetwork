@@ -2,6 +2,7 @@
 // ⚠️ ใช้ STORY_SELECT เท่านั้นเวลา query ให้หน้าสาธารณะ — ห้าม include user/ผู้ประสานงาน/พิกัด/ไฟล์ที่ไม่ public
 //    (หน้าสาธารณะ = ตำแหน่งแค่ตำบล, ไม่มีชื่อเจ้าหน้าที่/ผู้ประสานงาน/เบอร์ — ตามแผน activity-data-roadmap)
 import type { Prisma } from '@prisma/client';
+import { FOCUS_WHERE } from '@/app/lib/focus';
 
 export const STORY_SELECT = {
   id: true,
@@ -76,5 +77,5 @@ export const storyPlace = (s: Pick<StoryRow, 'areaName' | 'district' | 'amphoe' 
       : [s.areaName, `ต.${s.district} อ.${s.amphoe} จ.${s.province}`].filter(Boolean).join(' · ');
 
 // เรื่องที่เผยแพร่แล้วในชุดเดียวกัน เรียงตามลำดับในชุด (ใช้ทั้งหน้าชุดและกล่อง "อ่านต่อในชุดนี้")
-export const seriesStoriesWhere = (seriesId: number) => ({ seriesId, isPublished: true }) satisfies Prisma.ActivityWhereInput;
+export const seriesStoriesWhere = (seriesId: number) => ({ seriesId, isPublished: true, ...FOCUS_WHERE }) satisfies Prisma.ActivityWhereInput;
 export const SERIES_ORDER = [{ seriesOrder: 'asc' }, { id: 'asc' }] satisfies Prisma.ActivityOrderByWithRelationInput[];

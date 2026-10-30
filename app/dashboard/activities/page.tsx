@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { Table2, SquarePen, FileSpreadsheet, Search, ExternalLink } from 'lucide-react';
 import prisma, { ACTIVE_ACTIVITY } from '@/app/lib/db';
+import { FOCUS_SUB, FOCUS_WHERE } from '@/app/lib/focus';
 import { getAdminUser } from '@/app/lib/adminAuth';
 import { categoryColor } from '@/app/lib/categoryColors';
 import { getRegionLabel, getAllHealthZones } from '@/app/utils/healthZones';
@@ -64,6 +65,7 @@ export default async function AllActivitiesPage({
     ...(region ? { region } : {}),
     ...(owner ? { userId: owner } : {}),
     AND: [
+      FOCUS_WHERE, // เน้นงานศพปลอดเหล้า — ประเด็นอื่นซ่อน (lib/focus.ts)
       q
         ? {
             OR: [
@@ -91,15 +93,20 @@ export default async function AllActivitiesPage({
     // id ทั้งหมดตามตัวกรอง — ใช้นับ + ปุ่ม "เลือกทั้งหมดตามตัวกรอง" ของการโอนงาน
     prisma.activity.findMany({ where, select: { id: true }, orderBy: { createdAt: 'desc' } }),
     prisma.workCategory.findMany({
+      where: FOCUS_SUB ? { subCategories: { some: { name: FOCUS_SUB } } } : {},
       select: {
         name: true,
-        subCategories: { select: { name: true }, orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }] },
+        subCategories: {
+          where: FOCUS_SUB ? { name: FOCUS_SUB } : {},
+          select: { name: true },
+          orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
+        },
       },
       orderBy: { name: 'asc' },
     }),
-    prisma.activity.groupBy({ by: ['province'], _count: true, orderBy: { province: 'asc' } }),
-    prisma.activity.findMany({ select: { startDate: true, createdAt: true } }),
-    prisma.activity.groupBy({ by: ['region'], _count: true }),
+    prisma.activity.groupBy({ by: ['province'], where: FOCUS_WHERE, _count: true, orderBy: { province: 'asc' } }),
+    prisma.activity.findMany({ where: FOCUS_WHERE, select: { startDate: true, createdAt: true } }),
+    prisma.activity.groupBy({ by: ['region'], where: FOCUS_WHERE, _count: true }),
     prisma.user.findMany({
       select: { id: true, firstName: true, lastName: true, email: true, _count: { select: { activities: { where: ACTIVE_ACTIVITY } } } },
       orderBy: [{ firstName: 'asc' }],

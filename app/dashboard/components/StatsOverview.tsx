@@ -13,6 +13,7 @@ import {
   FileSpreadsheet,
 } from 'lucide-react';
 import prisma from '@/app/lib/db';
+import { FOCUS_WHERE } from '@/app/lib/focus';
 import { categoryColor } from '@/app/lib/categoryColors';
 import { getThaiZoneName, getAllHealthZones } from '@/app/utils/healthZones';
 import { provinceAreaTotals, TOTAL_PROVINCES } from '@/app/lib/areaCoverage';
@@ -26,6 +27,7 @@ const STATUS_META: Record<string, { text: string; cls: string }> = {
 
 export default async function StatsOverview({ year }: { year?: number }) {
   const rows = await prisma.activity.findMany({
+    where: FOCUS_WHERE, // เน้นงานศพปลอดเหล้า (lib/focus.ts)
     select: {
       userId: true,
       province: true,

@@ -8,6 +8,7 @@ import MapView from './components/MapView';
 import type { MapActivity } from './components/MapView';
 import { getTambonCoords } from '@/app/lib/tambonCoords';
 import { isStaffRole } from '@/app/lib/activityMeta';
+import { FOCUS_SUB, FOCUS_WHERE } from '@/app/lib/focus';
 
 export const metadata = { title: 'แผนที่รวม — Stop Drink Network' };
 
@@ -17,6 +18,7 @@ export default async function MapPage() {
   const myId = Number(session?.user?.id ?? 0);
   const [rows, categories, subLogoRows] = await Promise.all([
     prisma.activity.findMany({
+      where: FOCUS_WHERE, // เว็บนี้เน้นงานศพปลอดเหล้า — ประเด็นอื่นซ่อน (lib/focus.ts)
       include: {
         category: { select: { name: true } },
         subCategory: { select: { name: true } },
@@ -27,7 +29,7 @@ export default async function MapPage() {
       orderBy: { createdAt: 'desc' },
     }),
     prisma.workCategory.findMany({
-      where: { isActive: true },
+      where: { isActive: true, ...(FOCUS_SUB ? { subCategories: { some: { name: FOCUS_SUB } } } : {}) },
       select: { id: true, name: true, logo: true },
       orderBy: { name: 'asc' },
     }),

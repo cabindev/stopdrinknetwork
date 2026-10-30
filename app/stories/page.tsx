@@ -4,6 +4,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { BookOpen, Layers } from 'lucide-react';
 import prisma from '@/app/lib/db';
+import { FOCUS_WHERE } from '@/app/lib/focus';
 import { STORY_SELECT } from '@/app/lib/story';
 import { ACTIVE_ACTIVITY } from '@/app/lib/db';
 import StoryCard from './StoryCard';
@@ -26,6 +27,7 @@ export default async function StoriesPage({
     prisma.activity.findMany({
       where: {
         isPublished: true,
+        AND: [FOCUS_WHERE], // เน้นงานศพปลอดเหล้า (lib/focus.ts)
         ...(sub ? { subCategory: { name: sub } } : {}),
         // จังหวัด: พื้นที่หลัก หรือพื้นที่ที่เกี่ยวข้อง (ActivityArea) ของเรื่องนั้น
         ...(province ? { OR: [{ province }, { areas: { some: { province } } }] } : {}),
@@ -34,14 +36,14 @@ export default async function StoriesPage({
       orderBy: { publishedAt: 'desc' },
     }),
     prisma.activity.findMany({
-      where: { isPublished: true },
+      where: { isPublished: true, ...FOCUS_WHERE },
       select: { province: true, areas: { select: { province: true } }, subCategory: { select: { name: true } } },
     }),
   ]);
   // ชุดกรณีศึกษาที่มีเรื่องเผยแพร่แล้ว — ชิปลิงก์ไปหน้าชุด
   const seriesList = await prisma.storySeries.findMany({
-    where: { activities: { some: { isPublished: true, ...ACTIVE_ACTIVITY } } },
-    select: { id: true, title: true, _count: { select: { activities: { where: { isPublished: true, ...ACTIVE_ACTIVITY } } } } },
+    where: { activities: { some: { isPublished: true, ...ACTIVE_ACTIVITY, ...FOCUS_WHERE } } },
+    select: { id: true, title: true, _count: { select: { activities: { where: { isPublished: true, ...ACTIVE_ACTIVITY, ...FOCUS_WHERE } } } } },
     orderBy: { updatedAt: 'desc' },
   });
   const count = <T,>(list: T[]) => [...list.reduce((m, k) => m.set(k, (m.get(k) ?? 0) + 1), new Map<T, number>())];

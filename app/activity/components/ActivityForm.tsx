@@ -43,6 +43,7 @@ import {
   AREA_SCOPES,
 } from '@/app/lib/activityMeta';
 import type { PolicyDetail } from '@/app/lib/activityMeta';
+import { FOCUS_SUB } from '@/app/lib/focus';
 
 interface Category {
   id: number;
@@ -321,6 +322,18 @@ export default function ActivityForm({
   }, []);
 
   const selectedCategory = categories.find((c) => String(c.id) === form.categoryId);
+
+  // เว็บเน้นงานศพปลอดเหล้า (lib/focus.ts): งานใหม่/คัดลอก/แก้งานศพเดิม = ล็อกประเด็นอัตโนมัติ ซ่อนช่องเลือก
+  // แก้งานประเด็นอื่นที่มีอยู่แล้ว (เช่น Civic Space) ยังเห็นช่องเลือกตามเดิม — ไม่เปลี่ยนประเด็นงานเก่าเงียบ ๆ
+  const focusCategory = FOCUS_SUB ? categories.find((c) => c.subCategories.some((sc) => sc.name === FOCUS_SUB)) : undefined;
+  const focusSub = focusCategory?.subCategories.find((sc) => sc.name === FOCUS_SUB);
+  const focusLocked =
+    !!focusCategory && !!focusSub && (!isEdit || String(initial?.subCategoryId ?? '') === String(focusSub.id));
+  useEffect(() => {
+    if (!focusLocked || !focusCategory || !focusSub) return;
+    setForm((prev) => (prev.categoryId === String(focusCategory.id) ? prev : { ...prev, categoryId: String(focusCategory.id) }));
+    setExtra((prev) => (prev.subCategoryId === String(focusSub.id) ? prev : { ...prev, subCategoryId: String(focusSub.id) }));
+  }, [focusLocked, focusCategory, focusSub]);
   const descLength = form.description.trim().length;
 
   const set = (field: keyof typeof form) =>
@@ -452,6 +465,14 @@ export default function ActivityForm({
           </div>
 
           <div className="grid sm:grid-cols-2 gap-4">
+            {focusLocked ? (
+              <div>
+                <p className={labelCls}>ประเด็นงาน</p>
+                <p className="flex min-h-[42px] items-center rounded-lg border border-gray-200 bg-gray-50 px-3 text-sm text-gray-800">
+                  {focusCategory?.name} <span className="mx-1.5 text-gray-400">›</span> <b className="font-medium">{FOCUS_SUB}</b>
+                </p>
+              </div>
+            ) : (
             <div>
               <label className={labelCls} htmlFor="categoryId">
                 ประเด็นงาน <span className="text-red-500">*</span>
@@ -471,6 +492,7 @@ export default function ActivityForm({
                 ))}
               </select>
             </div>
+            )}
             <div>
               <label className={labelCls} htmlFor="status">สถานะ</label>
               <select id="status" value={form.status} onChange={set('status')} className={inputCls}>
@@ -482,7 +504,7 @@ export default function ActivityForm({
           </div>
 
           {/* ประเด็นย่อย — ย่อส่วน สีจาง เยื้องใต้ช่องประเด็นงาน ให้เห็นว่าเป็นระดับรองของประเด็นที่เลือก */}
-          {selectedCategory && selectedCategory.subCategories.length > 0 && (
+          {!focusLocked && selectedCategory && selectedCategory.subCategories.length > 0 && (
             <div className="-mt-2 sm:w-1/2 sm:pr-2 flex items-center gap-2 pl-3">
               <span aria-hidden className="text-orange-300 text-sm leading-none">└</span>
               <label className="shrink-0 text-xs font-light text-gray-400" htmlFor="subCategoryId">

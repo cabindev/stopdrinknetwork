@@ -11,6 +11,7 @@ import { getServerSession } from 'next-auth/next';
 import { ArrowLeft, MapPin, CalendarDays, FileText, Download, Users, Home, UserRound, Handshake, EyeOff, Link2, Layers } from 'lucide-react';
 import authOptions from '@/app/lib/configs/auth/authOptions';
 import prisma from '@/app/lib/db';
+import { FOCUS_SUB, FOCUS_WHERE } from '@/app/lib/focus';
 import { STORY_SELECT, storyCover, storyExcerpt, storyPlace, publicFileUrl, storyLogoUrl, seriesStoriesWhere, SERIES_ORDER } from '@/app/lib/story';
 import {
   parsePartners,
@@ -31,6 +32,8 @@ async function loadStory(idRaw: string) {
   if (!Number.isInteger(id)) return null;
   const story = await prisma.activity.findUnique({ where: { id }, select: { ...STORY_SELECT, isPublished: true } });
   if (!story) return null;
+  // เว็บเน้นงานศพปลอดเหล้า — เรื่องประเด็นอื่นซ่อนจากหน้าสาธารณะ (lib/focus.ts)
+  if (FOCUS_SUB && story.subCategory?.name !== FOCUS_SUB) return null;
   if (story.isPublished) return { story, preview: false };
   const session = await getServerSession(authOptions);
   return ['admin', 'superadmin'].includes(session?.user?.role ?? '') ? { story, preview: true } : null;
@@ -99,6 +102,7 @@ export default async function StoryPage({ params }: { params: Promise<{ id: stri
   const related = await prisma.activity.findMany({
     where: {
       isPublished: true,
+      AND: [FOCUS_WHERE],
       // เรื่องในชุดเดียวกันขึ้นในกล่องชุดแล้ว ไม่ซ้ำใน "ใกล้เคียง"
       id: { notIn: [story.id, ...seriesItems.map((x) => x.id)] },
       ...(story.subCategory ? { subCategory: { name: story.subCategory.name } } : { category: { name: story.category.name } }),

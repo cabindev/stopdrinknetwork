@@ -6,6 +6,7 @@ import { ArrowRight, BookOpen, Map as MapIcon } from 'lucide-react';
 import { getServerSession } from 'next-auth/next';
 import authOptions from '@/app/lib/configs/auth/authOptions';
 import prisma from '@/app/lib/db';
+import { FOCUS_WHERE } from '@/app/lib/focus';
 import { HALFTONE_VIEWBOX, RECENT_DAYS, toSpots } from '@/app/lib/halftoneMap';
 
 export const dynamic = 'force-dynamic';
@@ -15,8 +16,8 @@ const MAX_PULSES = 6;
 
 async function getNetworkMap() {
   const [rows, tambons] = await Promise.all([
-    prisma.activity.findMany({ select: { latitude: true, longitude: true, createdAt: true, province: true } }),
-    prisma.activity.groupBy({ by: ['province', 'district'] }),
+    prisma.activity.findMany({ where: FOCUS_WHERE, select: { latitude: true, longitude: true, createdAt: true, province: true } }),
+    prisma.activity.groupBy({ by: ['province', 'district'], where: FOCUS_WHERE }),
   ]);
   const spots = toSpots(rows);
   const pulses = spots
@@ -128,7 +129,7 @@ export default async function HomePage() {
 
       <p className="w-full max-w-6xl mx-auto px-4 -mt-6 pb-8 text-center md:text-right text-xs text-gray-400">
         <span className="inline-block w-2 h-2 rounded-full bg-orange-600 align-middle mr-1.5" aria-hidden="true" />
-        พื้นที่ที่มีงาน (ตำแหน่งโดยประมาณ){pulses.length > 0 && <> · วงกระเพื่อม = มีงานใหม่ใน {RECENT_DAYS} วัน</>}
+ทำ        พื้นที่ที่มีงาน (ตำแหน่งโดยประมาณ){pulses.length > 0 && <> · วงกระเพื่อม = มีงานใหม่ใน {RECENT_DAYS} วัน</>}
       </p>
 
       <footer className="mt-auto border-t border-orange-100 py-6">

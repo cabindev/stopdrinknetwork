@@ -9,6 +9,7 @@ import authOptions from '@/app/lib/configs/auth/authOptions';
 import { isStaffRole } from '@/app/lib/activityMeta';
 import { involvedWhere } from '@/app/lib/activityAccess';
 import prisma from '@/app/lib/db';
+import { FOCUS_WHERE } from '@/app/lib/focus';
 import { getThaiZoneName } from '@/app/utils/healthZones';
 import type { HealthZone } from '@/app/utils/healthZones';
 import { parsePartners, policyShape, policyDetailText, formatStartDate, POLICY_LABEL, AREA_SCOPE_LABEL } from '@/app/lib/activityMeta';
@@ -60,6 +61,8 @@ export async function GET(request: NextRequest) {
         ...(status ? { status: status as 'PLANNING' | 'ACTIVE' | 'COMPLETED' } : {}),
         ...(category ? { category: { name: category } } : {}),
         ...(sub ? { subCategory: { name: sub } } : {}),
+        // เน้นงานศพปลอดเหล้า — ไฟล์ "ของฉัน" ยังได้ครบทุกประเด็น เหมือนหน้างานของฉัน (lib/focus.ts)
+        AND: [mine ? {} : FOCUS_WHERE],
       },
       include: {
         category: { select: { name: true } },

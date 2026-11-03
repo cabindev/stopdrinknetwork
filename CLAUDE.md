@@ -169,6 +169,7 @@ app/
 │   │                             #   รายจังหวัด แยกระดับ หมู่บ้าน/ตำบล/อำเภอ/จังหวัด/ประเทศ
 │   │                             #   ตำบล/อำเภอ = จำนวนพื้นที่ไม่ซ้ำ เทียบทั้งจังหวัด (areaCoverage) · คลิกจังหวัด = รายชื่อพื้นที่ + ลิงก์งาน
 │   │                             #   กรอง ภาค/จังหวัด/ประเภท/ปี พ.ศ. ของนโยบาย · นับพื้นที่หลักเท่านั้น + ACTIVE_ACTIVITY
+│   │                             #   + ตัวเลขสรุป 5 ช่อง, แถบแยกภาค/ประเภท/ปี (คลิก = กรอง, ประเภท `__none` = ยังไม่ระบุ), "ข้อมูลที่ควรแก้" (ไม่มีประเภท/ปี, ข้อตกลงหมู่บ้านแต่ระดับอื่น)
 │   ├── loading.tsx               # Skeleton
 │   ├── components/
 │   │   ├── DashboardClient.tsx   # Sidebar + TopNav + main (margin ตาม sidebarCollapsed)
@@ -458,7 +459,7 @@ uploads/                          # ไฟล์แนบ runtime (gitignore) �
 | wichai@test.sdn / pranee@test.sdn / thanakorn@test.sdn | member | กระจายพื้นที่อื่น |
 | admin@test.sdn | admin | แดชบอร์ด/จัดการผู้ใช้ |
 | super@test.sdn | superadmin | สิทธิ์สูงสุด |
-| sdn.warehouse@gmail.com | admin | บัญชีจริงของเจ้าของโปรเจค (yongyut yodjarn) — มีงานศพปลอดเหล้า 49 งาน |
+| sdn.warehouse@gmail.com | superadmin | บัญชีจริงของเจ้าของโปรเจค (yongyut yodjarn) — มีงานศพปลอดเหล้า 49 งาน |
 
 > **26 ก.ย. 2026 ล้างงานทดสอบทั้งหมดแล้ว** เหลือเฉพาะงานศพปลอดเหล้า 49 งาน (#83–#131) — บัญชี @test.sdn ยังอยู่แต่ไม่มีงาน
 > ต้องการข้อมูลทดสอบ (pagination/ทับซ้อน) ให้รัน `node scripts/seed-test-data.mjs && node scripts/seed-test-bulk.mjs` แล้ว `--clean` หลังใช้

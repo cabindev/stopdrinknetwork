@@ -1,6 +1,7 @@
 // app/dashboard/policies/page.tsx — นโยบาย/ข้อตกลงงานศพปลอดเหล้า แยกระดับ รายจังหวัด (แอดมิน)
 // ตอบคำถามแบบ "จังหวัดนี้มีนโยบายระดับตำบลกี่ที่ ระดับอำเภอกี่ที่" (ผู้ใช้ขอ 30 ต.ค. 2026)
 // เฉพาะประเด็นย่อย "งานศพปลอดเหล้า" (FUNERAL_SUB) — ไม่รวมงาน Civic Space/ประเด็นอื่น · โทนขาวดำ + โลโก้ประเด็นย่อยงานศพ
+// สถิติ (ผู้ใช้ขอ 3 พ.ย. 2026 — แบบชีตสถิติใน Excel): ตัวเลขสรุป + แยกภาค/ประเภท/ปี (คลิก = กรอง) + ข้อมูลที่ควรแก้
 // การนับ: ตำบล/อำเภอ = จำนวนพื้นที่ไม่ซ้ำ (หลายงานในตำบลเดียวนับ 1) เทียบกับทั้งจังหวัด ·
 //   หมู่บ้าน/จังหวัด/ประเทศ = จำนวนนโยบาย · นับจากพื้นที่หลักของงานเท่านั้น (ไม่รวม ActivityArea) · ไม่นับงานในถังขยะ
 import Link from 'next/link';
@@ -18,6 +19,9 @@ const selCls =
   'px-3 py-2 text-sm text-gray-900 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-300';
 
 type Level = (typeof POLICY_LEVELS)[number]['value'];
+
+const NO_TYPE = '__none'; // ตัวกรอง "ยังไม่ระบุประเภท"
+const VILLAGE_TYPE = 'กติกาชุมชน/ข้อตกลงหมู่บ้าน';
 
 interface Place {
   activityId: number;
@@ -52,7 +56,7 @@ export default async function PoliciesByAreaPage({
   const sp = await searchParams;
   const region = getAllHealthZones().find((z) => z === sp.region) ?? '';
   const province = sp.province ?? '';
-  const type = POLICY_TYPES.find((t) => t === sp.type) ?? '';
+  const type = sp.type === NO_TYPE ? NO_TYPE : (POLICY_TYPES.find((t) => t === sp.type) ?? '');
   const year = Number(sp.year) || 0; // พ.ศ. ของนโยบาย
   const level = POLICY_LEVELS.find((l) => l.value === sp.level)?.value ?? null; // ชิ้นพายที่เลือก
 
@@ -61,7 +65,7 @@ export default async function PoliciesByAreaPage({
   const [policies, yearOptions, funeralSub] = await Promise.all([
     prisma.activityPolicy.findMany({
       where: {
-        ...(type ? { type } : {}),
+        ...(type === NO_TYPE ? { OR: [{ type: null }, { type: '' }] } : type ? { type } : {}),
         ...(year ? { year } : {}),
         activity: { ...funeral, ...(region ? { region } : {}), ...(province ? { province } : {}) },
       },
@@ -71,7 +75,10 @@ export default async function PoliciesByAreaPage({
         type: true,
         year: true,
         activity: {
-          select: { id: true, title: true, province: true, amphoe: true, district: true, areaName: true, region: true },
+          select: {
+            id: true, title: true, province: true, amphoe: true, district: true, areaName: true, region: true,
+            attachments: { where: { policyLevel: { not: null } }, select: { policyLevel: true } },
+          },
         },
       },
     }),
@@ -160,6 +167,62 @@ export default async function PoliciesByAreaPage({
   const totalPolicies = POLICY_LEVELS.reduce((n, { value }) => n + policyCount[value], 0);
   const UNIT: Record<Level, string> = { VILLAGE: 'นโยบาย', SUBDISTRICT: 'ตำบล', DISTRICT: 'อำเภอ', PROVINCE: 'จังหวัด', NATIONAL: 'นโยบาย' };
 
+  // ── สถิติ (ตามตัวกรอง) ──
+  const countBy = (key: (p: (typeof policies)[number]) => string) => {
+    const m = new Map<string, number>();
+    for (const p of policies) m.set(key(p), (m.get(key(p)) ?? 0) + 1);
+    return [...m];
+  };
+  const hasFile = (p: (typeof policies)[number]) => p.activity.attachments.some((t) => t.policyLevel === p.level);
+  const filterHref = (patch: Record<string, string>) => {
+    const q = new URLSearchParams();
+    const cur: Record<string, string> = { region, province, type, year: year ? String(year) : '', ...patch };
+    for (const [k, v] of Object.entries(cur)) if (v) q.set(k, v);
+    const qs = q.toString();
+    return `/dashboard/policies${qs ? `?${qs}` : ''}`;
+  };
+  const regionStats = countBy((p) => p.activity.region)
+    .map(([z, n]) => ({
+      label: getRegionLabel(z as HealthZone),
+      sub: `${new Set(policies.filter((p) => p.activity.region === z).map((p) => p.activity.province)).size} จังหวัด`,
+      n,
+      href: filterHref({ region: region === z ? '' : z, province: '' }),
+      active: region === z,
+    }))
+    .sort((a, b) => b.n - a.n);
+  const typeStats = countBy((p) => p.type || NO_TYPE)
+    .map(([t, n]) => ({
+      label: t === NO_TYPE ? 'ยังไม่ระบุประเภท' : t,
+      n,
+      href: filterHref({ type: type === t ? '' : t }),
+      active: type === t,
+      muted: t === NO_TYPE,
+    }))
+    .sort((a, b) => b.n - a.n);
+  const yearStats = countBy((p) => (p.year ? String(p.year) : ''))
+    .map(([y, n]) => ({
+      label: y ? `พ.ศ. ${y}` : 'ไม่ระบุปี',
+      n,
+      href: y ? filterHref({ year: String(year) === y ? '' : y }) : null,
+      active: String(year) === y,
+      muted: !y,
+    }))
+    .sort((a, b) => (a.label < b.label ? -1 : 1));
+  const withFile = policies.filter(hasFile).length;
+  // ข้อมูลที่ควรแก้: ไม่ระบุประเภท · ประเภทข้อตกลงหมู่บ้านแต่ระดับไม่ใช่หมู่บ้าน (ไม่นับ "ไม่มีไฟล์" — แทบทุกแถว ดูจากตัวเลขสรุปแทน)
+  const issues = policies
+    .map((p) => ({
+      p,
+      why: [
+        !p.type && 'ยังไม่ระบุประเภท',
+        p.type === VILLAGE_TYPE && p.level !== 'VILLAGE' &&
+          `ประเภทเป็นข้อตกลงหมู่บ้าน แต่ระดับเป็น${POLICY_LEVELS.find((l) => l.value === p.level)?.label}`,
+        !p.year && 'ไม่ระบุปี',
+      ].filter(Boolean) as string[],
+    }))
+    .filter((x) => x.why.length)
+    .sort((a, b) => a.p.activity.province.localeCompare(b.p.activity.province, 'th') || a.p.activity.id - b.p.activity.id);
+
   const provinceOptions = [...new Set(policies.map((p) => p.activity.province))].sort((a, b) => a.localeCompare(b, 'th'));
   if (province && !provinceOptions.includes(province)) provinceOptions.unshift(province);
   const filtered = Boolean(region || province || type || year);
@@ -203,6 +266,7 @@ export default async function PoliciesByAreaPage({
           <select name="type" defaultValue={type} className={selCls}>
             <option value="">ทุกประเภท</option>
             {POLICY_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+            <option value={NO_TYPE}>ยังไม่ระบุประเภท</option>
           </select>
         </label>
         <label className="text-xs text-gray-500">
@@ -221,6 +285,15 @@ export default async function PoliciesByAreaPage({
           </Link>
         )}
       </form>
+
+      {/* ตัวเลขสรุป (ตามตัวกรอง) */}
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
+        <Kpi label="นโยบายทั้งหมด" value={totalPolicies} accent />
+        <Kpi label="จังหวัด" value={rows.length} />
+        <Kpi label="ภาค" value={new Set(rows.map((r) => r.region)).size} unit="จาก 10 ภาค" />
+        <Kpi label="ตำบลที่มีนโยบายระดับตำบล" value={sum.SUBDISTRICT} />
+        <Kpi label="มีไฟล์เอกสารนโยบาย" value={withFile} unit={`จาก ${totalPolicies} นโยบาย`} />
+      </div>
 
       {/* สรุปรวมรายระดับ: พาย (ขนาด = จำนวนนโยบาย) — จิ้มชิ้นหรือคำอธิบาย = รายการทั้งหมดของระดับนั้น (?level=) */}
       <section id="by-level" className="rounded-2xl border border-gray-200 bg-white p-5 scroll-mt-20">
@@ -311,6 +384,15 @@ export default async function PoliciesByAreaPage({
         )}
       </section>
 
+      {/* แยกตามภาค / ประเภท / ปี — คลิกแถว = กรองทั้งหน้า (คลิกซ้ำ = เลิกกรอง) */}
+      {policies.length > 0 && (
+        <div className="grid gap-4 lg:grid-cols-3">
+          <BarList title="แยกตามภาค" items={regionStats} total={totalPolicies} />
+          <BarList title="แยกตามประเภทนโยบาย" items={typeStats} total={totalPolicies} />
+          <BarList title="แยกตามปีที่ประกาศ" items={yearStats} total={totalPolicies} />
+        </div>
+      )}
+
       {/* ตารางรายจังหวัด */}
       {rows.length === 0 ? (
         <p className="rounded-2xl border border-dashed border-gray-300 p-10 text-center text-sm text-gray-500">
@@ -380,7 +462,120 @@ export default async function PoliciesByAreaPage({
           </ul>
         </div>
       )}
+
+      {issues.length > 0 && (
+        <details className="group rounded-2xl border border-gray-200 bg-white">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-5 py-4 [&::-webkit-details-marker]:hidden">
+            <span>
+              <span className="text-sm font-semibold text-gray-900">ข้อมูลที่ควรแก้ {issues.length} รายการ</span>
+              <span className="block text-xs text-gray-500">นโยบายที่ยังไม่ระบุประเภท/ปี หรือประเภทไม่ตรงกับระดับ — กดแก้ไขงานเพื่อเติมข้อมูล</span>
+            </span>
+            <span className="text-xs text-gray-500 underline underline-offset-2 group-open:hidden">ดูรายการ</span>
+            <span className="hidden text-xs text-gray-500 underline underline-offset-2 group-open:inline">ซ่อน</span>
+          </summary>
+          <div className="overflow-x-auto border-t border-gray-200 px-5 pb-4">
+            <table className="w-full text-left text-sm">
+              <thead>
+                <tr className="border-b border-gray-900 text-xs text-gray-500">
+                  <th className="py-2 pr-3 font-medium">จังหวัด</th>
+                  <th className="py-2 pr-3 font-medium">พื้นที่</th>
+                  <th className="py-2 pr-3 font-medium">ระดับ / ชื่อนโยบาย</th>
+                  <th className="py-2 pr-3 font-medium">ที่ควรแก้</th>
+                  <th className="py-2 font-medium"><span className="sr-only">แก้ไข</span></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {issues.map(({ p, why }) => (
+                  <tr key={`${p.activity.id}-${p.level}`} className="align-top">
+                    <td className="py-2 pr-3 whitespace-nowrap text-gray-900">{p.activity.province}</td>
+                    <td className="py-2 pr-3 text-gray-900">
+                      {[p.activity.areaName, `ต.${p.activity.district} อ.${p.activity.amphoe}`].filter(Boolean).join(' · ')}
+                    </td>
+                    <td className="py-2 pr-3 text-gray-600">
+                      ระดับ{POLICY_LEVELS.find((l) => l.value === p.level)?.label}
+                      {p.name && <span className="block text-xs text-gray-400">{p.name}</span>}
+                    </td>
+                    <td className="py-2 pr-3 text-gray-900">{why.join(' · ')}</td>
+                    <td className="py-2">
+                      <Link href={`/activity/${p.activity.id}/edit`} className="inline-flex items-center gap-1 whitespace-nowrap text-xs text-gray-500 hover:text-gray-900">
+                        แก้ไขงาน <ExternalLink className="w-3 h-3" />
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </details>
+      )}
     </div>
+  );
+}
+
+function Kpi({ label, value, unit, accent }: { label: string; value: number; unit?: string; accent?: boolean }) {
+  return (
+    <div className="rounded-2xl border border-gray-200 bg-white px-4 py-3">
+      <p className="text-xs text-gray-500">{label}</p>
+      <p className={`mt-1 text-3xl font-bold tabular-nums ${accent ? 'text-orange-600' : 'text-gray-900'}`}>
+        {value.toLocaleString('th-TH')}
+      </p>
+      {unit && <p className="text-xs text-gray-400">{unit}</p>}
+    </div>
+  );
+}
+
+// แถบแนวนอนแบบเดียวกับชีตสถิติใน Excel: ชื่อ · จำนวน · % · แท่ง (ยาวเทียบค่ามากสุดในกลุ่ม)
+function BarList({
+  title,
+  items,
+  total,
+}: {
+  title: string;
+  items: { label: string; sub?: string; n: number; href: string | null; active?: boolean; muted?: boolean }[];
+  total: number;
+}) {
+  const max = Math.max(1, ...items.map((i) => i.n));
+  return (
+    <section className="rounded-2xl border border-gray-200 bg-white p-5">
+      <h2 className="text-sm font-semibold text-gray-900">{title}</h2>
+      <ul className="mt-3 space-y-1">
+        {items.map((it) => {
+          const body = (
+            <>
+              <span className="flex items-baseline justify-between gap-3 text-sm">
+                <span className={`min-w-0 truncate ${it.muted ? 'text-gray-400' : 'text-gray-900'}`}>
+                  {it.label}
+                  {it.sub && <span className="ml-1.5 text-xs text-gray-400">{it.sub}</span>}
+                </span>
+                <span className="shrink-0 tabular-nums">
+                  <span className="font-semibold text-gray-900">{it.n.toLocaleString('th-TH')}</span>
+                  <span className="ml-2 inline-block w-9 text-right text-xs text-gray-400">{Math.round((it.n / total) * 100)}%</span>
+                </span>
+              </span>
+              <span className="mt-1 block h-1.5 rounded-full bg-gray-100">
+                <span className={`block h-full rounded-full ${it.muted ? 'bg-gray-300' : 'bg-gray-900'}`} style={{ width: `${(it.n / max) * 100}%` }} />
+              </span>
+            </>
+          );
+          return (
+            <li key={it.label}>
+              {it.href ? (
+                <Link
+                  href={it.href}
+                  scroll={false}
+                  aria-current={it.active ? 'true' : undefined}
+                  className={`block rounded-lg px-2 py-1.5 transition-colors ${it.active ? 'bg-gray-100 ring-1 ring-gray-900' : 'hover:bg-gray-50'}`}
+                >
+                  {body}
+                </Link>
+              ) : (
+                <div className="px-2 py-1.5">{body}</div>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+    </section>
   );
 }
 

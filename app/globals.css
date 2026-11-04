@@ -71,17 +71,18 @@ input:-webkit-autofill {
   }
 }
 
-/* ── แผนที่: หมุดโลโก้ประเด็นงาน (หมวดที่มีโลโก้) — วงกลมขาวเปล่า ไม่มีขอบ (ผู้ใช้เลือก: สวยกว่า) */
+/* ── แผนที่รวม /map: แผนที่ฐาน OSM ขาวดำจาง ให้หมุดสี/สีจังหวัดเด่น — ค่าเดียวกับ BASEMAP_FILTER ใน MapView (ใช้วาด PNG) */
+.sdn-basemap {
+  filter: grayscale(1) contrast(0.85) brightness(1.08);
+}
+/* ── แผนที่: หมุดโลโก้ประเด็นงาน — โลโก้ล้วน ไม่มีวงพื้นขาว (ผู้ใช้เลือก 4 พ.ย. 2026) สีตามระดับนโยบาย (MapView tintLogo) */
 .sdn-logo-pin {
   box-sizing: border-box;
   width: 36px;
   height: 36px;
-  border-radius: 9999px;
-  background: #ffffff;
-  box-shadow: 0 1px 4px rgb(0 0 0 / 0.35);
-  overflow: hidden;
   cursor: pointer;
   transition: transform 0.15s;
+  filter: drop-shadow(0 1px 1px rgb(0 0 0 / 0.35));
 }
 .sdn-logo-pin:hover {
   transform: scale(1.15);
@@ -91,10 +92,9 @@ input:-webkit-autofill {
   width: 100%;
   height: 100%;
   object-fit: contain;
-  padding: 2px;
   pointer-events: none;
 }
-/* ตำแหน่งโดยประมาณ (จุดกลางตำบล) — ไม่มีขอบให้ทำเส้นประ จึงจางลงแทน */
+/* ตำแหน่งโดยประมาณ (จุดกลางตำบล) — หมุดโลโก้ไม่จางแล้ว (ผู้ใช้ขอสีเข้ม 4 พ.ย. 2026 — งานส่วนใหญ่เป็นจุดกลางตำบล จางทั้งแผนที่) */
 .sdn-logo-pin--approx {
-  opacity: 0.75;
+  opacity: 1;
 }

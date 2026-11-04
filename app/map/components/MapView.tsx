@@ -35,6 +35,7 @@ import { getRegionLabel } from '@/app/utils/healthZones';
 import { makeColorOf } from '@/app/lib/categoryColors';
 import type { HealthZone } from '@/app/utils/healthZones';
 import { navigationUrl } from '@/app/lib/geoLink';
+import { POLICY_LEVELS, POLICY_LABEL } from '@/app/lib/activityMeta';
 
 export interface MapActivity {
   id: number;
@@ -54,6 +55,7 @@ export interface MapActivity {
   createdAt: string; // ISO
   mine: boolean; // งานของผู้ที่กำลังดู — ไม่นับเป็น "งานใหม่"
   published: boolean; // เผยแพร่เป็นกรณีศึกษาแล้ว → มีหน้า /stories/[id]
+  policyLevel: string | null; // ระดับนโยบายสูงสุด (VILLAGE…NATIONAL) — null = ยังไม่มีนโยบาย
   // พื้นที่ที่เกี่ยวข้อง (ActivityArea) — หมุดรองของงานเดียวกัน ไม่นับในสถิติ/ความหนาแน่น/แผงจังหวัด
   extraAreas: MapArea[];
 }
@@ -140,22 +142,85 @@ function readNewBaseline(): number {
 interface PulseSpec {
   kind: 'pulse';
 }
-// หมุดโลโก้ (หมวดที่แอดมินใส่โลโก้ไว้) — วงกลมขาวเปล่าใส่โลโก้ (ไม่มีขอบสี) ใหญ่กว่าหมุดสีให้พอดูออก
-const LOGO_PIN = 36;
+// หมุดโลโก้ (หมวดที่แอดมินใส่โลโก้ไว้) — วงกลมขาวใส่โลโก้ สี/ขนาดตามระดับนโยบาย (LEVEL_PIN)
 interface LogoSpec {
   kind: 'logo';
   color: string;
   approx: boolean;
+  ring: string;
+  size: number;
 }
+// หมุดโลโก้แยกตามระดับนโยบาย (ผู้ใช้ขอ 4 พ.ย. 2026 — หมุดงานศพหน้าตาเหมือนกันหมด แยกไม่ออก)
+// เปลี่ยนสีตัวโลโก้ ไม่มีขอบ ไม่มีวงพื้นขาว (ผู้ใช้เลือก) — tintLogo() ระบายส่วนดำของโลโก้เป็นสีนี้ ส่วนขาวคงขาว
+// ระดับเรียงเล็ก→ใหญ่ จึงไล่เฉดอุ่น + ขนาดโตขึ้น (อ่านลำดับได้แม้ตาบอดสี) · ส้มสงวนให้ข้อมูลบนแผนที่อยู่แล้ว
+const LEVEL_PIN: Record<string, { ring: string; size: number }> = {
+  // ไล่โทนอุ่นต่างเฉด เหลือง→ส้ม→แดง→แดงเลือดหมู (ผู้ใช้ขอให้ต่างกัน+เข้มกว่าส้มไล่อ่อน-เข้มเดิม)
+  // ขนาดเล็กลงจากรุ่นแรก — กลุ่มเชียงราย/อุบลฯ ทับกันจนนับไม่ได้ที่มุมทั้งประเทศ
+  VILLAGE: { ring: '#ca8a04', size: 28 },
+  SUBDISTRICT: { ring: '#ea580c', size: 32 },
+  DISTRICT: { ring: '#dc2626', size: 36 },
+  PROVINCE: { ring: '#7f1d1d', size: 42 },
+  NATIONAL: { ring: '#4c0519', size: 46 },
+};
+// ไม่ได้ระบุระดับ = โลโก้ดำตามต้นฉบับ (ผู้ใช้เลือก) — ดำจึงห้ามใช้ในระดับข้างบน
+const NO_POLICY_PIN = { ring: '#000000', size: 28 };
+const NO_POLICY = '__none';
+const levelPin = (level: string | null) => (level && LEVEL_PIN[level]) || NO_POLICY_PIN;
 // เส้นขอบประเทศบาง ๆ สีเกือบดำ — แค่พอสังเกตขอบเขต ไม่ให้หน้าตาแผนที่ต่างจากเดิม (ผู้ใช้ไม่เอาฉากจางนอกประเทศ)
 // ไม่ใช้ส้ม — ส้มสงวนไว้ให้ข้อมูล (หมุด/ความหนาแน่น/จังหวัดที่เลือก)
 const COUNTRY_LINE = { color: '#1c1917', weight: 1.2, opacity: 0.55 };
 const PROVINCE_LINE = { color: '#d1d5db', weight: 1 };
+// แผนที่ฐาน OSM สีจัด (ป่าเขียว/ถนนส้ม/ป้ายหลายภาษา) แย่งสายตากับหมุด → ขาวดำจาง (ผู้ใช้ขอให้ดูง่าย 4 พ.ย. 2026) · ต้องตรงกับ .sdn-basemap ใน globals.css
+const BASEMAP_FILTER = 'grayscale(1) contrast(0.85) brightness(1.08)';
+// โหมดหมุด: เส้นขอบบาง สีเทาปกติ ไม่ระบายพื้น (ผู้ใช้เลือก 4 พ.ย. 2026 — ลองพื้นเทาไล่ขั้น/เส้นไล่หนา/เส้นพาสเทลประจำภาคแล้วไม่เอา "ดูยาก")
+// มีงาน = เทาเข้มกว่าเล็กน้อย · เลือกอยู่ = พื้นส้มอ่อน+เส้นส้ม (ผู้ใช้ชอบ) · fillOpacity 0 แต่ยัง fill ไว้ให้คลิก/tooltip ทั้งพื้นที่ได้ · ใช้ทั้งบนจอและ PNG
+function provinceStyle(hasData: boolean, isSelected: boolean) {
+  if (isSelected) return { fillColor: '#ea580c', fillOpacity: 0.12, color: '#ea580c', weight: 2.5 };
+  return hasData
+    ? { fillColor: '#ffffff', fillOpacity: 0, color: '#78716c', weight: 1 }
+    : { fillColor: '#ffffff', fillOpacity: 0, color: '#d6d3d1', weight: 0.8 };
+}
 // วงนอกของแผ่นดินใหญ่ + เกาะ ([lng, lat]) — ใช้วาดเส้นขอบประเทศใน PNG
 const OUTLINE_RINGS = (thailandOutline.geometry.coordinates as number[][][][]).map((p) => p[0]);
 
-const logoPinHtml = (src: string, color: string, approx: boolean) =>
-  `<div class="sdn-logo-pin${approx ? ' sdn-logo-pin--approx' : ''}" style="--c:${color}"><img src="${esc(src)}" alt="" draggable="false"></div>`;
+const logoPinHtml = (src: string, color: string, approx: boolean, size: number) =>
+  `<div class="sdn-logo-pin${approx ? ' sdn-logo-pin--approx' : ''}" style="--c:${color};width:${size}px;height:${size}px"><img src="${esc(src)}" alt="" draggable="false"></div>`;
+
+// ระบายสีโลโก้ (โลโก้ขาวดำ): สูตร screen ทีละพิกเซล → ดำ = สี, ขาว = ขาว, โปร่งใสคงโปร่งใส · ได้ data URL (cache ต่อโลโก้+สี)
+// โลโก้มาจาก /api/files หรือ /api/public-logo (same-origin) จึงอ่านพิกเซลได้ · โหลดพลาด = ใช้โลโก้เดิม
+const tintCache = new Map<string, Promise<string>>();
+function tintLogo(src: string, color: string): Promise<string> {
+  const key = `${src}|${color}`;
+  let p = tintCache.get(key);
+  if (!p) {
+    p = new Promise<string>((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        try {
+          const c = document.createElement('canvas');
+          c.width = img.naturalWidth;
+          c.height = img.naturalHeight;
+          const ctx = c.getContext('2d')!;
+          ctx.drawImage(img, 0, 0);
+          const data = ctx.getImageData(0, 0, c.width, c.height);
+          const t = [1, 3, 5].map((i) => parseInt(color.slice(i, i + 2), 16));
+          const px = data.data;
+          for (let i = 0; i < px.length; i += 4) {
+            for (let j = 0; j < 3; j++) px[i + j] = 255 - ((255 - px[i + j]) * (255 - t[j])) / 255;
+          }
+          ctx.putImageData(data, 0, 0);
+          resolve(c.toDataURL());
+        } catch {
+          resolve(src);
+        }
+      };
+      img.onerror = () => resolve(src);
+      img.src = src;
+    });
+    tintCache.set(key, p);
+  }
+  return p;
+}
 
 // escape ข้อความจากผู้ใช้ก่อนใส่ลง HTML ของ popup (กัน XSS)
 const esc = (v: unknown) =>
@@ -191,6 +256,7 @@ function activityPopupHtml(a: MapActivity, color: string, isNew: boolean, public
         place.amphoe
       )} จ.${esc(place.province)}</div>
       ${extraLine}
+      ${a.policyLevel ? `<div style="display:flex;align-items:center;gap:5px;font-size:11px;color:#374151;margin-top:4px"><span style="width:9px;height:9px;border-radius:50%;background:${levelPin(a.policyLevel).ring};flex:none"></span>นโยบายระดับ${esc(POLICY_LABEL[a.policyLevel] ?? a.policyLevel)}</div>` : ''}
       ${publicView ? '' : `<div style="font-size:11px;color:#9ca3af;margin-top:2px">โดย ${esc(a.userName)}</div>`}
       ${publicView ? publicPopupFooter(a) : `
       <div style="display:flex;align-items:center;gap:12px;margin-top:8px">
@@ -224,6 +290,7 @@ export default function MapView({ activities, categories, categoryLogos, subCate
   const mapRef = useRef<LeafletMap | null>(null);
   const geoLayerRef = useRef<GeoJSONLayer | null>(null);
   const markersRef = useRef<(CircleMarker | Marker)[]>([]);
+  const drawRunRef = useRef(0); // นับรอบวาดหมุด — รอบเก่าที่ยังรอโลโก้ระบายสีอยู่จะไม่วาดทับ
   const centersRef = useRef<Map<string, [number, number]>>(new Map());
   const boundsRef = useRef<Map<string, LatLngBounds>>(new Map());
   const fullBoundsRef = useRef<LatLngBounds | null>(null);
@@ -232,6 +299,7 @@ export default function MapView({ activities, categories, categoryLogos, subCate
   const [categoryFilter, setCategoryFilter] = useState('');
   const [subFilter, setSubFilter] = useState(''); // ประเด็นย่อย — ใช้ได้เมื่อเลือกประเด็นแล้ว
   const [statusFilter, setStatusFilter] = useState('');
+  const [levelFilter, setLevelFilter] = useState(''); // ระดับนโยบาย · NO_POLICY = ยังไม่มีนโยบาย
   const [search, setSearch] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(false); // เปิดเมื่อคลิกไอคอนหมวดหมู่
   const [mapMode, setMapMode] = useState<'markers' | 'heat'>('markers');
@@ -257,6 +325,7 @@ export default function MapView({ activities, categories, categoryLogos, subCate
         if (categoryFilter && a.category !== categoryFilter) return false;
         if (subFilter && a.subCategory !== subFilter) return false;
         if (statusFilter && a.status !== statusFilter) return false;
+        if (levelFilter && (a.policyLevel ?? NO_POLICY) !== levelFilter) return false;
         if (search) {
           const hay =
             `${a.title} ${a.province} ${a.amphoe} ${a.district} ${a.areaName ?? ''} ${a.userName} ${a.category} ${a.subCategory ?? ''} ${a.extraAreas
@@ -266,7 +335,7 @@ export default function MapView({ activities, categories, categoryLogos, subCate
         }
         return true;
       }),
-    [activities, categoryFilter, subFilter, statusFilter, search, newOnly, newIds]
+    [activities, categoryFilter, subFilter, statusFilter, levelFilter, search, newOnly, newIds]
   );
 
   const byProvince = useMemo(() => {
@@ -330,6 +399,7 @@ export default function MapView({ activities, categories, categoryLogos, subCate
         maxZoom: 18,
         attribution: '&copy; OpenStreetMap contributors',
         crossOrigin: 'anonymous', // จำเป็นต่อการบันทึกภาพแผนที่เป็น PNG (ไม่ให้ canvas ถูก taint)
+        className: 'sdn-basemap', // แผนที่ฐานขาวดำจาง (globals.css) ให้หมุด/สีจังหวัดเด่น — PNG ใช้ BASEMAP_FILTER เดียวกัน
       }).addTo(map);
 
       const geoLayer = L.geoJSON(thailandGeo as GeoJSON.GeoJsonObject, {
@@ -368,8 +438,21 @@ export default function MapView({ activities, categories, categoryLogos, subCate
   useEffect(() => {
     if (!mapReady || !mapRef.current) return;
     (async () => {
+      const run = ++drawRunRef.current;
       const L = (await import('leaflet')).default;
-      const map = mapRef.current!;
+      // เตรียมโลโก้ระบายสีตามระดับนโยบายก่อนล้างหมุดเดิม (รอบที่ถูกแทนแล้วหยุด ไม่ให้หมุดซ้อน 2 ชุด)
+      const tinted = new Map<string, string>();
+      await Promise.all(
+        filtered.map(async (a) => {
+          const src = logoOf(a);
+          if (!src) return;
+          const key = `${src}|${levelPin(a.policyLevel).ring}`;
+          if (!tinted.has(key)) tinted.set(key, src);
+          tinted.set(key, await tintLogo(src, levelPin(a.policyLevel).ring));
+        })
+      );
+      if (run !== drawRunRef.current || !mapRef.current) return;
+      const map = mapRef.current;
 
       markersRef.current.forEach((m) => m.remove());
       markersRef.current = [];
@@ -427,19 +510,23 @@ export default function MapView({ activities, categories, categoryLogos, subCate
               const logo = logoOf(a);
               let marker: CircleMarker | Marker;
               if (logo) {
+                // สีโลโก้+ขนาดตามระดับนโยบาย · หมุดรองเล็กลง 6px · ระดับสูงวางบนสุด (zIndexOffset) ไม่ให้หมุดเล็กบัง
+                const { ring, size: levelSize } = levelPin(a.policyLevel);
+                const size = site.extra ? levelSize - 6 : levelSize;
                 marker = L.marker(pos, {
                   icon: L.divIcon({
-                    html: logoPinHtml(logo, color, !precise),
+                    html: logoPinHtml(tinted.get(`${logo}|${ring}`) ?? logo, color, !precise, size),
                     className: '',
-                    iconSize: [LOGO_PIN, LOGO_PIN],
-                    iconAnchor: [LOGO_PIN / 2, LOGO_PIN / 2],
-                    popupAnchor: [0, -LOGO_PIN / 2],
-                    tooltipAnchor: [0, -LOGO_PIN / 2],
+                    iconSize: [size, size],
+                    iconAnchor: [size / 2, size / 2],
+                    popupAnchor: [0, -size / 2],
+                    tooltipAnchor: [0, -size / 2],
                   }),
                   riseOnHover: true,
+                  zIndexOffset: size * 10,
                   alt: a.category,
                 }).addTo(map);
-                (marker.options as { sdn?: LogoSpec }).sdn = { kind: 'logo', color, approx: !precise };
+                (marker.options as { sdn?: LogoSpec }).sdn = { kind: 'logo', color, approx: !precise, ring, size };
               } else {
                 // หมุดรอง (พื้นที่ที่เกี่ยวข้อง) เล็กกว่าหมุดหลักเล็กน้อย
                 const r = site.extra ? 2 : 0;
@@ -478,12 +565,7 @@ export default function MapView({ activities, categories, categoryLogos, subCate
           };
         }
 
-        return {
-          fillColor: isSelected ? '#ea580c' : '#ffffff',
-          fillOpacity: isSelected ? 0.12 : 0.02,
-          color: isSelected ? '#ea580c' : PROVINCE_LINE.color,
-          weight: isSelected ? 2 : PROVINCE_LINE.weight,
-        };
+        return provinceStyle(byProvince.has(name), isSelected);
       });
 
       // tooltip จังหวัด: โหมด heat โชว์ตัวเลขประกอบ
@@ -582,6 +664,7 @@ export default function MapView({ activities, categories, categoryLogos, subCate
       const tiles = [...mapEl.querySelectorAll<HTMLImageElement>('img.leaflet-tile')].filter(
         (t) => t.complete && t.naturalWidth > 0
       );
+      ctx.filter = BASEMAP_FILTER;
       for (const t of tiles) {
         const r = t.getBoundingClientRect();
         try {
@@ -633,9 +716,8 @@ export default function MapView({ activities, categories, categoryLogos, subCate
         if (!name) continue;
         const isSelected = name === selectedProvince;
         const heatValue = heatData.get(name)?.[heatMetric] ?? 0;
-        const fill =
-          mapMode === 'heat' ? heatColor(heatValue, heatMax) : isSelected ? '#ea580c' : null;
-        if (!fill && !isSelected) continue;
+        const ps = provinceStyle(byProvince.has(name), isSelected);
+        const fill = mapMode === 'heat' ? heatColor(heatValue, heatMax) : ps.fillColor;
 
         ctx.beginPath();
         for (const ring of ringsOf(f.geometry)) {
@@ -646,11 +728,14 @@ export default function MapView({ activities, categories, categoryLogos, subCate
           });
           ctx.closePath();
         }
-        if (fill) {
-          ctx.globalAlpha = mapMode === 'heat' ? 0.75 : 0.12;
-          ctx.fillStyle = fill;
-          ctx.fill();
-          ctx.globalAlpha = 1;
+        ctx.globalAlpha = mapMode === 'heat' ? 0.75 : ps.fillOpacity;
+        ctx.fillStyle = fill;
+        ctx.fill();
+        ctx.globalAlpha = 1;
+        if (mapMode !== 'heat' && !isSelected) {
+          ctx.strokeStyle = ps.color;
+          ctx.lineWidth = ps.weight * k;
+          ctx.stroke();
         }
         if (isSelected) {
           ctx.strokeStyle = mapMode === 'heat' ? '#1c1917' : '#ea580c';
@@ -679,25 +764,20 @@ export default function MapView({ activities, categories, categoryLogos, subCate
         if (sdn?.kind === 'logo') {
           // วาดจาก <img> ที่โหลดอยู่บนแผนที่แล้ว (same-origin ผ่าน /api/files — canvas ไม่โดน taint)
           const img = (layer as Marker).getElement()?.querySelector('img');
-          const R = (LOGO_PIN / 2) * k;
-          ctx.save();
-          ctx.globalAlpha = sdn.approx ? 0.75 : 1;
-          ctx.shadowColor = 'rgba(0,0,0,.35)';
-          ctx.shadowBlur = 4 * k;
-          ctx.shadowOffsetY = 1 * k;
-          ctx.beginPath();
-          ctx.arc(x, y, R, 0, Math.PI * 2);
-          ctx.fillStyle = '#ffffff';
-          ctx.fill();
-          ctx.shadowColor = 'transparent';
+          const R = (sdn.size / 2) * k;
+          // โลโก้ระบายสีแล้ว (data URL) ไม่มีวงพื้นขาว — เงาเดียวกับ drop-shadow บนจอ
           if (img?.complete && img.naturalWidth > 0) {
             ctx.save();
-            ctx.clip();
-            const inner = R * 2 - 4 * k;
-            ctx.drawImage(img, x - inner / 2, y - inner / 2, inner, inner);
+            ctx.shadowColor = 'rgba(0,0,0,.35)';
+            ctx.shadowBlur = 2 * k;
+            ctx.shadowOffsetY = 1 * k;
+            // object-fit: contain เหมือนบนจอ — โลโก้ไม่จำเป็นต้องจัตุรัส (สัญลักษณ์งานศพเป็นแนวตั้ง)
+            const f = Math.min((R * 2) / img.naturalWidth, (R * 2) / img.naturalHeight);
+            const w = img.naturalWidth * f;
+            const h = img.naturalHeight * f;
+            ctx.drawImage(img, x - w / 2, y - h / 2, w, h);
             ctx.restore();
           }
-          ctx.restore();
           continue;
         }
 
@@ -821,8 +901,22 @@ export default function MapView({ activities, categories, categoryLogos, subCate
     return m;
   }, [activities, categoryFilter, statusFilter, newOnly, newIds]);
 
-  const hasFilter = !!(categoryFilter || subFilter || statusFilter || search || newOnly);
+  const hasFilter = !!(categoryFilter || subFilter || statusFilter || levelFilter || search || newOnly);
+  // จำนวนงานรายระดับนโยบาย — นับจากผลตัวกรองอื่นทั้งหมด ยกเว้นตัวกรองระดับเอง
+  const countByLevel = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const a of activities) {
+      if (newOnly && !newIds.has(a.id)) continue;
+      if (categoryFilter && a.category !== categoryFilter) continue;
+      if (subFilter && a.subCategory !== subFilter) continue;
+      if (statusFilter && a.status !== statusFilter) continue;
+      const k = a.policyLevel ?? NO_POLICY;
+      m.set(k, (m.get(k) ?? 0) + 1);
+    }
+    return m;
+  }, [activities, categoryFilter, subFilter, statusFilter, newOnly, newIds]);
   const clearFilters = () => {
+    setLevelFilter('');
     setSubFilter('');
     setCategoryFilter('');
     setStatusFilter('');
@@ -1062,6 +1156,34 @@ export default function MapView({ activities, categories, categoryLogos, subCate
                     );
                   })}
                 </ul>
+                {/* ระดับนโยบาย = คำอธิบายสี/ขนาดหมุด + กดกรองได้ */}
+                <p className="mt-4 mb-1.5 text-[11px] font-semibold text-gray-500">ระดับนโยบาย (สี/ขนาดหมุด)</p>
+                <ul className="space-y-0.5">
+                  {[...POLICY_LEVELS.map((l) => ({ value: l.value as string, label: `ระดับ${l.label}` })), { value: NO_POLICY, label: 'ยังไม่มีนโยบาย' }]
+                    .filter(({ value }) => (countByLevel.get(value) ?? 0) > 0 || levelFilter === value)
+                    .map(({ value, label }) => {
+                      const on = levelFilter === value;
+                      const { ring, size } = levelPin(value === NO_POLICY ? null : value);
+                      const d = Math.round(size / 3); // ย่อขนาดจริงลงในรายการ แต่ยังเห็นเล็ก→ใหญ่
+                      return (
+                        <li key={value}>
+                          <button
+                            onClick={() => setLevelFilter(on ? '' : value)}
+                            aria-pressed={on}
+                            className={`flex items-center gap-2 w-full text-left text-xs rounded-lg px-2 py-1.5 transition-colors ${
+                              on ? 'bg-gray-50 text-gray-900 font-medium' : 'text-gray-600 hover:bg-gray-50'
+                            }`}
+                          >
+                            <span className="w-5 flex justify-center shrink-0">
+                              <span className="rounded-full" style={{ width: d, height: d, backgroundColor: ring }} />
+                            </span>
+                            <span className="flex-1 truncate">{label}</span>
+                            <span className="text-[10px] text-gray-400">{countByLevel.get(value) ?? 0}</span>
+                          </button>
+                        </li>
+                      );
+                    })}
+                </ul>
                 <MapLegend publicView={publicView} />
                 {hasFilter && (
                   <button
@@ -1218,7 +1340,7 @@ export default function MapView({ activities, categories, categoryLogos, subCate
             </>
           )}
           <LegendDot /> {publicView ? 'ตำแหน่งระดับตำบล' : 'โดยประมาณ'}
-          <span className="text-gray-400">· สีตามประเด็น — คลิกหมุดดูรายละเอียด</span>
+          <span className="text-gray-400">· สี/ขนาดโลโก้ = ระดับนโยบาย — คลิกหมุดดูรายละเอียด</span>
           {newIds.size > 0 && (
             <>
               <span className="w-px h-3.5 bg-gray-200" />
@@ -1247,7 +1369,7 @@ function LegendDot({ solid = false }: { solid?: boolean }) {
 function MapLegend({ publicView }: { publicView: boolean }) {
   return (
     <div className="mt-4 pt-3 border-t border-gray-100 space-y-2 text-[11px] text-gray-500 leading-snug">
-      <p>หมุดสีตามประเด็นงาน — คลิกหมุดดูรายละเอียด คลิกจังหวัดดูรายการทั้งหมด</p>
+      <p>สีและขนาดโลโก้ = ระดับนโยบาย (เหลืองเล็ก = หมู่บ้าน → แดงเข้มใหญ่ = จังหวัด) — คลิกหมุดดูรายละเอียด คลิกจังหวัดดูรายการทั้งหมด</p>
       <p className={publicView ? 'hidden' : 'flex items-center gap-2'}>
         <LegendDot solid />
         <span>ปักหมุดตำแหน่งจริง</span>

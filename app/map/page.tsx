@@ -7,8 +7,9 @@ import prisma from '@/app/lib/db';
 import MapView from './components/MapView';
 import type { MapActivity } from './components/MapView';
 import { getTambonCoords } from '@/app/lib/tambonCoords';
-import { isStaffRole } from '@/app/lib/activityMeta';
+import { isStaffRole, POLICY_LEVELS } from '@/app/lib/activityMeta';
 import { FOCUS_SUB, FOCUS_WHERE } from '@/app/lib/focus';
+import { FUNERAL_SUB } from '@/app/lib/farewellAgreements';
 
 export const metadata = { title: 'แผนที่รวม — Stop Drink Network' };
 
@@ -25,6 +26,7 @@ export default async function MapPage() {
         user: { select: { firstName: true, lastName: true } },
         members: { where: { userId: myId }, select: { userId: true } },
         areas: { orderBy: { sortOrder: 'asc' } },
+        policies: { select: { level: true } },
       },
       orderBy: { createdAt: 'desc' },
     }),
@@ -52,6 +54,9 @@ export default async function MapPage() {
       region: a.region,
       createdAt: a.createdAt.toISOString(),
       published: a.isPublished,
+      // ระดับนโยบายสูงสุดของงาน (งานเดียวติ๊กได้หลายระดับ) → สี/ขนาดหมุด · ข้อมูลเดียวกับแผนที่ข้อตกลงสาธารณะ
+      policyLevel:
+        [...POLICY_LEVELS].reverse().find((l) => a.policies.some((p) => p.level === l.value))?.value ?? null,
       // พื้นที่ที่เกี่ยวข้อง → หมุดรอง · สาธารณะ: จุดกลางตำบล ไม่มีชื่อสถานที่ (กติกาเดียวกับพื้นที่หลัก)
       extraAreas: a.areas.map((x) => {
         if (!isPublic) {
@@ -129,7 +134,11 @@ export default async function MapPage() {
         )}
         // โลโก้ประเด็นย่อย key = "ประเด็น|ประเด็นย่อย" — ใช้ก่อนโลโก้ประเด็นหลัก
         subCategoryLogos={Object.fromEntries(
-          subLogoRows.map((s) => [`${s.category.name}|${s.name}`, logoUrl('sub', s.id, s.logo!)])
+          // งานศพ: หมุดใช้สัญลักษณ์ล้วน (ไม่มีกรอบข้อความ ด้านในโปร่ง) จาก public/brand แทนโลโก้เต็มที่อัปโหลด — ระบายสีตามระดับนโยบายใน MapView
+          subLogoRows.map((s) => [
+            `${s.category.name}|${s.name}`,
+            s.name === FUNERAL_SUB ? '/brand/rip-symbol.svg' : logoUrl('sub', s.id, s.logo!),
+          ])
         )}
       />
     </main>

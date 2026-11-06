@@ -1,7 +1,7 @@
 // app/farewell/journey/components/StageCard.tsx
 // การ์ดข้อความของแต่ละขั้น ใช้ทั้งบนภาพ 3D และในหน้าสำรอง (ไม่มี WebGL)
 import { ArrowDown, ArrowRight } from 'lucide-react';
-import Image from 'next/image';
+import RipLogo from './RipLogo';
 import type { StageCopy } from '../content';
 import styles from './StageCard.module.css';
 
@@ -35,8 +35,8 @@ export default function StageCard({ copy, index, dark = false, overlay = false }
       }`}
     >
       {overlay && <div className={styles.masthead}>
+        <RipLogo className={styles.logo} />
         <p>ส่งด้วยใจ · 0{index + 1} / 06</p>
-        <Image src="/logo/logorip.png" alt="งานศพปลอดเหล้า" width={48} height={41} className="rounded bg-white p-1" />
       </div>}
       {copy.eyebrow && !overlay && (
         <p className={`text-xs font-medium mb-2 ${dark ? 'text-gray-400' : 'text-gray-900'}`}>{copy.eyebrow}</p>

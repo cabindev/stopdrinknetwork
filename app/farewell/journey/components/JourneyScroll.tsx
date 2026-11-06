@@ -4,7 +4,9 @@
 // ส่วน 3D ที่ขับด้วยการเลื่อน: section สูงหลายจอ ข้างในเป็น canvas แบบ sticky
 // ไม่ยึดการเลื่อนของ browser (ไม่มี scroll-jacking) แค่อ่านตำแหน่งแล้ววาดตาม
 // วาดเฉพาะตอน progress ยังขยับ พอนิ่งแล้วหยุด loop เพื่อประหยัดแบตมือถือ
+// ปุ่ม "เล่นอัตโนมัติ" (หรือ ?autoplay=1) = เลื่อนหน้าให้เองทีละขั้น วนซ้ำไม่จบ เวลาแต่ละขั้นตามความยาวข้อความ — แตะ/เลื่อนเอง = หยุด
 import { useEffect, useRef, useState } from 'react';
+import { Pause, Play } from 'lucide-react';
 import { STAGE_COPY } from '../content';
 import { STAGES, clamp01, snapToStage, stageAt } from '../three/timeline';
 import type { JourneyScene } from '../three/scene';
@@ -16,6 +18,14 @@ type Status = 'loading' | 'ready' | 'failed';
 /** ขั้นที่ฉากมืดแล้ว การ์ดเปลี่ยนเป็นพื้นเข้ม */
 const DARK_FROM = 3;
 
+/** เวลาเล่นอัตโนมัติต่อขั้น (ms) — พออ่านข้อความจบ: 5–11 วินาที */
+const STAGE_MS = STAGE_COPY.map(({ title, body, note, quote }) => {
+  const chars = title.length + (body?.length ?? 0) + (note?.length ?? 0) + (quote ? quote.text.length + quote.by.length : 0);
+  return Math.min(11000, Math.max(5000, 3000 + chars * 45));
+});
+/** จบฉากสุดท้ายแล้วค้างไว้ก่อนวนกลับต้นเรื่อง (ms) */
+const END_HOLD_MS = 4000;
+
 export default function JourneyScroll() {
   const sectionRef = useRef<HTMLElement>(null);
   const stickyRef = useRef<HTMLDivElement>(null);
@@ -23,7 +33,74 @@ export default function JourneyScroll() {
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
   const [status, setStatus] = useState<Status>('loading');
   const [stage, setStage] = useState(0);
+  const [playing, setPlaying] = useState(false);
+  const playRef = useRef<HTMLButtonElement>(null);
   const failed = status === 'failed';
+
+  // ?autoplay=1 เริ่มเล่นเองเมื่อ 3D พร้อม (เปิดฉายในงานประชุม/จอหน้างาน)
+  useEffect(() => {
+    if (status === 'ready' && new URLSearchParams(window.location.search).get('autoplay') === '1') setPlaying(true);
+  }, [status]);
+
+  // เล่นอัตโนมัติ: ขยับตำแหน่งเลื่อนของหน้าเอง ฉาก 3D จึงตามมาด้วยกลไกเดิม (อ่านจาก scroll)
+  useEffect(() => {
+    const section = sectionRef.current;
+    if (!playing || !section) return;
+    const geometry = () => ({
+      top: section.getBoundingClientRect().top + window.scrollY,
+      total: section.offsetHeight - window.innerHeight,
+    });
+    let { top, total } = geometry();
+    let p = total > 0 ? clamp01((window.scrollY - top) / total) : 0;
+    if (p >= 0.999) p = 0; // อยู่ท้ายเรื่องแล้วกดเล่น = เริ่มต้น
+    let raf = 0;
+    let last = 0;
+    let held = 0;
+
+    const step = (now: number) => {
+      const dt = last ? Math.min(100, now - last) : 0;
+      last = now;
+      // ถึงท้ายเรื่อง: ค้างฉากสุดท้ายให้อ่าน แล้ววนกลับต้นเรื่อง (ฉากย้อนกลับเองเพราะขึ้นกับตำแหน่งเลื่อนอย่างเดียว)
+      if (p >= 1) {
+        held += dt;
+        if (held >= END_HOLD_MS) {
+          held = 0;
+          p = 0;
+          window.scrollTo({ top, behavior: 'instant' });
+        }
+        raf = requestAnimationFrame(step);
+        return;
+      }
+      const i = stageAt(p);
+      const { start, end } = STAGES[i];
+      p = Math.min(1, p + ((end - start) * dt) / STAGE_MS[i]);
+      window.scrollTo({ top: top + total * p, behavior: 'instant' });
+      raf = requestAnimationFrame(step);
+    };
+
+    // ผู้ใช้จับเอง (ล้อเมาส์/แตะ/กดปุ่ม) = หยุด — ยกเว้นกดที่ปุ่มเล่น/หยุดเอง
+    const stop = (event: Event) => {
+      if (event.target instanceof Node && playRef.current?.contains(event.target)) return;
+      setPlaying(false);
+    };
+    const onResize = () => ({ top, total } = geometry());
+
+    window.scrollTo({ top: top + total * p, behavior: 'instant' });
+    raf = requestAnimationFrame(step);
+    window.addEventListener('wheel', stop, { passive: true });
+    window.addEventListener('touchstart', stop, { passive: true });
+    window.addEventListener('pointerdown', stop);
+    window.addEventListener('keydown', stop);
+    window.addEventListener('resize', onResize);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener('wheel', stop);
+      window.removeEventListener('touchstart', stop);
+      window.removeEventListener('pointerdown', stop);
+      window.removeEventListener('keydown', stop);
+      window.removeEventListener('resize', onResize);
+    };
+  }, [playing]);
 
   useEffect(() => {
     const section = sectionRef.current;
@@ -296,6 +373,21 @@ export default function JourneyScroll() {
               </button>
             ))}
           </nav>
+
+          {/* เล่นอัตโนมัติ: มือถือมุมขวาบน (ไม่ทับการ์ดล่าง) จอใหญ่มุมขวาล่าง */}
+          <button
+            ref={playRef}
+            type="button"
+            onClick={() => setPlaying((v) => !v)}
+            aria-pressed={playing}
+            aria-label={playing ? 'หยุดเล่นอัตโนมัติ' : 'เล่นอัตโนมัติ (วนซ้ำ)'}
+            className={`absolute right-3 top-[64px] md:top-auto md:right-6 md:bottom-6 z-20 inline-flex items-center gap-2 h-11 px-3 md:px-4 rounded-full border text-sm font-medium backdrop-blur transition-opacity duration-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-gray-900 ${
+              dark ? 'border-white/30 bg-gray-900/70 text-white hover:bg-gray-900/90' : 'border-gray-300 bg-white/90 text-gray-900 hover:bg-white'
+            } ${status === 'ready' ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+          >
+            {playing ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+            <span className="max-md:sr-only">{playing ? 'หยุด' : 'เล่นอัตโนมัติ'}</span>
+          </button>
         </div>
       </section>
     </>

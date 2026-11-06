@@ -170,8 +170,6 @@ const levelPin = (level: string | null) => (level && LEVEL_PIN[level]) || NO_POL
 // ไม่ใช้ส้ม — ส้มสงวนไว้ให้ข้อมูล (หมุด/ความหนาแน่น/จังหวัดที่เลือก)
 const COUNTRY_LINE = { color: '#1c1917', weight: 1.2, opacity: 0.55 };
 const PROVINCE_LINE = { color: '#d1d5db', weight: 1 };
-// แผนที่ฐาน OSM สีจัด (ป่าเขียว/ถนนส้ม/ป้ายหลายภาษา) แย่งสายตากับหมุด → ขาวดำจาง (ผู้ใช้ขอให้ดูง่าย 4 พ.ย. 2026) · ต้องตรงกับ .sdn-basemap ใน globals.css
-const BASEMAP_FILTER = 'grayscale(1) contrast(0.85) brightness(1.08)';
 // โหมดหมุด: เส้นขอบบาง สีเทาปกติ ไม่ระบายพื้น (ผู้ใช้เลือก 4 พ.ย. 2026 — ลองพื้นเทาไล่ขั้น/เส้นไล่หนา/เส้นพาสเทลประจำภาคแล้วไม่เอา "ดูยาก")
 // มีงาน = เทาเข้มกว่าเล็กน้อย · เลือกอยู่ = พื้นส้มอ่อน+เส้นส้ม (ผู้ใช้ชอบ) · fillOpacity 0 แต่ยัง fill ไว้ให้คลิก/tooltip ทั้งพื้นที่ได้ · ใช้ทั้งบนจอและ PNG
 function provinceStyle(hasData: boolean, isSelected: boolean) {
@@ -399,7 +397,6 @@ export default function MapView({ activities, categories, categoryLogos, subCate
         maxZoom: 18,
         attribution: '&copy; OpenStreetMap contributors',
         crossOrigin: 'anonymous', // จำเป็นต่อการบันทึกภาพแผนที่เป็น PNG (ไม่ให้ canvas ถูก taint)
-        className: 'sdn-basemap', // แผนที่ฐานขาวดำจาง (globals.css) ให้หมุด/สีจังหวัดเด่น — PNG ใช้ BASEMAP_FILTER เดียวกัน
       }).addTo(map);
 
       const geoLayer = L.geoJSON(thailandGeo as GeoJSON.GeoJsonObject, {
@@ -664,7 +661,6 @@ export default function MapView({ activities, categories, categoryLogos, subCate
       const tiles = [...mapEl.querySelectorAll<HTMLImageElement>('img.leaflet-tile')].filter(
         (t) => t.complete && t.naturalWidth > 0
       );
-      ctx.filter = BASEMAP_FILTER;
       for (const t of tiles) {
         const r = t.getBoundingClientRect();
         try {

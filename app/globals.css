@@ -71,10 +71,6 @@ input:-webkit-autofill {
   }
 }
 
-/* ── แผนที่รวม /map: แผนที่ฐาน OSM ขาวดำจาง ให้หมุดสี/สีจังหวัดเด่น — ค่าเดียวกับ BASEMAP_FILTER ใน MapView (ใช้วาด PNG) */
-.sdn-basemap {
-  filter: grayscale(1) contrast(0.85) brightness(1.08);
-}
 /* ── แผนที่: หมุดโลโก้ประเด็นงาน — โลโก้ล้วน ไม่มีวงพื้นขาว (ผู้ใช้เลือก 4 พ.ย. 2026) สีตามระดับนโยบาย (MapView tintLogo) */
 .sdn-logo-pin {
   box-sizing: border-box;

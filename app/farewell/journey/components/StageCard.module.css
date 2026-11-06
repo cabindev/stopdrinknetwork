@@ -1,7 +1,7 @@
 .poster { color: #111111; position: relative; }
 .masthead { display: flex; align-items: center; gap: 20px; margin-bottom: 22px; font-size: 10px; letter-spacing: .2em; color: #525252; }
-/* โลโก้ rip-vector (6 พ.ย. 2026 ผู้ใช้ขอ ใหญ่ขึ้น + ตัวหนังสือมีสี): สัญลักษณ์ดำ · ป้ายชื่อแถบดำ ตัวหนังสือทองแบบลายทองบนหีบ */
-.logo { width: 128px; height: auto; flex-shrink: 0; --rip-symbol: #111; --rip-label: #111; --rip-text: #e0b04a; filter: drop-shadow(0 6px 14px rgb(0 0 0 / .18)); }
+/* โลโก้ rip-vector (6 พ.ย. 2026 ผู้ใช้ขอ ใหญ่ขึ้น + ตัวหนังสือมีสี): สัญลักษณ์ดำ · ป้ายชื่อแถบดำ ตัวหนังสือขาว (ผู้ใช้เปลี่ยนจากทอง 6 พ.ย.) */
+.logo { width: 128px; height: auto; flex-shrink: 0; --rip-symbol: #111; --rip-label: #111; --rip-text: #fff; filter: drop-shadow(0 6px 14px rgb(0 0 0 / .18)); }
 .headline { font-family: var(--font-sao), Tahoma, sans-serif; font-size: clamp(40px, 4.8vw, 76px); line-height: 1.18; font-weight: 700; letter-spacing: -.015em; margin-bottom: 22px; text-shadow: 0 2px 0 rgb(255 255 255 / .25), 0 10px 28px rgb(0 0 0 / .18); }
 .headline span { display: block; }
 .body { max-width: 34em; width: fit-content; border-top: 2px solid #fff; padding-top: 14px; font-size: clamp(15px, 1.2vw, 18px); line-height: 1.8; color: #333333; text-wrap: pretty; }
@@ -15,7 +15,7 @@
 .note { font-size: 11px; line-height: 1.7; margin-top: 8px; color: #525252; }
 .finale { width: min(100%, 920px); color: #fff; }
 .finale .masthead { justify-content: center; color: #d4d4d4; }
-.finale .logo { --rip-symbol: #fff; --rip-label: #e0b04a; --rip-text: #141515; width: 116px; filter: drop-shadow(0 4px 24px rgb(224 176 74 / .35)); }
+.finale .logo { --rip-symbol: #fff; --rip-label: #fff; --rip-text: #141515; width: 116px; filter: drop-shadow(0 4px 24px rgb(0 0 0 / .5)); }
 .finale .masthead { flex-direction: column; gap: 10px; margin-bottom: 14px; }
 .finale .headline { font-size: clamp(40px, 6.6vw, 104px); line-height: 1.34; /* ไทยมีสระบน/ล่าง — ต่ำกว่านี้ ญ/ู ชน ั้/ี่ ของบรรทัดถัดไป */ text-shadow: 0 4px 30px #000; }
 /* ฉากสุดท้ายตัวใหญ่อยู่แล้ว (104px) — คำหลักไม่ต้องขยายอีก, บรรทัดเล็กเบาลง */

@@ -226,7 +226,7 @@ export default function Receipt({
                     onClick={() => onJump(isQuestion ? (r.key as QuestionKey) : 'budget')}
                     aria-label={`แก้เรื่อง${r.label}`}
                     aria-current={active ? 'step' : undefined}
-                    className={`${cls} transition-colors hover:bg-gray-100 ${active ? 'bg-gray-100 shadow-[inset_3px_0_0_#111827]' : ''}`}
+                    className={`${cls} transition-colors hover:bg-yellow-50 ${active ? 'bg-yellow-100' : ''}`}
                   >
                     {body}
                   </button>

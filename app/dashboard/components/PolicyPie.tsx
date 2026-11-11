@@ -1,33 +1,13 @@
 // app/dashboard/components/PolicyPie.tsx — พายนโยบายงานศพแยกระดับ (server component, SVG ล้วน ไม่ต้องใช้ JS)
 // ใช้ทั้งหน้า /dashboard/policies และหน้าแรกแดชบอร์ด · ขนาดชิ้น = จำนวนนโยบาย · แต่ละชิ้นเป็นลิงก์ (href ของผู้เรียก)
 import { POLICY_LEVELS } from '@/app/lib/activityMeta';
+import { LEVEL_FILL, LEVEL_TINT, LEVEL_INK } from '@/app/lib/policyLevelColors';
 
 export type Level = (typeof POLICY_LEVELS)[number]['value'];
 
-// สีประจำระดับ (ผู้ใช้ขอ 11 พ.ย. 2026 — เดิมไล่เทา→ดำ "ดูยาก"): พาสเทลคนละเฉด แยกระดับได้ทันที ตัวอักษรบนชิ้นเป็นสีเข้มเสมอ
-// FILL = ชิ้นพาย/จุดสี · TINT = พื้นอ่อนของการ์ด/ชิป · INK = ตัวอักษรเข้มของเฉดเดียวกัน (อ่านบน TINT ได้)
+// สีประจำระดับมาจาก lib/policyLevelColors.ts (ชุดเดียวกับหมุดบนแผนที่) · พาสเทลทุกชิ้น ตัวอักษรบนชิ้นเป็นสีเข้มเสมอ
 // ชิ้นพาสเทลตัดพื้นขาวน้อย → เส้นขาวคั่นชิ้น + ป้ายตัวเลข + รายการด้านข้างบอกชื่อระดับเสมอ (ไม่พึ่งสีอย่างเดียว)
-export const LEVEL_FILL: Record<Level, string> = {
-  VILLAGE: '#fcd34d', // amber
-  SUBDISTRICT: '#6ee7b7', // emerald
-  DISTRICT: '#7dd3fc', // sky
-  PROVINCE: '#c4b5fd', // violet
-  NATIONAL: '#fda4af', // rose
-};
-export const LEVEL_TINT: Record<Level, string> = {
-  VILLAGE: '#fffbeb',
-  SUBDISTRICT: '#ecfdf5',
-  DISTRICT: '#f0f9ff',
-  PROVINCE: '#f5f3ff',
-  NATIONAL: '#fff1f2',
-};
-export const LEVEL_INK: Record<Level, string> = {
-  VILLAGE: '#92400e',
-  SUBDISTRICT: '#065f46',
-  DISTRICT: '#075985',
-  PROVINCE: '#5b21b6',
-  NATIONAL: '#9f1239',
-};
+export { LEVEL_FILL, LEVEL_TINT, LEVEL_INK };
 
 // พาย SVG ฝั่ง server — แต่ละชิ้นเป็นลิงก์ ?level= · ชิ้นที่เลือกดันออกจากวง · <title> = คำอธิบายเมื่อชี้
 export default function PolicyPie({

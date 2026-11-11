@@ -5,7 +5,8 @@
 // ข้อความ 3 แบบจากทีม Civic Space · สีส้ม–ขาว–ดำ พื้นล้วน (ตามธีมเว็บ ห้าม gradient)
 // ไม่ใช้ html2canvas (กติกาโปรเจกต์) วาดเองทั้งหมด
 import { useEffect, useRef, useState } from 'react';
-import { Check, Download, Printer } from 'lucide-react';
+import Link from 'next/link';
+import { ArrowLeft, Check, Download, Printer } from 'lucide-react';
 import { SIGN_MESSAGES } from '../content';
 import { usePlan } from '../planStore';
 import { track } from '../track';
@@ -176,7 +177,7 @@ function draw(canvas: HTMLCanvasElement, message: string, name: string, footer: 
   }
 }
 
-export default function SignMaker() {
+export default function SignMaker({ returnHref }: { returnHref?: string } = {}) {
   const { plan } = usePlan();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [preset, setPreset] = useState<string>(SIGN_MESSAGES[0]);
@@ -264,7 +265,7 @@ export default function SignMaker() {
                   aria-checked={active}
                   onClick={() => setLayout(l.id)}
                   className={`rounded-2xl border px-4 py-3 text-left transition-colors ${
-                    active ? 'border-gray-900 bg-gray-50' : 'border-gray-200 hover:border-gray-400'
+                    active ? 'border-yellow-500 bg-yellow-50 shadow-[0_0_0_1px_#eab308]' : 'border-gray-200 hover:border-yellow-400'
                   }`}
                 >
                   <span className="block text-base font-medium text-gray-900">{l.label}</span>
@@ -287,7 +288,7 @@ export default function SignMaker() {
                   aria-checked={dark === o.v}
                   onClick={() => setDark(o.v)}
                   className={`min-h-10 rounded-full border px-4 ${
-                    dark === o.v ? 'border-gray-900 bg-gray-900 text-white' : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                    dark === o.v ? 'border-gray-900 bg-gray-900 text-yellow-300' : 'border-gray-300 text-gray-700 hover:bg-yellow-50'
                   }`}
                 >
                   {o.label}
@@ -322,12 +323,12 @@ export default function SignMaker() {
                     setCustom(false);
                   }}
                   className={`w-full flex items-center gap-3 rounded-2xl border px-4 py-3 text-left text-base transition-colors ${
-                    active ? 'border-gray-900 bg-gray-50 text-gray-900' : 'border-gray-200 text-gray-700 hover:border-gray-400'
+                    active ? 'border-yellow-500 bg-yellow-50 text-gray-900' : 'border-gray-200 text-gray-700 hover:border-yellow-400'
                   }`}
                 >
                   <span
                     className={`flex w-5 h-5 shrink-0 items-center justify-center rounded-full border ${
-                      active ? 'border-gray-900 bg-gray-900 text-white' : 'border-gray-300'
+                      active ? 'border-gray-900 bg-gray-900 text-yellow-300' : 'border-gray-300'
                     }`}
                   >
                     {active && <Check className="w-3.5 h-3.5" />}
@@ -342,12 +343,12 @@ export default function SignMaker() {
               aria-checked={custom}
               onClick={() => setCustom(true)}
               className={`w-full flex items-center gap-3 rounded-2xl border px-4 py-3 text-left text-base transition-colors ${
-                custom ? 'border-gray-900 bg-gray-50 text-gray-900' : 'border-gray-200 text-gray-700 hover:border-gray-400'
+                custom ? 'border-yellow-500 bg-yellow-50 text-gray-900' : 'border-gray-200 text-gray-700 hover:border-yellow-400'
               }`}
             >
               <span
                 className={`flex w-5 h-5 shrink-0 items-center justify-center rounded-full border ${
-                  custom ? 'border-gray-900 bg-gray-900 text-white' : 'border-gray-300'
+                  custom ? 'border-gray-900 bg-gray-900 text-yellow-300' : 'border-gray-300'
                 }`}
               >
                 {custom && <Check className="w-3.5 h-3.5" />}
@@ -366,7 +367,7 @@ export default function SignMaker() {
                   value={customText}
                   onChange={(e) => setCustomText(e.target.value.slice(0, 60))}
                   placeholder="เช่น ร่วมส่งท่านด้วยใจ ไม่มีเหล้าในงานนี้"
-                  className="w-full h-12 rounded-2xl border border-gray-300 px-4 text-base outline-none focus:border-gray-900 focus:ring-2 focus:ring-gray-200"
+                  className="w-full h-12 rounded-2xl border border-gray-300 px-4 text-base outline-none focus:border-gray-900 focus:ring-2 focus:ring-yellow-200"
                 />
                 <p className="mt-1.5 flex justify-between gap-3 text-xs text-gray-500">
                   <span>เว้นวรรคตรงที่อยากให้ขึ้นบรรทัดใหม่ · ข้อความยาวตัวอักษรจะเล็กลง</span>
@@ -387,7 +388,7 @@ export default function SignMaker() {
               type="text"
               value={name}
               onChange={(e) => setNameEdit(e.target.value.slice(0, 80))}
-              className="mt-2 w-full h-12 rounded-2xl border border-gray-300 px-4 text-base outline-none focus:border-gray-900 focus:ring-2 focus:ring-gray-200"
+              className="mt-2 w-full h-12 rounded-2xl border border-gray-300 px-4 text-base outline-none focus:border-gray-900 focus:ring-2 focus:ring-yellow-200"
             />
           </div>
           <div>
@@ -399,7 +400,7 @@ export default function SignMaker() {
               type="text"
               value={footer}
               onChange={(e) => setFooter(e.target.value.slice(0, 60))}
-              className="mt-2 w-full h-12 rounded-2xl border border-gray-300 px-4 text-base outline-none focus:border-gray-900 focus:ring-2 focus:ring-gray-200"
+              className="mt-2 w-full h-12 rounded-2xl border border-gray-300 px-4 text-base outline-none focus:border-gray-900 focus:ring-2 focus:ring-yellow-200"
             />
           </div>
         </div>
@@ -408,7 +409,7 @@ export default function SignMaker() {
           <button
             type="button"
             onClick={download}
-            className="inline-flex items-center justify-center gap-2 min-h-12 px-5 rounded-full bg-gray-900 text-sm font-semibold text-white hover:bg-gray-700"
+            className="inline-flex items-center justify-center gap-2 min-h-12 px-5 rounded-full bg-yellow-400 text-sm font-semibold text-gray-900 hover:bg-yellow-300"
           >
             <Download className="w-4 h-4" /> ดาวน์โหลด PNG
           </button>
@@ -423,6 +424,19 @@ export default function SignMaker() {
             <Printer className="w-4 h-4" /> พิมพ์
           </button>
         </div>
+
+        {/* มาจากแบบวางแผน → ทำป้ายเสร็จกลับขั้นเดิม (ผู้ใช้ขอ 11 พ.ย. 2026 — ไม่ต้องเริ่มขั้นแรกใหม่) */}
+        {returnHref && (
+          <div className="mt-6 flex flex-wrap items-center gap-3 rounded-2xl border border-yellow-300 bg-yellow-50 px-4 py-3.5 print:hidden">
+            <p className="min-w-0 flex-1 text-sm text-gray-800">ได้ป้ายแล้ว กลับไปวางแผนต่อจากขั้นที่ค้างไว้ — ข้อมูลที่เลือกยังอยู่ครบ</p>
+            <Link
+              href={returnHref}
+              className="inline-flex items-center justify-center gap-1.5 min-h-11 px-5 rounded-full bg-gray-900 text-sm font-semibold text-yellow-300 hover:bg-gray-700"
+            >
+              <ArrowLeft className="w-4 h-4" /> กลับไปวางแผนต่อ
+            </Link>
+          </div>
+        )}
       </div>
     </div>
   );

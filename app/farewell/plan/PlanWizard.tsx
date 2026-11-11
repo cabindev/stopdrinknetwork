@@ -4,8 +4,12 @@
 // เลย์เอาต์ (ออกแบบใหม่ 28 ต.ค. 2026 — ผู้ใช้ขอ "ดูเป็นทางการ ไม่เอา icon"): แบบฟอร์มขาว-ดำ ไม่มีไอคอนทั้งหน้า ·
 //   จอใหญ่ = 3 คอลัมน์ รายการขั้นตอนมีเลขกำกับ (กดข้ามขั้นได้) | ฟอร์ม | ใบสรุปติดข้าง (กดแถวกลับไปแก้ขั้นนั้น) ·
 //   จอเล็กกว่า lg = แถบความคืบหน้าบนฟอร์ม · มือถือ = แถบยอดรวมติดล่าง กด "ใบสรุป" เปิดแผ่นล่าง
+// สี (ผู้ใช้ขอ 11 พ.ย. 2026 — "ไม่ต้องดำหมด ให้ดูมืออาชีพ"): สีเน้นเหลือง-ดำ (ผู้ใช้เลือกแทนเขียว teal) (ขั้นปัจจุบัน/ตัวเลือกที่เลือก/ปุ่มหลัก/ความคืบหน้า)
+//   ที่เหลือคงขาว-เทา · ยังไม่ใส่ไอคอน (คงแนวทางการเดิม)
+// ขั้นปัจจุบันอยู่ใน URL (?step=) — ไปทำป้ายแล้วกลับมา (หรือกด back) เข้าขั้นเดิม ไม่เริ่มขั้นแรกใหม่
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { DEFAULT_COST_NOTE, QUESTIONS, type Question } from '../content';
 import { baht, planBudget, usePlan, type Plan } from '../planStore';
 import AreaPicker from '../components/AreaPicker';
@@ -42,16 +46,23 @@ function StepList({ plan, step, onGo }: { plan: Plan; step: Step; onGo: (s: Step
                 onClick={() => onGo(s)}
                 aria-current={current ? 'step' : undefined}
                 aria-label={`ขั้นที่ ${i + 1} ${STEP_LABEL[s]}${done ? ' (ทำแล้ว)' : ''}`}
-                className={`flex w-full items-baseline gap-3 rounded-md px-3 py-2 text-left transition-colors ${
-                  current ? 'bg-gray-900 text-white' : 'hover:bg-gray-100'
+                className={`flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left transition-colors ${
+                  current ? 'bg-yellow-50 text-gray-900' : 'hover:bg-gray-50'
                 }`}
               >
-                <span className={`w-5 shrink-0 text-xs tabular-nums ${current ? 'text-gray-300' : 'text-gray-400'}`}>{pad2(i + 1)}</span>
+                {/* เลขขั้นในวงกลม: ทำแล้ว = teal ทึบ · ขั้นนี้ = ขอบ teal · ยังไม่ทำ = ขอบเทา */}
+                <span
+                  className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold tabular-nums ${
+                    done ? 'bg-gray-900 text-yellow-300' : current ? 'border-2 border-gray-900 bg-yellow-400 text-gray-900' : 'border border-gray-300 text-gray-400'
+                  }`}
+                >
+                  {pad2(i + 1)}
+                </span>
                 <span className="min-w-0 flex-1">
-                  <span className={`block text-sm ${current ? 'font-medium' : done ? 'text-gray-900' : 'text-gray-500'}`}>
+                  <span className={`block text-sm ${current ? 'font-semibold' : done ? 'text-gray-900' : 'text-gray-500'}`}>
                     {STEP_LABEL[s]}
                   </span>
-                  {done && <span className={`block text-[11px] ${current ? 'text-gray-300' : 'text-gray-400'}`}>เลือกแล้ว</span>}
+                  {done && <span className="block text-[11px] text-gray-500">เลือกแล้ว</span>}
                 </span>
               </button>
             </li>
@@ -85,7 +96,7 @@ function StepBar({ plan, step, onGo }: { plan: Plan; step: Step; onGo: (s: Step)
               >
                 <span
                   className={`block h-1 rounded-full transition-colors ${
-                    current ? 'bg-gray-900' : done ? 'bg-gray-400 group-hover:bg-gray-500' : 'bg-gray-200 group-hover:bg-gray-300'
+                    current ? 'bg-yellow-400' : done ? 'bg-gray-900 group-hover:bg-gray-700' : 'bg-gray-200 group-hover:bg-gray-300'
                   }`}
                 />
               </button>
@@ -103,10 +114,11 @@ function StepHeading({ step, title, lead }: { step: Step; title: string; lead: R
   const i = STEPS.indexOf(step);
   return (
     <div className="border-b border-gray-100 pb-5">
-      <p className="text-xs font-medium text-gray-500">
-        ขั้นที่ {i + 1} จาก {STEPS.length}
-        <span className="text-gray-300"> · </span>
-        {STEP_LABEL[step]}
+      <p className="inline-flex items-center gap-2 text-xs font-medium">
+        <span className="rounded-full bg-yellow-400 px-2.5 py-0.5 text-gray-900">
+          ขั้นที่ {i + 1} จาก {STEPS.length}
+        </span>
+        <span className="text-gray-500">{STEP_LABEL[step]}</span>
       </p>
       <h2 tabIndex={-1} className="mt-1.5 text-xl sm:text-2xl font-semibold leading-snug text-gray-900 outline-none">
         {title}
@@ -123,7 +135,7 @@ function Facts({ q }: { q: Question }) {
   return (
     <div className="mt-5 space-y-3">
       {q.tip && (
-        <div className="border-l-2 border-gray-900 pl-4">
+        <div className="rounded-lg bg-yellow-50 px-4 py-3">
           <p className="text-xs font-semibold text-gray-900">ข้อแนะนำ</p>
           <p className="mt-0.5 text-sm leading-relaxed text-gray-700">{q.tip}</p>
         </div>
@@ -155,7 +167,17 @@ function Facts({ q }: { q: Question }) {
 }
 
 // ── คำถามแบบเลือกตอบ ───────────────────────────────────────────────────────────────
-function QuestionStep({ q, plan, onPick }: { q: Question; plan: Plan; onPick: (id: string) => void }) {
+function QuestionStep({
+  q,
+  plan,
+  onPick,
+  afterOptions,
+}: {
+  q: Question;
+  plan: Plan;
+  onPick: (id: string) => void;
+  afterOptions?: ReactNode; // แสดงติดใต้ตัวเลือก (เช่น ปุ่มทำป้ายเมื่อเลือก "ไม่เลี้ยงเหล้า")
+}) {
   const chosen = plan.answers[q.key];
   return (
     <div>
@@ -172,8 +194,8 @@ function QuestionStep({ q, plan, onPick }: { q: Question; plan: Plan; onPick: (i
               onClick={() => onPick(o.id)}
               className={`flex w-full items-start gap-4 rounded-lg border px-4 py-3.5 text-left transition-[border-color,background-color,box-shadow] ${
                 active
-                  ? 'border-gray-900 bg-gray-50 shadow-[0_0_0_1px_#111827]'
-                  : 'border-gray-200 bg-white hover:border-gray-400'
+                  ? 'border-yellow-500 bg-yellow-50 shadow-[0_0_0_1px_#eab308]'
+                  : 'border-gray-200 bg-white hover:border-yellow-400 hover:bg-yellow-50/40'
               }`}
             >
               {/* ปุ่มเลือกแบบวงกลม (ตัวควบคุมฟอร์ม ไม่ใช่ไอคอน) */}
@@ -189,7 +211,7 @@ function QuestionStep({ q, plan, onPick }: { q: Question; plan: Plan; onPick: (i
                 <span className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
                   <span className="text-[15px] font-medium text-gray-900">{o.label}</span>
                   {o.lighter && (
-                    <span className="rounded border border-gray-300 px-1.5 py-px text-[11px] text-gray-700">ช่วยลดภาระ</span>
+                    <span className="rounded-full bg-gray-900 px-2 py-px text-[11px] font-medium text-yellow-300">ช่วยลดภาระ</span>
                   )}
                 </span>
                 <span className="mt-0.5 block text-[13px] leading-relaxed text-gray-500">{o.detail}</span>
@@ -198,6 +220,7 @@ function QuestionStep({ q, plan, onPick }: { q: Question; plan: Plan; onPick: (i
           );
         })}
       </div>
+      {afterOptions}
       <Facts q={q} />
     </div>
   );
@@ -216,7 +239,7 @@ function MoneyInput({
   onChange: (n: number | undefined) => void;
 }) {
   return (
-    <div className="flex h-10 items-center rounded-md border border-gray-300 bg-white transition-colors focus-within:border-gray-900 focus-within:ring-2 focus-within:ring-gray-200">
+    <div className="flex h-10 items-center rounded-md border border-gray-300 bg-white transition-colors focus-within:border-gray-900 focus-within:ring-2 focus-within:ring-yellow-200">
       <input
         id={id}
         type="text"
@@ -301,12 +324,12 @@ function BudgetStep({ plan, update }: { plan: Plan; update: ReturnType<typeof us
         </tbody>
       </table>
 
-      <div className="mt-2 border-t-2 border-gray-900 pt-4 space-y-3">
+      <div className="mt-2 rounded-lg bg-yellow-50 px-4 py-4 space-y-3">
         <div className="flex items-baseline justify-between gap-3">
           <span className="text-sm font-medium text-gray-900">รวมค่าใช้จ่ายโดยประมาณ</span>
           <span className="text-xl font-semibold tabular-nums text-gray-900">{baht(b.total)}</span>
         </div>
-        <div className="grid grid-cols-[minmax(0,1fr),10rem] items-center gap-3 border-t border-gray-100 pt-3">
+        <div className="grid grid-cols-[minmax(0,1fr),10rem] items-center gap-3 border-t border-yellow-200 pt-3">
           <label htmlFor="cost-support">
             <span className="block text-sm font-medium text-gray-900">เงินช่วยงานที่คาดว่าจะได้รับ</span>
             <span className="block text-xs text-gray-500">ไม่ใส่ก็ได้</span>
@@ -314,7 +337,7 @@ function BudgetStep({ plan, update }: { plan: Plan; update: ReturnType<typeof us
           <MoneyInput id="cost-support" value={plan.support ?? undefined} onChange={(n) => update({ support: n ?? null })} />
         </div>
         {b.net != null && (
-          <div className="flex items-baseline justify-between gap-3 border-t border-gray-100 pt-3">
+          <div className="flex items-baseline justify-between gap-3 border-t border-yellow-200 pt-3">
             <span className="text-sm text-gray-700">{b.net > 0 ? 'ครอบครัวต้องออกเพิ่ม' : 'เหลือหลังหักค่าใช้จ่าย'}</span>
             <span className="text-base font-semibold tabular-nums text-gray-900">{baht(Math.abs(b.net))}</span>
           </div>
@@ -322,16 +345,16 @@ function BudgetStep({ plan, update }: { plan: Plan; update: ReturnType<typeof us
       </div>
 
       {(b.savedIfOneDay > 0 || b.alcohol > 0) && (
-        <section aria-label="ส่วนที่ปรับได้" className="mt-6 rounded-lg bg-gray-50 px-4 py-4 space-y-1.5">
-          <p className="text-xs font-semibold text-gray-900">คำนวณจากตัวเลขในแผนนี้</p>
+        <section aria-label="ส่วนที่ปรับได้" className="mt-4 rounded-lg border border-yellow-300 px-4 py-4 space-y-1.5">
+          <p className="text-xs font-semibold text-gray-900">ประหยัดได้อีก — คำนวณจากตัวเลขในแผนนี้</p>
           {b.savedIfOneDay > 0 && (
             <p className="text-sm text-gray-800">
-              ถ้าจัดวันเดียว รายการที่คิดต่อวันจะลดลง <strong className="tabular-nums">{baht(b.savedIfOneDay)}</strong>
+              ถ้าจัดวันเดียว รายการที่คิดต่อวันจะลดลง <strong className="tabular-nums text-gray-900 bg-yellow-200 px-1 rounded">{baht(b.savedIfOneDay)}</strong>
             </p>
           )}
           {b.alcohol > 0 && (
             <p className="text-sm text-gray-800">
-              ถ้าไม่เลี้ยงเหล้าเบียร์ จะลดลง <strong className="tabular-nums">{baht(b.alcohol)}</strong>
+              ถ้าไม่เลี้ยงเหล้าเบียร์ จะลดลง <strong className="tabular-nums text-gray-900 bg-yellow-200 px-1 rounded">{baht(b.alcohol)}</strong>
             </p>
           )}
         </section>
@@ -341,14 +364,27 @@ function BudgetStep({ plan, update }: { plan: Plan; update: ReturnType<typeof us
 }
 
 const BTN_PRIMARY =
-  'inline-flex h-11 items-center rounded-md bg-gray-900 px-6 text-sm font-medium text-white transition-colors hover:bg-gray-700';
+  'inline-flex h-11 items-center rounded-md bg-yellow-400 px-6 text-sm font-semibold text-gray-900 transition-colors hover:bg-yellow-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-900';
 const BTN_SECONDARY =
   'inline-flex h-11 items-center rounded-md border border-gray-300 bg-white px-5 text-sm font-medium text-gray-800 transition-colors hover:bg-gray-50';
 
 // ── ตัวหลัก ────────────────────────────────────────────────────────────────────────
 export default function PlanWizard() {
   const { plan, update } = usePlan();
-  const [step, setStep] = useState<Step>('start');
+  // ขั้นเริ่มจาก ?step= (กลับจากหน้าทำป้าย/กด back) — ใช้ useSearchParams ไม่ใช่ window.location:
+  // ตอนเปลี่ยนหน้าแบบ client (Link) window.location ยังเป็น URL หน้าเดิมขณะ render → เคยเด้งกลับขั้นแรก
+  const searchParams = useSearchParams();
+  const [step, setStep] = useState<Step>(() => {
+    const s = searchParams.get('step') as Step | null;
+    return s && STEPS.includes(s) ? s : 'start';
+  });
+  // เขียนขั้นปัจจุบันลง URL (replaceState — ไม่เพิ่มประวัติทุกขั้น) ให้ปุ่ม back ของเบราว์เซอร์พากลับมาขั้นเดิม
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    if (step === 'start') url.searchParams.delete('step');
+    else url.searchParams.set('step', step);
+    window.history.replaceState(window.history.state, '', url);
+  }, [step]);
   const [sheet, setSheet] = useState(false); // ใบสรุปแบบแผ่นล่าง (มือถือ)
   const topRef = useRef<HTMLDivElement>(null);
   const index = STEPS.indexOf(step);
@@ -424,7 +460,7 @@ export default function PlanWizard() {
       <header className="mx-auto mt-2 mb-8 max-w-2xl text-center">
         <p className="text-sm text-gray-500">ส่งด้วยใจ — แบบวางแผนงานศพสำหรับครอบครัว</p>
         <h1 className="mt-2 text-2xl sm:text-3xl font-semibold leading-tight text-gray-900">ทุกการเตรียมพร้อม คือความใส่ใจ</h1>
-        <div className="mx-auto mt-4 h-px w-16 bg-gray-900" aria-hidden="true" />
+        <div className="mx-auto mt-4 h-1 w-16 rounded-full bg-yellow-400" aria-hidden="true" />
         <p className="mt-4 text-[15px] leading-relaxed text-gray-600">
           ตัดสินใจทีละเรื่อง {STEPS.length} ขั้นตอน ข้ามได้ทุกข้อ ตัวเลขในใบสรุปแก้ได้ภายหลัง
         </p>
@@ -462,7 +498,7 @@ export default function PlanWizard() {
               value={plan.deceasedName}
               onChange={(e) => update({ deceasedName: e.target.value.slice(0, 120) })}
               placeholder="เช่น คุณแม่สมศรี ใจดี"
-              className="mt-2 h-11 w-full rounded-md border border-gray-300 px-3 text-base sm:text-sm outline-none transition-colors focus:border-gray-900 focus:ring-2 focus:ring-gray-200"
+              className="mt-2 h-11 w-full rounded-md border border-gray-300 px-3 text-base sm:text-sm outline-none transition-colors focus:border-gray-900 focus:ring-2 focus:ring-yellow-200"
             />
 
             <p className="mt-6 text-sm font-medium text-gray-900">
@@ -480,6 +516,22 @@ export default function PlanWizard() {
             <QuestionStep
               q={q}
               plan={plan}
+              afterOptions={
+                q.key === 'alcohol' && plan.answers.alcohol === 'none' ? (
+                  // ติดใต้ตัวเลือกเลย (ผู้ใช้ขอ — เลือกข้อนี้แล้วไปทำป้ายได้ทันที) · ทำเสร็จหน้าป้ายมีปุ่มกลับมาขั้นนี้
+                  <div className="mt-3 flex flex-wrap items-center gap-3 rounded-lg border border-yellow-300 bg-yellow-50 px-4 py-3.5">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold text-gray-900">ทำป้ายหน้างาน &ldquo;ไม่เลี้ยงเหล้า&rdquo;</p>
+                      <p className="mt-0.5 text-[13px] text-gray-600">
+                        ใส่ชื่อ{plan.deceasedName ? ` ${plan.deceasedName}` : 'ผู้วายชนม์'}ให้แล้ว ดาวน์โหลดหรือพิมพ์ A4 · ทำเสร็จกลับมาขั้นนี้ต่อ
+                      </p>
+                    </div>
+                    <Link href="/farewell/signs?from=plan" className={BTN_PRIMARY}>
+                      เลือกป้าย
+                    </Link>
+                  </div>
+                ) : undefined
+              }
               onPick={(id) => {
                 update((p) => ({ answers: { ...p.answers, [q.key]: id } }));
                 // เลือกแล้วไปข้อถัดไปเอง (เห็นตัวเลือกที่กดก่อนแวบหนึ่ง) — ยกเว้นขั้นเหล้า
@@ -502,11 +554,6 @@ export default function PlanWizard() {
                     </div>
                   )}
                 </div>
-                {plan.answers.alcohol === 'none' && (
-                  <Link href="/farewell/signs" className={`mt-5 ${BTN_SECONDARY}`}>
-                    ทำป้ายหน้างาน &ldquo;ไม่เลี้ยงเหล้า&rdquo;
-                  </Link>
-                )}
               </section>
             )}
           </>

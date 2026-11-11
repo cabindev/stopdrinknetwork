@@ -2,6 +2,7 @@
 // เลย์เอาต์: ฟอร์มทีละขั้น + ใบสรุปข้าง ๆ (จอใหญ่) / แถบยอดรวมติดล่าง กดเปิดใบสรุป (มือถือ) — ดู PlanWizard
 // หัวข้อหน้า (h1) อยู่ใน PlanWizard แสดงเฉพาะขั้นแรก — ขั้นอื่นการ์ดขึ้นบนสุด ไม่ต้องเลื่อน
 import type { Metadata } from 'next';
+import { Suspense } from 'react';
 import Link from 'next/link';
 import PlanWizard from './PlanWizard';
 
@@ -17,7 +18,10 @@ export default function PlanPage() {
         <Link href="/farewell" className="inline-flex items-center min-h-10 text-sm text-gray-500 underline-offset-4 hover:text-gray-900 hover:underline">
           กลับหน้าส่งด้วยใจ
         </Link>
-        <PlanWizard />
+        {/* PlanWizard อ่าน ?step= ด้วย useSearchParams → ต้องอยู่ใน Suspense ให้หน้ายัง prerender ได้ */}
+        <Suspense fallback={<div className="min-h-[60vh]" aria-busy="true" />}>
+          <PlanWizard />
+        </Suspense>
       </div>
     </main>
   );

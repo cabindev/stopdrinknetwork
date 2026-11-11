@@ -36,6 +36,7 @@ import { makeColorOf } from '@/app/lib/categoryColors';
 import type { HealthZone } from '@/app/utils/healthZones';
 import { navigationUrl } from '@/app/lib/geoLink';
 import { POLICY_LEVELS, POLICY_LABEL } from '@/app/lib/activityMeta';
+import { LEVEL_PIN_COLOR } from '@/app/lib/policyLevelColors';
 
 export interface MapActivity {
   id: number;
@@ -152,16 +153,12 @@ interface LogoSpec {
 }
 // หมุดโลโก้แยกตามระดับนโยบาย (ผู้ใช้ขอ 4 พ.ย. 2026 — หมุดงานศพหน้าตาเหมือนกันหมด แยกไม่ออก)
 // เปลี่ยนสีตัวโลโก้ ไม่มีขอบ ไม่มีวงพื้นขาว (ผู้ใช้เลือก) — tintLogo() ระบายส่วนดำของโลโก้เป็นสีนี้ ส่วนขาวคงขาว
-// ระดับเรียงเล็ก→ใหญ่ จึงไล่เฉดอุ่น + ขนาดโตขึ้น (อ่านลำดับได้แม้ตาบอดสี) · ส้มสงวนให้ข้อมูลบนแผนที่อยู่แล้ว
-const LEVEL_PIN: Record<string, { ring: string; size: number }> = {
-  // ไล่โทนอุ่นต่างเฉด เหลือง→ส้ม→แดง→แดงเลือดหมู (ผู้ใช้ขอให้ต่างกัน+เข้มกว่าส้มไล่อ่อน-เข้มเดิม)
-  // ขนาดเล็กลงจากรุ่นแรก — กลุ่มเชียงราย/อุบลฯ ทับกันจนนับไม่ได้ที่มุมทั้งประเทศ
-  VILLAGE: { ring: '#ca8a04', size: 28 },
-  SUBDISTRICT: { ring: '#ea580c', size: 32 },
-  DISTRICT: { ring: '#dc2626', size: 36 },
-  PROVINCE: { ring: '#7f1d1d', size: 42 },
-  NATIONAL: { ring: '#4c0519', size: 46 },
-};
+// สีตามระดับ = ชุดเดียวกับแดชบอร์ดนโยบาย (LEVEL_PIN_COLOR ใน lib/policyLevelColors.ts — ผู้ใช้ขอ 11 พ.ย. 2026 ให้ตรงกัน)
+// ขนาดโตขึ้นตามระดับ (อ่านลำดับได้แม้ตาบอดสี) · ขนาดเล็กลงจากรุ่นแรก — กลุ่มเชียงราย/อุบลฯ ทับกันจนนับไม่ได้ที่มุมทั้งประเทศ
+const LEVEL_SIZE: Record<string, number> = { VILLAGE: 28, SUBDISTRICT: 32, DISTRICT: 36, PROVINCE: 42, NATIONAL: 46 };
+const LEVEL_PIN: Record<string, { ring: string; size: number }> = Object.fromEntries(
+  Object.entries(LEVEL_PIN_COLOR).map(([lv, ring]) => [lv, { ring, size: LEVEL_SIZE[lv] }])
+);
 // ไม่ได้ระบุระดับ = โลโก้ดำตามต้นฉบับ (ผู้ใช้เลือก) — ดำจึงห้ามใช้ในระดับข้างบน
 const NO_POLICY_PIN = { ring: '#000000', size: 28 };
 const NO_POLICY = '__none';

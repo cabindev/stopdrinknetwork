@@ -13,7 +13,7 @@ import { JOURNEY_PUBLIC } from '@/app/farewell/content';
 const FAREWELL_HREF = JOURNEY_PUBLIC ? '/farewell/journey' : '/farewell';
 
 const PILL =
-  'inline-flex items-center gap-1.5 h-9 px-3 rounded-full bg-white/95 backdrop-blur border border-gray-200 shadow-sm text-xs font-medium text-gray-700 hover:bg-white hover:text-gray-600 transition-colors';
+  'inline-flex items-center gap-1.5 h-9 px-3 rounded-full bg-white/95 backdrop-blur text-xs font-medium text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors';
 
 export default function Navbar() {
   const { data: session, status } = useSession();
@@ -44,7 +44,7 @@ export default function Navbar() {
         <Link
           href="/"
           aria-label="Stop Drink Network เครือข่ายงดเหล้า — หน้าแรก"
-          className="pointer-events-auto inline-flex items-center gap-2.5 h-9 pl-3 pr-4 rounded-full bg-white/95 backdrop-blur border border-gray-200 shadow-sm"
+          className="pointer-events-auto inline-flex items-center gap-2.5 h-9 pl-3 pr-4 rounded-full bg-white/95 backdrop-blur"
         >
           {/* โลโก้ "Network" (สัญลักษณ์ hub + แฉกพู่กัน + โหนด) — ต้นฉบับ ~/Desktop/logo/network/*.ai · ไฟล์ใช้งาน public/brand/ */}
           <Image src="/brand/network-logo-horizontal-color.svg" alt="" width={97} height={24} priority unoptimized className="h-6 w-auto" />
@@ -105,7 +105,7 @@ export default function Navbar() {
                   setIsUserMenuOpen(!isUserMenuOpen);
                 }}
                 aria-label="เมนูผู้ใช้"
-                className="flex w-9 h-9 rounded-full bg-white/95 backdrop-blur border border-gray-200 shadow-sm items-center justify-center overflow-hidden hover:border-gray-400 transition-colors"
+                className="flex w-9 h-9 rounded-full bg-white/95 backdrop-blur items-center justify-center overflow-hidden"
               >
                 {session.user.image ? (
                   <img src={session.user.image} alt="" className="w-full h-full object-cover" />
@@ -156,7 +156,7 @@ export default function Navbar() {
           type="button"
           onClick={() => setIsMenuOpen(!isMenuOpen)}
           aria-label="เมนู"
-          className="pointer-events-auto sm:hidden flex w-9 h-9 rounded-full bg-white/95 backdrop-blur border border-gray-200 shadow-sm items-center justify-center text-gray-600"
+          className="pointer-events-auto sm:hidden flex w-9 h-9 rounded-full bg-white/95 backdrop-blur items-center justify-center text-gray-600"
         >
           {isMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
         </button>

@@ -235,3 +235,65 @@ export function parseLinksField(fd: FormData) {
   const r = parseLinkList(v);
   return 'error' in r ? ({ error: r.error } as const) : ({ links: r.links } as const);
 }
+
+// เผยแพร่เป็นกรณีศึกษาจากฟอร์มบันทึกงาน (ผู้ใช้ขอ 11 พ.ย. 2026 — ไม่ต้องไปหน้า /publish แยก) · เฉพาะแอดมิน
+// formData `publish` = 'true' | 'false' (ไม่ส่ง = ไม่แตะ) · `publicImages` = { existing: id[], new: index[] }
+// ตั้ง isPublic ของรูปแกลเลอรีตามที่ติ๊ก (รูปเริ่มต้นไม่เปิดเผย — ต้องได้รับอนุญาตจากคนในภาพ)
+// เผยแพร่ครั้งแรก: เอกสาร/ไฟล์นโยบายเปิดเผย · ลิงก์เปิดเผยยกเว้น Google Drive · แบบสำรวจไม่เปิดเผย (เหมือน PublishForm)
+// คืนข้อความ audit (null = ไม่มีอะไรเปลี่ยน)
+export async function applyPublishFromForm(
+  activity: { id: number; isPublished: boolean; publishedAt: Date | null; publishedById: number | null },
+  fd: FormData,
+  newImageIds: number[],
+  adminId: number
+): Promise<string | null> {
+  const raw = fd.get('publish');
+  if (raw !== 'true' && raw !== 'false') return null;
+  const publish = raw === 'true';
+  const id = activity.id;
+
+  let picked: { existing?: unknown; new?: unknown } = {};
+  try {
+    picked = JSON.parse(String(fd.get('publicImages') ?? '{}')) ?? {};
+  } catch {}
+  const gallery = await prisma.activityAttachment.findMany({
+    where: { activityId: id, kind: 'IMAGE', policyLevel: null, isSurvey: false },
+    select: { id: true, isPublic: true },
+  });
+  const own = new Set(gallery.map((g) => g.id));
+  const publicImageIds = [
+    ...(Array.isArray(picked.existing) ? picked.existing.map(Number) : []),
+    ...(Array.isArray(picked.new) ? picked.new.map((i) => newImageIds[Number(i)]) : []),
+  ].filter((x) => own.has(x));
+
+  const firstTime =
+    !activity.isPublished && (await prisma.activityAttachment.count({ where: { activityId: id, isPublic: true } })) === 0;
+
+  await prisma.$transaction([
+    prisma.activityAttachment.updateMany({ where: { id: { in: [...own] } }, data: { isPublic: false } }),
+    prisma.activityAttachment.updateMany({ where: { id: { in: publicImageIds } }, data: { isPublic: true } }),
+    ...(publish && firstTime
+      ? [
+          prisma.activityAttachment.updateMany({ where: { activityId: id, kind: 'DOCUMENT', isSurvey: false }, data: { isPublic: true } }),
+          prisma.activityLink.updateMany({ where: { activityId: id, kind: { not: 'DRIVE' } }, data: { isPublic: true } }),
+        ]
+      : []),
+    prisma.activity.update({
+      where: { id },
+      data: {
+        isPublished: publish,
+        publishedAt: publish ? activity.publishedAt ?? new Date() : null,
+        publishedById: publish ? activity.publishedById ?? adminId : null,
+      },
+    }),
+  ]);
+
+  const before = new Set(gallery.filter((g) => g.isPublic).map((g) => g.id));
+  const imagesChanged = publicImageIds.length !== before.size || publicImageIds.some((x) => !before.has(x));
+  if (activity.isPublished !== publish) {
+    return publish
+      ? `เผยแพร่เป็นกรณีศึกษาสาธารณะจากฟอร์ม (รูปเปิดเผย ${publicImageIds.length} รูป)`
+      : 'ยกเลิกการเผยแพร่กรณีศึกษา';
+  }
+  return imagesChanged ? `รูปที่เปิดเผยบนหน้ากรณีศึกษา: ${publicImageIds.length} รูป` : null;
+}

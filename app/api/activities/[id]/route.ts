@@ -16,7 +16,7 @@ import { resolveActivityCoords } from '@/app/lib/provinceGeo';
 import { purgeExpiredTrash, TRASH_DAYS } from '@/app/lib/activityAccess';
 import { writeAuditLog, diffFields, STATUS_LABEL } from '@/app/lib/audit';
 import { parseExtraAreas, areasText } from '@/app/lib/activityAreas';
-import { parseActivityExtras, imageLimitError, applyImageMeta, policyFilesFrom, surveyFilesFrom, parseMemberIds, parseLinksField } from '@/app/lib/activityInput';
+import { parseActivityExtras, imageLimitError, applyImageMeta, applyPublishFromForm, policyFilesFrom, surveyFilesFrom, parseMemberIds, parseLinksField } from '@/app/lib/activityInput';
 import {
   canSeeCoordinatorContact,
   canEditActivity,
@@ -294,6 +294,7 @@ export async function PATCH(
     for (const file of survey.files) {
       await saveAttachment(activity.id, file, IMAGE_TYPES.includes(file.type) ? 'IMAGE' : 'DOCUMENT', null, true);
     }
+    const publishNote = await applyPublishFromForm(activity, formData, newImageIds, Number(session.user.id));
 
     // audit: บันทึกเฉพาะฟิลด์ที่เปลี่ยนจริง + สรุปไฟล์แนบที่เพิ่ม/ลบ
     const beforePolicy = policyShape(activity.policies);
@@ -359,6 +360,7 @@ export async function PATCH(
     const addedCount = documents.length + images.length + policy.files.length;
     if (addedCount > 0) fileNotes.push(`เพิ่มไฟล์แนบ ${addedCount} ไฟล์`);
     if (toRemove.length > 0) fileNotes.push(`ลบไฟล์แนบ ${toRemove.length} ไฟล์`);
+    if (publishNote) fileNotes.push(publishNote);
 
     if (changes.length > 0 || fileNotes.length > 0) {
       await writeAuditLog({

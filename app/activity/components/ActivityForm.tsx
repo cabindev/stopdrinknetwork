@@ -22,6 +22,11 @@ import {
   ClipboardCheck,
   FileText,
   Plus,
+  Globe,
+  Eye,
+  EyeOff,
+  Check,
+  ExternalLink,
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import imageCompression from 'browser-image-compression';
@@ -190,6 +195,32 @@ export default function ActivityForm({
     return c ? `existing:${c.id}` : '';
   });
   const keptExistingImages = existingImages.filter((a) => !removeIds.includes(a.id));
+  // เผยแพร่เป็นกรณีศึกษาจากฟอร์มนี้ได้เลย (ผู้ใช้ขอ 11 พ.ย. 2026) — แก้/ยกเลิกได้ทุกครั้งที่แก้ไขงาน
+  // รูปเริ่มต้นไม่เปิดเผย (ต้องได้รับอนุญาตจากคนในภาพ) · เอกสาร/ลิงก์ server ตั้งให้ตอนเผยแพร่ครั้งแรก
+  const wasPublished = isEdit && !!initial?.isPublished;
+  const [publish, setPublish] = useState(wasPublished);
+  const [publicExisting, setPublicExisting] = useState<Set<number>>(
+    () => new Set(existingImages.filter((a) => a.isPublic).map((a) => a.id))
+  );
+  const [publicNew, setPublicNew] = useState<Set<string>>(new Set());
+  const toggleIn = <T,>(set: Set<T>, v: T) => {
+    const next = new Set(set);
+    if (next.has(v)) next.delete(v);
+    else next.add(v);
+    return next;
+  };
+  const shownCount =
+    keptExistingImages.filter((a) => publicExisting.has(a.id)).length + images.filter((i) => publicNew.has(i.key)).length;
+  const coverKey = cover || (keptExistingImages[0] ? `existing:${keptExistingImages[0].id}` : images[0] ? `new:${images[0].key}` : '');
+  const coverShown = coverKey.startsWith('new:')
+    ? publicNew.has(coverKey.slice(4))
+    : coverKey
+      ? publicExisting.has(Number(coverKey.slice(9)))
+      : true;
+  const showCover = () => {
+    if (coverKey.startsWith('new:')) setPublicNew((p) => new Set(p).add(coverKey.slice(4)));
+    else if (coverKey) setPublicExisting((p) => new Set(p).add(Number(coverKey.slice(9))));
+  };
   const imageSlots = MAX_IMAGES - keptExistingImages.length - images.length;
   const [extra, setExtra] = useState({
     subCategoryId: initial?.subCategoryId ? String(initial.subCategoryId) : '',
@@ -421,6 +452,14 @@ export default function ActivityForm({
       fd.set('links', JSON.stringify(links));
       fd.set('extraAreas', JSON.stringify(extraAreas));
       if (isEdit) fd.set('removeAttachmentIds', JSON.stringify(removeIds));
+      fd.set('publish', String(publish));
+      fd.set(
+        'publicImages',
+        JSON.stringify({
+          existing: keptExistingImages.filter((a) => publicExisting.has(a.id)).map((a) => a.id),
+          new: images.flatMap((img, i) => (publicNew.has(img.key) ? [i] : [])),
+        })
+      );
 
       const res = await fetch(isEdit ? `/api/activities/${initial!.id}` : '/api/activities', {
         method: isEdit ? 'PATCH' : 'POST',
@@ -429,7 +468,15 @@ export default function ActivityForm({
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'บันทึกไม่สำเร็จ');
 
-      toast.success(isEdit ? 'บันทึกการแก้ไขแล้ว' : 'บันทึกการดำเนินงานสำเร็จ');
+      toast.success(
+        publish && !wasPublished
+          ? 'บันทึกและเผยแพร่เป็นกรณีศึกษาแล้ว'
+          : !publish && wasPublished
+            ? 'บันทึกแล้ว · ยกเลิกการเผยแพร่'
+            : isEdit
+              ? 'บันทึกการแก้ไขแล้ว'
+              : 'บันทึกการดำเนินงานสำเร็จ'
+      );
       router.push(`/activity/${data.activityId}`);
       router.refresh();
     } catch (err) {
@@ -1204,13 +1251,16 @@ export default function ActivityForm({
             <p className="text-xs text-gray-400 mb-2">
               ⭐ = รูปปก (ใช้แสดงบนการ์ดและหน้าเผยแพร่) · ไม่เลือก ระบบใช้รูปแรก
             </p>
-            {/* หน้ากรณีศึกษาใช้เฉพาะรูปที่เปิดเผย — ปกใหม่ที่ยังไม่เปิดเผยจะไม่ขึ้นบนหน้าสาธารณะ (เคยเกิดกับ #151) */}
-            {isEdit && initial?.isPublished && cover &&
-              (cover.startsWith('new:') || !existingImages.find((a) => `existing:${a.id}` === cover)?.isPublic) && (
-                <p role="note" className="mb-2 text-xs text-gray-900 bg-gray-50 border border-gray-300 rounded-lg px-3 py-2">
-                  รูปปกที่เลือกยังไม่เปิดเผยบนหน้ากรณีศึกษา — บันทึกแล้วไปติ๊ก &quot;เปิดเผย&quot; ที่หน้าเผยแพร่ด้วย ไม่งั้นหน้าสาธารณะยังใช้รูปปกเดิม
-                </p>
-              )}
+            {/* หน้ากรณีศึกษาใช้เฉพาะรูปที่เปิดเผย — ปกที่ไม่เปิดเผยจะไม่ขึ้น หน้าสาธารณะใช้รูปเปิดเผยรูปแรกแทน (เคยเกิดกับ #151) */}
+            {publish && !coverShown && (
+              <div role="note" className="mb-3 flex flex-wrap items-center gap-2 text-xs text-amber-900 bg-amber-50 border border-amber-300 rounded-lg px-3 py-2">
+                <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+                <span className="flex-1 min-w-0">รูปปกยังไม่เปิดเผย — หน้ากรณีศึกษาจะไม่ใช้รูปนี้เป็นปก</span>
+                <button type="button" onClick={showCover} className="px-2.5 py-1 rounded-md bg-gray-900 text-white font-medium hover:bg-gray-700">
+                  เปิดเผยรูปปก
+                </button>
+              </div>
+            )}
             <ul className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {existingImages.map((a) => {
                 const marked = removeIds.includes(a.id);
@@ -1224,6 +1274,8 @@ export default function ActivityForm({
                     onCaption={(v) => setExistingCaptions((prev) => ({ ...prev, [a.id]: v }))}
                     isCover={!marked && cover === key}
                     onCover={() => setCover(key)}
+                    shown={publish ? publicExisting.has(a.id) : undefined}
+                    onShown={() => setPublicExisting((p) => toggleIn(p, a.id))}
                     removed={marked}
                     onRemove={() =>
                       setRemoveIds((prev) => (marked ? prev.filter((x) => x !== a.id) : [...prev, a.id]))
@@ -1244,6 +1296,8 @@ export default function ActivityForm({
                     }
                     isCover={cover === key}
                     onCover={() => setCover(key)}
+                    shown={publish ? publicNew.has(img.key) : undefined}
+                    onShown={() => setPublicNew((p) => toggleIn(p, img.key))}
                     onRemove={() => {
                       URL.revokeObjectURL(img.url);
                       setImages((prev) => prev.filter((x) => x.key !== img.key));
@@ -1255,6 +1309,12 @@ export default function ActivityForm({
             </ul>
           </div>
         )}
+        {publish && (existingImages.length > 0 || images.length > 0) && (
+          <p className="mt-3 text-xs text-emerald-700">
+            <Globe className="inline w-3.5 h-3.5 -mt-0.5 mr-1" />
+            กดป้าย &quot;เปิดเผย&quot; ใต้รูปเพื่อแสดงบนหน้ากรณีศึกษา — เลือกเฉพาะรูปที่คนในภาพอนุญาตแล้ว
+          </p>
+        )}
         <p className="mt-3 text-xs text-gray-400">
           ลากไฟล์มาวางในกรอบนี้ หรือกด Ctrl+V เพื่อวางจากคลิปบอร์ดก็ได้ · ไฟล์ละไม่เกิน 20MB
           (รวมครั้งละไม่เกิน 60MB) · รูป HEIC จาก iPhone ระบบแปลงเป็น JPEG ให้อัตโนมัติ
@@ -1263,6 +1323,97 @@ export default function ActivityForm({
 
       {/* ลิงก์ภายนอก — ต่อจากไฟล์แนบ */}
       <LinksField value={links} onChange={setLinks} />
+
+      {/* เผยแพร่เป็นกรณีศึกษา — การ์ดสุดท้ายก่อนปุ่มบันทึก สีเขียวเมื่อเปิด ให้เห็นชัดว่างานนี้จะขึ้นหน้าสาธารณะ */}
+      <section
+        data-testid="publish-section"
+        className={`rounded-2xl border-2 p-5 sm:p-6 transition-colors ${
+          publish ? 'border-emerald-500 bg-emerald-50/60' : 'border-dashed border-gray-300 bg-white'
+        }`}
+      >
+        <div className="flex items-start gap-3">
+          <span
+            className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
+              publish ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-500'
+            }`}
+          >
+            <Globe className="w-5 h-5" />
+          </span>
+          <div className="flex-1 min-w-0">
+            <h2 className="text-base font-semibold text-gray-900">เผยแพร่เป็นกรณีศึกษาสาธารณะ</h2>
+            <p className="text-xs text-gray-500 mt-0.5">
+              {publish
+                ? 'งานนี้จะขึ้นที่หน้า "กรณีศึกษา" ให้คนทั่วไปอ่านได้โดยไม่ต้องเข้าสู่ระบบ'
+                : 'ปิดอยู่ — งานนี้เห็นเฉพาะทีมงานในระบบ'}
+            </p>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={publish}
+            aria-label="เผยแพร่เป็นกรณีศึกษาสาธารณะ"
+            onClick={() => setPublish((v) => !v)}
+            className={`relative shrink-0 w-14 h-8 rounded-full transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600 ${
+              publish ? 'bg-emerald-600' : 'bg-gray-300'
+            }`}
+          >
+            <span
+              className={`absolute top-1 left-1 w-6 h-6 rounded-full bg-white shadow transition-transform ${
+                publish ? 'translate-x-6' : ''
+              }`}
+            />
+          </button>
+        </div>
+
+        {publish && (
+          <div className="mt-4 grid gap-3 sm:grid-cols-2 text-xs">
+            <div className="rounded-xl bg-white border border-emerald-200 p-3">
+              <p className="flex items-center gap-1.5 font-semibold text-emerald-700 mb-1.5">
+                <Eye className="w-4 h-4" /> แสดงบนหน้าสาธารณะ
+              </p>
+              <ul className="space-y-1 text-gray-700">
+                {['ชื่องาน รายละเอียด ตัวเลขผลลัพธ์ ภาคี', 'พื้นที่ระดับตำบล (ไม่มีหมุดจริง)', 'เอกสาร/ไฟล์นโยบาย และลิงก์ (ยกเว้น Google Drive)'].map((t) => (
+                  <li key={t} className="flex gap-1.5"><Check className="w-3.5 h-3.5 mt-0.5 text-emerald-600 shrink-0" />{t}</li>
+                ))}
+                <li className="flex gap-1.5">
+                  <Check className="w-3.5 h-3.5 mt-0.5 text-emerald-600 shrink-0" />
+                  <span>
+                    รูปที่ติ๊ก &quot;เปิดเผย&quot;{' '}
+                    <b className={shownCount > 0 ? 'text-emerald-700' : 'text-amber-700'}>
+                      {shownCount}/{keptExistingImages.length + images.length} รูป
+                    </b>
+                  </span>
+                </li>
+              </ul>
+            </div>
+            <div className="rounded-xl bg-white border border-gray-200 p-3">
+              <p className="flex items-center gap-1.5 font-semibold text-gray-600 mb-1.5">
+                <EyeOff className="w-4 h-4" /> ไม่แสดง
+              </p>
+              <ul className="space-y-1 text-gray-500">
+                {['ชื่อเจ้าหน้าที่และทีมงาน', 'ผู้ประสานงาน เบอร์โทร LINE', 'หมุดตำแหน่งจริง ชื่อสถานที่', 'แบบสำรวจ และรูปที่ไม่ได้ติ๊ก'].map((t) => (
+                  <li key={t} className="flex gap-1.5"><X className="w-3.5 h-3.5 mt-0.5 text-gray-400 shrink-0" />{t}</li>
+                ))}
+              </ul>
+            </div>
+            {isEdit && (
+              <p className="sm:col-span-2 flex flex-wrap gap-x-4 gap-y-1 text-gray-600">
+                <a href={`/activity/${initial!.id}/publish`} className="underline underline-offset-2 hover:text-gray-900">
+                  เขียนเนื้อหาเรื่อง / เลือกไฟล์ทีละไฟล์ / จัดชุดกรณีศึกษา
+                </a>
+                {wasPublished && (
+                  <a href={`/stories/${initial!.id}`} target="_blank" className="inline-flex items-center gap-1 underline underline-offset-2 hover:text-gray-900">
+                    <ExternalLink className="w-3.5 h-3.5" /> ดูหน้าสาธารณะ
+                  </a>
+                )}
+              </p>
+            )}
+          </div>
+        )}
+        {!publish && wasPublished && (
+          <p className="mt-3 text-xs text-red-600">กดบันทึกแล้วจะยกเลิกการเผยแพร่ — หน้ากรณีศึกษาของงานนี้จะปิดทันที</p>
+        )}
+      </section>
 
       {error && (
         <motion.div
@@ -1290,7 +1441,12 @@ export default function ActivityForm({
             กำลังบันทึก...
           </span>
         ) : (
-          isEdit ? 'บันทึกการแก้ไข' : 'บันทึกการดำเนินงาน'
+          <span className="inline-flex items-center justify-center gap-2">
+            {publish && <Globe className="w-4 h-4" />}
+            {publish && !wasPublished
+              ? isEdit ? 'บันทึกและเผยแพร่' : 'บันทึกและเผยแพร่เป็นกรณีศึกษา'
+              : isEdit ? 'บันทึกการแก้ไข' : 'บันทึกการดำเนินงาน'}
+          </span>
         )}
       </button>
       </fieldset>
@@ -1306,6 +1462,8 @@ function ImageTile({
   onCaption,
   isCover,
   onCover,
+  shown,
+  onShown,
   removed = false,
   onRemove,
 }: {
@@ -1315,11 +1473,17 @@ function ImageTile({
   onCaption: (v: string) => void;
   isCover: boolean;
   onCover: () => void;
+  shown?: boolean; // undefined = ไม่ได้เปิดเผยแพร่ ซ่อนป้าย
+  onShown?: () => void;
   removed?: boolean;
   onRemove: () => void;
 }) {
   return (
-    <li className={`rounded-xl border overflow-hidden ${isCover ? 'border-gray-500 ring-2 ring-gray-300' : 'border-gray-200'}`}>
+    <li
+      className={`rounded-xl border overflow-hidden ${
+        shown ? 'border-emerald-500 ring-2 ring-emerald-200' : isCover ? 'border-gray-500 ring-2 ring-gray-300' : 'border-gray-200'
+      }`}
+    >
       <div className="relative">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={src} alt={alt} className={`w-full h-28 object-cover ${removed ? 'opacity-30 grayscale' : ''}`} />
@@ -1346,6 +1510,20 @@ function ImageTile({
         >
           {removed ? <Undo2 className="w-3.5 h-3.5 text-gray-600" /> : <X className="w-3.5 h-3.5 text-gray-500" />}
         </button>
+        {!removed && shown !== undefined && (
+          <button
+            type="button"
+            onClick={onShown}
+            aria-pressed={shown}
+            aria-label={`${shown ? 'เปิดเผย' : 'ไม่เปิดเผย'}บนหน้ากรณีศึกษา: ${alt}`}
+            className={`absolute bottom-1.5 left-1.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold shadow ${
+              shown ? 'bg-emerald-600 text-white' : 'bg-white/90 text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            {shown ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
+            {shown ? 'เปิดเผย' : 'ไม่เปิดเผย'}
+          </button>
+        )}
         {removed && (
           <span className="absolute inset-x-0 bottom-1 text-center text-[11px] font-medium text-red-600">
             จะถูกลบเมื่อบันทึก

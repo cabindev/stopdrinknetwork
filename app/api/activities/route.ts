@@ -8,7 +8,7 @@ import { provinceHealthZones } from '@/app/utils/healthZones';
 import { filesFrom, validateFiles, saveAttachment, IMAGE_TYPES } from '@/app/lib/activityFiles';
 import { resolveActivityCoords } from '@/app/lib/provinceGeo';
 import { writeAuditLog } from '@/app/lib/audit';
-import { parseLinksField, parseMemberIds, parseActivityExtras, imageLimitError, applyImageMeta, policyFilesFrom, surveyFilesFrom } from '@/app/lib/activityInput';
+import { parseLinksField, parseMemberIds, parseActivityExtras, imageLimitError, applyImageMeta, applyPublishFromForm, policyFilesFrom, surveyFilesFrom } from '@/app/lib/activityInput';
 import { canCreateActivity, descriptionError } from '@/app/lib/activityMeta';
 import { parseExtraAreas } from '@/app/lib/activityAreas';
 
@@ -169,12 +169,15 @@ export async function POST(request: NextRequest) {
     for (const file of survey.files) {
       await saveAttachment(activity.id, file, IMAGE_TYPES.includes(file.type) ? 'IMAGE' : 'DOCUMENT', null, true);
     }
+    // ติ๊ก "เผยแพร่เป็นกรณีศึกษา" ในฟอร์ม (หลังบันทึกไฟล์แล้ว เพื่อตั้งรูปที่เปิดเผยได้)
+    const publishNote = await applyPublishFromForm(activity, formData, newImageIds, userId);
 
     await writeAuditLog({
       action: 'CREATE',
       entityId: activity.id,
       entityName: activity.title,
       userId,
+      ...(publishNote && { changes: [publishNote] }),
     });
 
     return NextResponse.json({ message: 'บันทึกการดำเนินงานสำเร็จ', activityId: activity.id });

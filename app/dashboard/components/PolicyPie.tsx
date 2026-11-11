@@ -4,14 +4,29 @@ import { POLICY_LEVELS } from '@/app/lib/activityMeta';
 
 export type Level = (typeof POLICY_LEVELS)[number]['value'];
 
-// สีชิ้นพาย: ไล่โทนเทา→ดำตามขนาดพื้นที่ (ระดับมีลำดับ — สีไล่โทนสื่อลำดับ ไม่ใช่สีแยกกลุ่ม) ตามธีมขาวดำของหน้านี้
-// ชิ้นสีอ่อนตัดพื้นขาวน้อย (validator: contrast WARN) → ชดเชยด้วยเส้นขาวคั่นชิ้น + คำอธิบายมีตัวเลข + ตารางรายการ
+// สีประจำระดับ (ผู้ใช้ขอ 11 พ.ย. 2026 — เดิมไล่เทา→ดำ "ดูยาก"): พาสเทลคนละเฉด แยกระดับได้ทันที ตัวอักษรบนชิ้นเป็นสีเข้มเสมอ
+// FILL = ชิ้นพาย/จุดสี · TINT = พื้นอ่อนของการ์ด/ชิป · INK = ตัวอักษรเข้มของเฉดเดียวกัน (อ่านบน TINT ได้)
+// ชิ้นพาสเทลตัดพื้นขาวน้อย → เส้นขาวคั่นชิ้น + ป้ายตัวเลข + รายการด้านข้างบอกชื่อระดับเสมอ (ไม่พึ่งสีอย่างเดียว)
 export const LEVEL_FILL: Record<Level, string> = {
-  VILLAGE: '#d4d4d4',
-  SUBDISTRICT: '#a3a3a3',
-  DISTRICT: '#737373',
-  PROVINCE: '#404040',
-  NATIONAL: '#141413',
+  VILLAGE: '#fcd34d', // amber
+  SUBDISTRICT: '#6ee7b7', // emerald
+  DISTRICT: '#7dd3fc', // sky
+  PROVINCE: '#c4b5fd', // violet
+  NATIONAL: '#fda4af', // rose
+};
+export const LEVEL_TINT: Record<Level, string> = {
+  VILLAGE: '#fffbeb',
+  SUBDISTRICT: '#ecfdf5',
+  DISTRICT: '#f0f9ff',
+  PROVINCE: '#f5f3ff',
+  NATIONAL: '#fff1f2',
+};
+export const LEVEL_INK: Record<Level, string> = {
+  VILLAGE: '#92400e',
+  SUBDISTRICT: '#065f46',
+  DISTRICT: '#075985',
+  PROVINCE: '#5b21b6',
+  NATIONAL: '#9f1239',
 };
 
 // พาย SVG ฝั่ง server — แต่ละชิ้นเป็นลิงก์ ?level= · ชิ้นที่เลือกดันออกจากวง · <title> = คำอธิบายเมื่อชี้
@@ -60,7 +75,7 @@ export default function PolicyPie({
     const pct = Math.round((counts[value] / total) * 100);
     const lx = C + ox + Math.cos(mid) * R * 0.62;
     const ly = C + oy + Math.sin(mid) * R * 0.62;
-    const dark = value === 'DISTRICT' || value === 'PROVINCE' || value === 'NATIONAL';
+    const dark = false; // พาสเทลทุกชิ้น → ตัวอักษรเข้ม
     // โหมดเต็ม: ชิ้นกว้างพอ (> ~45°) เขียนข้างใน · ชิ้นแคบเขียนนอกวง (เส้นชี้จากขอบวง)
     const inside = a1 - a0 > 0.8;
     const cos = Math.cos(mid);

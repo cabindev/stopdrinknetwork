@@ -11,6 +11,7 @@ import { formatStartDate } from '@/app/lib/activityMeta';
 import type { HealthZone } from '@/app/utils/healthZones';
 import Pagination from '@/app/components/Pagination';
 import PublishToggle from './PublishToggle';
+import AutoFilterForm from '../components/AutoFilterForm';
 import { TransferProvider, RowCheck, PageCheck, TransferBar } from './TransferSelection';
 
 const PER_PAGE = 20;
@@ -170,8 +171,13 @@ export default async function AllActivitiesPage({
         </a>
       </div>
 
-      {/* ตัวกรอง — ใช้ GET form เพื่อให้ URL แชร์/บุ๊กมาร์กได้ */}
-      <form method="get" className="mt-5 bg-white rounded-2xl border border-gray-200 p-4">
+      {/* ตัวกรอง — เลือกแล้วกรองทันที (AutoFilterForm) ยังเป็น GET params ให้ URL แชร์/บุ๊กมาร์กได้
+          key = ค่าตัวกรอง (ยกเว้นช่องค้นหา) → select ตามทันเมื่อ URL เปลี่ยน โดยไม่ล้างช่องที่กำลังพิมพ์ */}
+      <AutoFilterForm
+        key={JSON.stringify({ ...activeFilters, q: undefined })}
+        showClear={Object.values(activeFilters).some(Boolean)}
+        className="mt-5 bg-white rounded-2xl border border-gray-200 p-4 space-y-2"
+      >
         <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-2">
           <div className="relative lg:col-span-2">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -182,13 +188,13 @@ export default async function AllActivitiesPage({
               className={`${selCls} w-full pl-9`}
             />
           </div>
-          <select name="category" defaultValue={category} className={selCls}>
+          <select name="category" defaultValue={category} data-resets="sub" className={selCls}>
             <option value="">ทุกประเด็นงาน</option>
             {categories.map((c) => (
               <option key={c.name} value={c.name}>{c.name}</option>
             ))}
           </select>
-          {/* ประเด็นย่อย: แสดงเมื่อเลือกประเด็นที่มีประเด็นย่อยแล้ว (form GET — กด "กรอง" หลังเลือกประเด็น) */}
+          {/* ประเด็นย่อย: แสดงเมื่อเลือกประเด็นที่มีประเด็นย่อยแล้ว */}
           {subOptions.length > 0 && (
             <select name="sub" defaultValue={sub} className={selCls}>
               <option value="">ทุกประเด็นย่อย</option>
@@ -236,20 +242,7 @@ export default async function AllActivitiesPage({
             </select>
           </div>
         </div>
-        <div className="mt-2 flex items-center gap-2">
-          <button
-            type="submit"
-            className="px-4 py-2 rounded-lg bg-gray-900 text-white text-xs font-medium hover:bg-gray-700 transition-colors"
-          >
-            ค้นหา
-          </button>
-          {Object.values(activeFilters).some(Boolean) && (
-            <Link href="/dashboard/activities" className="px-3 py-2 text-xs text-gray-500 hover:text-gray-600">
-              ล้างตัวกรอง
-            </Link>
-          )}
-        </div>
-      </form>
+      </AutoFilterForm>
 
       {/* ตาราง — superadmin ติ๊กเลือกแล้วโอนให้ผู้รับผิดชอบคนอื่นได้ (แถบลอยด้านล่าง) */}
       <TransferProvider>

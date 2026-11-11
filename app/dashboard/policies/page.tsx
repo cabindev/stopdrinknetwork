@@ -13,7 +13,8 @@ import { POLICY_LEVELS, POLICY_TYPES } from '@/app/lib/activityMeta';
 import { provinceAreaTotals } from '@/app/lib/areaCoverage';
 import { FUNERAL_SUB } from '@/app/lib/farewellAgreements';
 import { getRegionLabel, getAllHealthZones, type HealthZone } from '@/app/utils/healthZones';
-import PolicyPie, { LEVEL_FILL } from '../components/PolicyPie';
+import PolicyPie, { LEVEL_FILL, LEVEL_TINT, LEVEL_INK } from '../components/PolicyPie';
+import AutoFilterForm from '../components/AutoFilterForm';
 
 const selCls =
   'px-3 py-2 text-sm text-gray-900 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-300';
@@ -243,8 +244,12 @@ export default async function PoliciesByAreaPage({
         </div>
       </div>
 
-      {/* ตัวกรอง — GET form (URL แชร์ได้) */}
-      <form className="flex flex-wrap items-end gap-2 rounded-2xl border border-gray-200 bg-white p-4">
+      {/* ตัวกรอง — เลือกแล้วกรองทันที (GET params แชร์ได้) · key ให้ select ตามทันเมื่อกดแถบสถิติด้านล่าง */}
+      <AutoFilterForm
+        key={`${region}|${province}|${type}|${year}`}
+        showClear={filtered}
+        className="flex flex-wrap items-end gap-x-2 gap-y-3 rounded-2xl border border-gray-200 bg-white p-4"
+      >
         <label className="text-xs text-gray-500">
           <span className="block mb-1">ภาค</span>
           <select name="region" defaultValue={region} className={selCls}>
@@ -276,15 +281,7 @@ export default async function PoliciesByAreaPage({
             {yearOptions.map((y) => y.year && <option key={y.year} value={y.year}>{y.year}</option>)}
           </select>
         </label>
-        <button type="submit" className="px-4 py-2 rounded-lg bg-gray-900 text-sm font-medium text-white hover:bg-gray-700">
-          กรอง
-        </button>
-        {filtered && (
-          <Link href="/dashboard/policies" className="px-3 py-2 text-sm text-gray-500 underline-offset-4 hover:text-gray-900 hover:underline">
-            ล้างตัวกรอง
-          </Link>
-        )}
-      </form>
+      </AutoFilterForm>
 
       {/* ตัวเลขสรุป (ตามตัวกรอง) */}
       <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
@@ -311,11 +308,13 @@ export default async function PoliciesByAreaPage({
                     href={levelHref(active ? null : value)}
                     scroll={false}
                     aria-current={active ? 'true' : undefined}
+                    // ขอบบางเส้นเดียวสีของระดับ (ผู้ใช้ไม่เอาแถบหนาด้านซ้าย/วงดำ — "เหมือน AI") · เลือกอยู่ = พื้นสีเข้มขึ้น
                     className={`flex items-center gap-3 rounded-lg border px-3 py-2.5 transition-colors ${
-                      active ? 'border-gray-900 bg-gray-50' : 'border-gray-200 hover:border-gray-400'
-                    } ${n === 0 ? 'pointer-events-none opacity-50' : ''}`}
+                      n === 0 ? 'pointer-events-none opacity-50' : ''
+                    }`}
+                    style={{ background: active ? LEVEL_FILL[value] : LEVEL_TINT[value], borderColor: LEVEL_FILL[value] }}
                   >
-                    <span className="h-3.5 w-3.5 shrink-0 rounded-sm border border-gray-300" style={{ background: LEVEL_FILL[value] }} />
+                    <span className="h-4 w-4 shrink-0 rounded-full" style={{ background: active ? LEVEL_INK[value] : LEVEL_FILL[value] }} />
                     <span className="min-w-0 flex-1">
                       <span className="block text-sm font-medium text-gray-900">ระดับ{label}</span>
                       <span className="block text-xs text-gray-500">
@@ -325,7 +324,7 @@ export default async function PoliciesByAreaPage({
                           : ''}
                       </span>
                     </span>
-                    <span className="text-sm tabular-nums text-gray-500">
+                    <span className="text-base font-semibold tabular-nums" style={{ color: LEVEL_INK[value] }}>
                       {totalPolicies ? `${Math.round((n / totalPolicies) * 100)}%` : '—'}
                     </span>
                   </Link>
@@ -336,9 +335,9 @@ export default async function PoliciesByAreaPage({
         </div>
 
         {level && (
-          <div className="mt-5 border-t border-gray-200 pt-4">
+          <div className="mt-5 rounded-xl border p-4" style={{ background: LEVEL_TINT[level], borderColor: LEVEL_FILL[level] }}>
             <div className="flex flex-wrap items-baseline justify-between gap-2">
-              <h3 className="text-base font-semibold text-gray-900">
+              <h3 className="text-base font-semibold" style={{ color: LEVEL_INK[level] }}>
                 นโยบายระดับ{POLICY_LEVELS.find((l) => l.value === level)?.label}
                 <span className="ml-2 text-sm font-normal text-gray-500">
                   {levelPlaces.length.toLocaleString('th-TH')} นโยบาย ·{' '}
@@ -402,11 +401,11 @@ export default async function PoliciesByAreaPage({
         <div className="rounded-2xl border border-gray-200 bg-white overflow-hidden">
           <div className="hidden md:grid grid-cols-[minmax(0,1.6fr)_repeat(5,minmax(0,1fr))] gap-2 px-4 py-2.5 bg-gray-900 text-xs font-medium text-white">
             <span>จังหวัด</span>
-            <span className="text-right">หมู่บ้าน</span>
-            <span className="text-right">ตำบล</span>
-            <span className="text-right">อำเภอ</span>
-            <span className="text-right">จังหวัด</span>
-            <span className="text-right">ประเทศ</span>
+            <LevelHead level="VILLAGE" label="หมู่บ้าน" />
+            <LevelHead level="SUBDISTRICT" label="ตำบล" />
+            <LevelHead level="DISTRICT" label="อำเภอ" />
+            <LevelHead level="PROVINCE" label="จังหวัด" />
+            <LevelHead level="NATIONAL" label="ประเทศ" />
           </div>
           <ul className="divide-y divide-gray-100">
             {rows.map((r) => (
@@ -419,16 +418,17 @@ export default async function PoliciesByAreaPage({
                       <span className="ml-2 text-xs text-gray-500 underline underline-offset-2 group-open:hidden">ดูพื้นที่</span>
                       <span className="ml-2 text-xs text-gray-500 underline underline-offset-2 hidden group-open:inline">ซ่อน</span>
                     </span>
-                    <Cell label="หมู่บ้าน" value={r.village} />
-                    <Cell label="ตำบล" value={r.tambon.size} of={r.totals.tambon} />
-                    <Cell label="อำเภอ" value={r.amphoe.size} of={r.totals.amphoe} />
-                    <Cell label="จังหวัด" value={r.province_} text={r.province_ ? 'มี' : undefined} />
-                    <Cell label="ประเทศ" value={r.national} />
+                    <Cell level="VILLAGE" label="หมู่บ้าน" value={r.village} />
+                    <Cell level="SUBDISTRICT" label="ตำบล" value={r.tambon.size} of={r.totals.tambon} />
+                    <Cell level="DISTRICT" label="อำเภอ" value={r.amphoe.size} of={r.totals.amphoe} />
+                    <Cell level="PROVINCE" label="จังหวัด" value={r.province_} text={r.province_ ? 'มี' : undefined} />
+                    <Cell level="NATIONAL" label="ประเทศ" value={r.national} />
                   </summary>
                   <div className="px-4 pb-4 pt-1 grid gap-4 md:grid-cols-2 bg-gray-50">
                     {POLICY_LEVELS.filter(({ value }) => r.places[value].length > 0).map(({ value, label }) => (
                       <div key={value}>
-                        <p className="text-xs font-semibold text-gray-900 mb-1.5">
+                        <p className="mb-1.5 inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold" style={{ background: LEVEL_TINT[value], color: LEVEL_INK[value] }}>
+                          <span className="h-2 w-2 rounded-full" style={{ background: LEVEL_FILL[value] }} />
                           ระดับ{label} <span className="font-normal text-gray-400">({r.places[value].length} นโยบาย)</span>
                         </p>
                         <ul className="space-y-1.5">
@@ -579,14 +579,24 @@ function BarList({
   );
 }
 
-function Cell({ label, value, of, text }: { label: string; value: number; of?: number; text?: string }) {
+function LevelHead({ level, label }: { level: Level; label: string }) {
+  return (
+    <span className="flex items-center justify-end gap-1.5">
+      <span className="h-2.5 w-2.5 rounded-full ring-1 ring-white/60" style={{ background: LEVEL_FILL[level] }} />
+      {label}
+    </span>
+  );
+}
+
+// ตัวเลขรายระดับเป็นชิปสีอ่อนของระดับนั้น (ผู้ใช้ขอ 11 พ.ย. 2026 — ขาวดำล้วนอ่านยาก)
+function Cell({ level, label, value, of, text }: { level: Level; label: string; value: number; of?: number; text?: string }) {
   return (
     <span className="flex items-baseline justify-between md:justify-end gap-2 text-sm tabular-nums">
       <span className="md:hidden text-xs text-gray-400">{label}</span>
       {value === 0 ? (
         <span className="text-gray-300">—</span>
       ) : (
-        <span className="text-gray-900 font-medium">
+        <span className="rounded-md px-2 py-0.5 font-semibold" style={{ background: LEVEL_TINT[level], color: LEVEL_INK[level] }}>
           {text ?? value.toLocaleString('th-TH')}
           {of ? <span className="ml-1 text-xs font-normal text-gray-400">/ {of}</span> : null}
         </span>

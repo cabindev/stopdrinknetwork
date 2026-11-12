@@ -12,8 +12,11 @@ import { JOURNEY_PUBLIC } from '@/app/farewell/content';
 
 const FAREWELL_HREF = JOURNEY_PUBLIC ? '/farewell/journey' : '/farewell';
 
+// เมนูไม่มีพื้น/ขอบ — ไอคอน + ชื่อเท่านั้น (ผู้ใช้ขอ 12 พ.ย. 2026) · บนแผนที่อ่านออกด้วยเงาขาวรอบตัวอักษร (HALO ที่ <nav>)
 const PILL =
-  'inline-flex items-center gap-1.5 h-9 px-3 rounded-full bg-white/95 backdrop-blur text-xs font-medium text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors';
+  'inline-flex items-center gap-1.5 h-9 px-2.5 text-xs font-medium text-gray-700 hover:text-gray-950 transition-colors';
+// เงาขาวฟุ้งรอบตัวหนังสือ/ไอคอน — หน้าขาวมองไม่เห็น บนแผนที่ช่วยให้ไม่จมกับลายแผนที่
+const HALO = '[text-shadow:0_0_3px_#fff,0_0_6px_#fff,0_0_10px_#fff] [&_svg]:drop-shadow-[0_0_2px_#fff] [&_img]:drop-shadow-[0_0_3px_#fff]';
 
 export default function Navbar() {
   const { data: session, status } = useSession();
@@ -38,13 +41,13 @@ export default function Navbar() {
   if (pathname?.startsWith('/dashboard')) return null;
 
   return (
-    <nav className="fixed top-0 inset-x-0 z-[2000] pointer-events-none print:hidden">
+    <nav className={`fixed top-0 inset-x-0 z-[2000] pointer-events-none print:hidden ${HALO}`}>
       <div className="flex items-center justify-between gap-3 px-3 py-2.5">
         {/* แบรนด์ */}
         <Link
           href="/"
           aria-label="Stop Drink Network เครือข่ายงดเหล้า — หน้าแรก"
-          className="pointer-events-auto inline-flex items-center gap-2.5 h-9 pl-3 pr-4 rounded-full bg-white/95 backdrop-blur"
+          className="pointer-events-auto inline-flex items-center gap-2.5 h-9 pl-1 pr-2"
         >
           {/* โลโก้ "Network" (สัญลักษณ์ hub + แฉกพู่กัน + โหนด) — ต้นฉบับ ~/Desktop/logo/network/*.ai · ไฟล์ใช้งาน public/brand/ */}
           <Image src="/brand/network-logo-horizontal-color.svg" alt="" width={97} height={24} priority unoptimized className="h-6 w-auto" />
@@ -56,7 +59,7 @@ export default function Navbar() {
         {/* เมนูหลัก (เดสก์ท็อป) */}
         <div className="pointer-events-auto hidden sm:flex items-center gap-2">
           {status === 'loading' ? (
-            <div className="w-24 h-9 rounded-full bg-white/70 animate-pulse" />
+            <div className="w-24 h-9" />
           ) : (
             <>
               {/* กรณีศึกษา = หน้าสาธารณะ เห็นทุกคนแม้ไม่ได้ login */}
@@ -105,7 +108,7 @@ export default function Navbar() {
                   setIsUserMenuOpen(!isUserMenuOpen);
                 }}
                 aria-label="เมนูผู้ใช้"
-                className="flex w-9 h-9 rounded-full bg-white/95 backdrop-blur items-center justify-center overflow-hidden"
+                className="flex w-9 h-9 rounded-full items-center justify-center overflow-hidden"
               >
                 {session.user.image ? (
                   <img src={session.user.image} alt="" className="w-full h-full object-cover" />
@@ -156,7 +159,7 @@ export default function Navbar() {
           type="button"
           onClick={() => setIsMenuOpen(!isMenuOpen)}
           aria-label="เมนู"
-          className="pointer-events-auto sm:hidden flex w-9 h-9 rounded-full bg-white/95 backdrop-blur items-center justify-center text-gray-600"
+          className="pointer-events-auto sm:hidden flex w-9 h-9 items-center justify-center text-gray-700"
         >
           {isMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
         </button>

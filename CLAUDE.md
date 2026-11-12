@@ -36,8 +36,8 @@
   · `public/brand/network-logo-horizontal-{color,white}.svg` (ใช้รุ่น 5 คน — Navbar = color, Sidebar แดชบอร์ด = white), `network-logo-color.svg` (ซ้อนบน-ล่าง 8 คน),
     `network-symbol-{color,white}.svg`, `network-symbol-small-white.svg` (5 คน สำหรับ <48px — favicon + Sidebar ตอนย่อ)
   · favicon `app/icon.svg` (5 คนสีขาวบนพื้นส้ม) + `app/apple-icon.png` 180px · ต้นฉบับ .ai/.svg/.png ที่ `~/Desktop/logo/network/` (สร้างจากสคริปต์ people.py seed 12, ความสูง HEIGHTS สลับผู้ใหญ่/เด็ก)
-- **Navbar ลอย ไม่มีแถบพื้นหลัง** (`fixed top-0 pointer-events-none`) แต่ละเมนูเป็นแคปซูลขาว
-  `bg-white/95 backdrop-blur rounded-full` **ไม่มีขอบ/เงา** (ผู้ใช้ขอ 11 พ.ย. 2026 — หน้าขาวเห็นแค่ไอคอน+ตัวหนังสือ, บนแผนที่ยังมีพื้นขาวให้อ่านออก)
+- **Navbar ลอย ไม่มีแถบพื้นหลัง** (`fixed top-0 pointer-events-none`)
+  **ไม่มีพื้น/ขอบ — ไอคอน + ชื่อเท่านั้น** (ผู้ใช้ขอ 12 พ.ย. 2026) · บนแผนที่อาศัยเงาขาวรอบตัวอักษร (`HALO` ใน Navbar.tsx) · เมนูผู้ใช้/มือถือที่กางลงยังเป็นการ์ดขาว
   → **หน้าอื่นต้องเว้นระยะบนเอง** (`pt-20` สำหรับหน้าเนื้อหา, `pt-16` หน้าแรก) เพราะ navbar ไม่กินพื้นที่
 - แผนที่: UI ทุกชิ้นลอยทับแผนที่เป็นการ์ดขาวมุมมน — แถบไอคอนแนวตั้งซ้าย (การ์ดเดี่ยว มีเส้นคั่น),
   แผง "ตัวกรอง" (สถานะ+ประเด็น พร้อมจำนวน) กางออกข้าง ๆ เว้น 12px, ด้านบนมีแค่ช่องค้นหา+ชิป "ใหม่ N งาน"
@@ -447,7 +447,8 @@ uploads/                          # ไฟล์แนบ runtime (gitignore) �
   · **เพิ่ม API/หน้าภายในใหม่ต้องเช็ค `isStaffRole` ไม่ใช่แค่ `session?.user`**
   · อนุมัติ = `/dashboard/setting/admin` แท็บ "รออนุมัติ" (เปิดให้เองถ้ามี) → member · แดชบอร์ดมีแถบเตือนจำนวนรออนุมัติ
   · **ปฏิเสธ** = ลบบัญชี (`DELETE /api/admin/users/[id]`) ได้เฉพาะ pending ที่ไม่มีงาน/ทีม/ประวัติ + ลบรูป avatars ตามไป
-  · สมัครใหม่ → อีเมลแจ้งแอดมินทุกคน (BCC, ข้าม @test.sdn) ผ่าน `notifyAdminsOfSignup()` ใน `lib/mailer.ts`
+  · สมัครใหม่ → อีเมลแจ้งเฉพาะกล่อง `EMAIL_USER` ของเว็บ (+ `SIGNUP_NOTIFY_TO` คั่นด้วย , ถ้าตั้ง) ผ่าน `notifyAdminsOfSignup()` ใน `lib/mailer.ts`
+    — **เลิก BCC แอดมินทุกคน** (12 พ.ย. 2026: เมลไปโผล่กล่อง sdn.warehouse ที่ใช้กับ activerun/runphoto)
     (transporter Gmail ใช้ร่วมกับลืมรหัสผ่าน · ไม่ await — ส่งพลาดไม่ทำให้สมัครล้ม · ไม่มี EMAIL_USER = ข้าม)
   · jwt callback อ่าน role จาก DB ใหม่ทุกครั้งที่ token ยังเป็น pending → อนุมัติแล้วใช้ได้ทันที (หน้า /auth/pending มีปุ่มรีเฟรช)
   · pending ไม่อยู่ในรายชื่อเลือกทีมงาน (`teamPeople`) และรายชื่อเครือข่าย (/dashboard/people)
@@ -500,7 +501,8 @@ node ~/.claude/skills/browser-automation/browser.mjs http://localhost:3000/ --sc
 DATABASE_URL="mysql://root:root@localhost:3306/StopDrinkNetwork?schema=public"
 NEXTAUTH_URL="http://localhost:3000/"
 NEXTAUTH_SECRET="..."
-EMAIL_USER="..." / EMAIL_PASS="..."   # Gmail SMTP สำหรับ forgot-password
+EMAIL_USER="..." / EMAIL_PASS="..."   # Gmail SMTP สำหรับ forgot-password + แจ้งสมัครใหม่
+SIGNUP_NOTIFY_TO="a@x.com,b@y.com"   # (ไม่บังคับ) ผู้รับแจ้งสมัครใหม่เพิ่มจาก EMAIL_USER
 GOOGLE_CLIENT_ID="..." / GOOGLE_CLIENT_SECRET="..."   # Google OAuth (บัญชี sdnthailandbackup@gmail.com)
 NEXT_PUBLIC_GISTDA_API_KEY="..." / GISTDA_API_BASE_URL="https://api.sphere.gistda.or.th"   # GISTDA Sphere (ชื่อเดียวกับ sdn-mapportal)
 #   ใช้ฝั่ง server เท่านั้นผ่าน lib/sphere.ts — ห้ามอ้างใน client component · ต้องใส่ใน env production ด้วย

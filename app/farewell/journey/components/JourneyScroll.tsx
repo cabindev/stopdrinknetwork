@@ -294,12 +294,6 @@ export default function JourneyScroll() {
       </div>
 
       <section ref={sectionRef} aria-label="เส้นทางสุดท้าย ภาพเคลื่อนไหวตามการเลื่อนหน้า" className="relative h-[520svh] md:h-[600svh]">
-        <a
-          href="#learn"
-          className="sr-only focus:not-sr-only focus:absolute focus:top-20 focus:left-3 focus:z-30 focus:px-4 focus:py-2 focus:rounded-md focus:bg-gray-800 focus:text-white focus:text-sm"
-        >
-          ข้ามไปอ่านเนื้อหา
-        </a>
 
         <div ref={stickyRef} className="sticky top-0 h-[100svh] overflow-hidden bg-[#f3eee6]">
           {/* ระหว่างรอ 3D โหลด (ไม่ใช้ภาพนิ่งหีบปิดฝา เพราะขั้นแรกเป็นหีบเปิด ภาพจะกระโดด) */}

@@ -41,7 +41,7 @@ export default function Navbar() {
   if (pathname?.startsWith('/dashboard')) return null;
 
   return (
-    <nav className={`fixed top-0 inset-x-0 z-[2000] pointer-events-none print:hidden ${HALO}`}>
+    <nav className={`sdn-nav fixed top-0 inset-x-0 z-[2000] pointer-events-none print:hidden ${HALO}`}>
       <div className="flex items-center justify-between gap-3 px-3 py-2.5">
         {/* แบรนด์ */}
         <Link
@@ -50,7 +50,9 @@ export default function Navbar() {
           className="pointer-events-auto inline-flex items-center gap-2.5 h-9 pl-1 pr-2"
         >
           {/* โลโก้ "Network" (สัญลักษณ์ hub + แฉกพู่กัน + โหนด) — ต้นฉบับ ~/Desktop/logo/network/*.ai · ไฟล์ใช้งาน public/brand/ */}
-          <Image src="/brand/network-logo-horizontal-color.svg" alt="" width={97} height={24} priority unoptimized className="h-6 w-auto" />
+          <Image src="/brand/network-logo-horizontal-color.svg" alt="" width={97} height={24} priority unoptimized className="sdn-nav-logo h-6 w-auto" />
+          {/* ฉากพื้นมืด (html[data-nav-tone=dark] เช่น ส่งด้วยใจ ขั้น 4–6) สลับเป็นโลโก้ขาว — globals.css */}
+          <Image src="/brand/network-logo-horizontal-white.svg" alt="" width={97} height={24} unoptimized className="sdn-nav-logo-dark hidden h-6 w-auto" />
           <span className="hidden sm:inline border-l border-gray-200 pl-2.5 text-xs font-medium text-gray-600">
             เครือข่ายงดเหล้า
           </span>

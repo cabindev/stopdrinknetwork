@@ -36,6 +36,15 @@ export default function JourneyScroll() {
   const [playing, setPlaying] = useState(false);
   const playRef = useRef<HTMLButtonElement>(null);
   const failed = status === 'failed';
+  const dark = stage >= DARK_FROM;
+
+  // ฉากพื้นมืด: บอก Navbar (ลอยทับ) ให้เป็นตัวขาว — เงาขาวฟุ้งบนพื้นมืดดูเลอะ (globals.css html[data-nav-tone])
+  useEffect(() => {
+    const root = document.documentElement;
+    if (dark && !failed) root.dataset.navTone = 'dark';
+    else delete root.dataset.navTone;
+    return () => { delete root.dataset.navTone; };
+  }, [dark, failed]);
 
   // ?autoplay=1 เริ่มเล่นเองเมื่อ 3D พร้อม (เปิดฉายในงานประชุม/จอหน้างาน)
   useEffect(() => {
@@ -270,8 +279,6 @@ export default function JourneyScroll() {
 
   if (failed) return <JourneyFallback />;
 
-  const dark = stage >= DARK_FROM;
-
   return (
     <>
       {/* ข้อความทั้งหมดสำหรับ screen reader (การ์ดบนภาพ 3D ซ่อนไว้เพราะแสดงทีละใบ) */}
@@ -336,7 +343,7 @@ export default function JourneyScroll() {
 
           <div
             ref={(el) => { cardRefs.current[5] = el; }}
-            className="absolute inset-0 flex items-center justify-center px-6 pt-20 pb-8 bg-[#141515]/75 text-center will-change-[opacity,transform]"
+            className="absolute inset-0 flex items-center justify-center px-6 pt-20 pb-8 bg-[#141515]/80 backdrop-blur-[3px] text-center will-change-[opacity,transform]"
             style={{ opacity: 0, visibility: 'hidden' }}
           >
             <StageCard copy={STAGE_COPY[5]} index={5} dark overlay />
@@ -360,7 +367,7 @@ export default function JourneyScroll() {
                 <span
                   className={`block rounded-full transition-all duration-300 ${
                     stage === index
-                      ? `w-2.5 h-2.5 ${dark ? 'bg-gray-700' : 'bg-gray-900'}`
+                      ? `w-2.5 h-2.5 ${dark ? 'bg-white' : 'bg-gray-900'}`
                       : `w-2 h-2 ${dark ? 'bg-white/40 group-hover:bg-white/70' : 'bg-gray-900/25 group-hover:bg-gray-900/50'}`
                   }`}
                 />
@@ -376,7 +383,7 @@ export default function JourneyScroll() {
             aria-pressed={playing}
             aria-label={playing ? 'หยุดเล่นอัตโนมัติ' : 'เล่นอัตโนมัติ (วนซ้ำ)'}
             className={`absolute right-3 top-[64px] md:top-auto md:right-6 md:bottom-6 z-20 inline-flex items-center gap-2 h-11 px-3 md:px-4 rounded-full border text-sm font-medium backdrop-blur transition-opacity duration-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-gray-900 ${
-              dark ? 'border-white/30 bg-gray-900/70 text-white hover:bg-gray-900/90' : 'border-gray-300 bg-white/90 text-gray-900 hover:bg-white'
+              dark ? 'border-white/25 bg-white/10 text-white hover:bg-white/20' : 'border-gray-300 bg-white/90 text-gray-900 hover:bg-white'
             } ${status === 'ready' ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
           >
             {playing ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}

@@ -94,3 +94,15 @@ input:-webkit-autofill {
 .sdn-logo-pin--approx {
   opacity: 1;
 }
+
+/* Navbar บนฉากพื้นมืด (หน้าใดตั้ง html[data-nav-tone="dark"] — ตอนนี้ส่งด้วยใจ ขั้น 4–6):
+   ตัวขาว + เงาดำบาง แทนเงาขาวฟุ้ง · ไม่แตะการ์ดเมนูที่กางลง (พื้นขาว) */
+html[data-nav-tone="dark"] .sdn-nav { text-shadow: 0 1px 8px rgb(0 0 0 / .5); }
+html[data-nav-tone="dark"] .sdn-nav > div:first-child :is(a, button, span):not(.dropdown-menu > div *) { color: rgb(255 255 255 / .88); border-color: rgb(255 255 255 / .25); }
+html[data-nav-tone="dark"] .sdn-nav > div:first-child :is(a, button):not(.dropdown-menu > div *):hover { color: #fff; }
+html[data-nav-tone="dark"] .sdn-nav > div:first-child svg:not(.dropdown-menu > div *) { color: rgb(255 255 255 / .6); filter: none; }
+html[data-nav-tone="dark"] .sdn-nav :is(img) { filter: none; }
+html[data-nav-tone="dark"] .sdn-nav .sdn-nav-logo { display: none; }
+html[data-nav-tone="dark"] .sdn-nav .sdn-nav-logo-dark { display: block; }
+.sdn-nav :is(a, button, span, svg) { transition: color .4s; }
+html[data-nav-tone="dark"] .sdn-nav .dropdown-menu > div, html[data-nav-tone="dark"] .sdn-nav > div:not(:first-child) { text-shadow: none; }

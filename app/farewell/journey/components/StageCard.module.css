@@ -15,9 +15,9 @@
 .note { font-size: 11px; line-height: 1.7; margin-top: 8px; color: #525252; }
 .finale { width: min(100%, 920px); color: #fff; }
 .finale .masthead { justify-content: center; color: #d4d4d4; }
-.finale .logo { width: 116px; } /* ฉาก 6/6 โลโก้ดำเหมือนฉากอื่น (ผู้ใช้ขอ 6 พ.ย.) */
+.finale .logo { width: 116px; } /* ฉาก 6/6 โลโก้ดำเหมือนฉากอื่น (ผู้ใช้ขอ 6 พ.ย.) · ไม่มีพื้นหลังรองโลโก้ (ผู้ใช้ขอ 14 พ.ย. — ลองวงกลมขาวแล้วไม่เอา) */
 .finale .masthead { flex-direction: column; gap: 10px; margin-bottom: 14px; }
-.finale .headline { font-size: clamp(40px, 6.6vw, 104px); line-height: 1.34; /* ไทยมีสระบน/ล่าง — ต่ำกว่านี้ ญ/ู ชน ั้/ี่ ของบรรทัดถัดไป */ text-shadow: 0 4px 30px #000; }
+.finale .headline { font-size: clamp(40px, min(6.2vw, 10vh), 96px); line-height: 1.34; /* ไทยมีสระบน/ล่าง — ต่ำกว่านี้ ญ/ู ชน ั้/ี่ ของบรรทัดถัดไป */ text-shadow: 0 4px 30px #000; }
 /* ฉากสุดท้ายตัวใหญ่อยู่แล้ว (104px) — คำหลักไม่ต้องขยายอีก, บรรทัดเล็กเบาลง */
 .finale .headline .sm { font-size: .5em; font-weight: 300; color: #e5e5e5; }
 .finale .headline .md { font-size: .82em; }

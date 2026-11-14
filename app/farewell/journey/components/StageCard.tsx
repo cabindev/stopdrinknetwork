@@ -64,7 +64,7 @@ export default function StageCard({ copy, index, dark = false, overlay = false }
         <a
           href="/farewell/plan"
           tabIndex={tab}
-          className="mt-4 inline-flex items-center gap-2 min-h-11 px-5 rounded-full bg-gray-900 text-sm font-semibold text-white hover:bg-gray-700"
+          className={`mt-4 inline-flex items-center gap-2 min-h-11 px-5 rounded-full text-sm font-semibold ${dark ? 'bg-white text-gray-900 hover:bg-gray-200' : 'bg-gray-900 text-white hover:bg-gray-700'}`}
         >
           เริ่มวางแผนงานศพ
           <ArrowRight className="w-4 h-4" />

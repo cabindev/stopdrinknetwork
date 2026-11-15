@@ -283,7 +283,7 @@ export default function PeopleTable({ people }: { people: PersonRow[] }) {
                             onClick={(e) => e.stopPropagation()}
                             className="inline-flex items-center gap-1 text-gray-900 hover:underline"
                           >
-                            <Phone className="w-3 h-3" />
+                            <Phone className="w-3.5 h-3.5" />
                             {p.phone}
                           </a>
                         ) : (
@@ -296,7 +296,7 @@ export default function PeopleTable({ people }: { people: PersonRow[] }) {
                           onClick={(e) => e.stopPropagation()}
                           className="inline-flex items-center gap-1 text-gray-500 hover:text-gray-600"
                         >
-                          <Mail className="w-3 h-3" />
+                          <Mail className="w-3.5 h-3.5" />
                           {p.email}
                         </a>
                       </td>

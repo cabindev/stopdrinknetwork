@@ -46,7 +46,7 @@ export default function StoryCard({ story: s, badge }: { story: StoryRow; badge?
         <h2 className="mt-1 text-sm font-semibold text-gray-800 line-clamp-2 group-hover:text-gray-600">{s.title}</h2>
         <p className="mt-2 text-xs text-gray-500 line-clamp-3">{storyExcerpt(s, 140)}</p>
         <p className="mt-auto pt-3 flex items-center gap-1 text-[11px] text-gray-400">
-          <MapPin className="w-3 h-3" /> {storyPlace(s)}
+          <MapPin className="w-3.5 h-3.5" /> {storyPlace(s)}
           {started && <> · เริ่ม{started}</>}
         </p>
       </div>

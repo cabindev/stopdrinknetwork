@@ -289,7 +289,7 @@ export default async function MyActivitiesPage({
                             )}
                             {images.length > 1 && (
                               <span className="absolute bottom-1 right-1 px-1.5 py-0.5 rounded-md bg-black/60 text-white text-[10px] inline-flex items-center gap-0.5">
-                                <ImageIcon className="w-3 h-3" /> {images.length}
+                                <ImageIcon className="w-3.5 h-3.5" /> {images.length}
                               </span>
                             )}
                           </div>
@@ -311,7 +311,7 @@ export default async function MyActivitiesPage({
                             <h3 className="mt-1 font-semibold text-gray-800 leading-snug line-clamp-2 group-hover:text-gray-600 transition-colors">
                               {isNew && (
                                 <span className="mr-1.5 align-middle inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-orange-600 text-white text-[10px] font-semibold">
-                                  <Sparkles className="w-3 h-3" /> ใหม่
+                                  <Sparkles className="w-3.5 h-3.5" /> ใหม่
                                 </span>
                               )}
                               {a.title}
@@ -346,13 +346,13 @@ export default async function MyActivitiesPage({
 
                             <div className="mt-2 pt-2 border-t border-dashed border-gray-200 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-gray-400">
                               <span className="inline-flex items-center gap-1" title={a.createdAt.toISOString()}>
-                                <Clock className="w-3 h-3" />
+                                <Clock className="w-3.5 h-3.5" />
                                 บันทึกเมื่อ {fmtDate.format(a.createdAt)} {fmtTime.format(a.createdAt)} น.
                                 {ago && <span className="text-gray-500">· {ago}</span>}
                               </span>
                               {edited && (
                                 <span className="inline-flex items-center gap-1">
-                                  <Layers className="w-3 h-3" /> แก้ไขล่าสุด {fmtDate.format(a.updatedAt)}
+                                  <Layers className="w-3.5 h-3.5" /> แก้ไขล่าสุด {fmtDate.format(a.updatedAt)}
                                 </span>
                               )}
                             </div>

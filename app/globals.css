@@ -106,3 +106,9 @@ html[data-nav-tone="dark"] .sdn-nav .sdn-nav-logo { display: none; }
 html[data-nav-tone="dark"] .sdn-nav .sdn-nav-logo-dark { display: block; }
 .sdn-nav :is(a, button, span, svg) { transition: color .4s; }
 html[data-nav-tone="dark"] .sdn-nav .dropdown-menu > div, html[data-nav-tone="dark"] .sdn-nav > div:not(:first-child) { text-shadow: none; }
+
+/* ไอคอน lucide ให้ดูประณีต (15 พ.ย. 2026): เส้นมาตรฐาน 2 หนาทึบเมื่อไอคอนโต → บางลงตามขนาด
+   แตะเฉพาะไอคอนที่ใช้ค่าเริ่มต้น (stroke-width="2") — ไอคอนที่ตั้ง strokeWidth เองไม่โดน
+   ขนาดไอคอนใช้ 3 ระดับ: w-3.5 (ชิป/ข้อความเล็ก) · w-4 (ปุ่ม/เมนู) · w-5 (หัวการ์ด) — ใหญ่กว่านี้เฉพาะภาพประกอบ */
+svg.lucide[stroke-width="2"] { stroke-width: 1.75; }
+svg.lucide[stroke-width="2"]:is(.w-5, .w-6, .w-7, .w-8, .w-10, .w-12) { stroke-width: 1.5; }

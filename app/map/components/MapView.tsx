@@ -1302,7 +1302,7 @@ export default function MapView({ activities, categories, categoryLogos, subCate
                     </div>
                     <p className="mt-1.5 text-sm font-medium text-gray-800">{a.title}</p>
                     <p className="mt-1 text-xs text-gray-500">
-                      <MapPin className="inline w-3 h-3 mr-0.5 text-gray-600" />
+                      <MapPin className="inline w-3.5 h-3.5 mr-0.5 text-gray-600" />
                       {a.areaName ? `${a.areaName} · ` : ''}ต.{a.district} อ.{a.amphoe}
                     </p>
                     {publicView ? (

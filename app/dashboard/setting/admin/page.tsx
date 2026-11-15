@@ -220,7 +220,7 @@ const AdminManagementPage: React.FC = () => {
                 href="/dashboard"
                 className="flex items-center text-gray-500 hover:text-gray-600 transition-colors"
               >
-                <ArrowLeft className="w-3 h-3 mr-2" />
+                <ArrowLeft className="w-3.5 h-3.5 mr-2" />
                 <span className="text-sm font-light">กลับ</span>
               </Link>
               <h1 className="text-2xl font-semibold text-gray-900 flex items-center gap-3">
@@ -312,7 +312,7 @@ const AdminManagementPage: React.FC = () => {
           {/* Search */}
           <div className="mb-6">
             <div className="relative max-w-sm">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-3 h-3" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-3.5 h-3.5" />
               <input
                 type="text"
                 placeholder="ค้นหาชื่อ, นามสกุล, อีเมล..."
@@ -378,7 +378,7 @@ const AdminManagementPage: React.FC = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center text-sm text-gray-900">
-                          <Mail className="w-3 h-3 mr-2 text-gray-400" />
+                          <Mail className="w-3.5 h-3.5 mr-2 text-gray-400" />
                           {user.email}
                         </div>
                       </td>
@@ -392,17 +392,17 @@ const AdminManagementPage: React.FC = () => {
                         }`}>
                           {user.role === 'pending' ? (
                             <>
-                              <Clock className="w-3 h-3 mr-1" />
+                              <Clock className="w-3.5 h-3.5 mr-1" />
                               รออนุมัติ
                             </>
                           ) : user.role === 'admin' ? (
                             <>
-                              <ShieldCheck className="w-3 h-3 mr-1" />
+                              <ShieldCheck className="w-3.5 h-3.5 mr-1" />
                               ผู้ดูแลระบบ
                             </>
                           ) : (
                             <>
-                              <User className="w-3 h-3 mr-1" />
+                              <User className="w-3.5 h-3.5 mr-1" />
                               ผู้ใช้ทั่วไป
                             </>
                           )}
@@ -410,7 +410,7 @@ const AdminManagementPage: React.FC = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         <div className="flex items-center">
-                          <Calendar className="w-3 h-3 mr-2" />
+                          <Calendar className="w-3.5 h-3.5 mr-2" />
                           {formatDate(user.createdAt)}
                         </div>
                       </td>
@@ -436,7 +436,7 @@ const AdminManagementPage: React.FC = () => {
                           ) : user.role === 'admin' ? (
                             <X className="w-3 h-3 mr-1" />
                           ) : (
-                            <Check className="w-3 h-3 mr-1" />
+                            <Check className="w-3.5 h-3.5 mr-1" />
                           )}
                           {user.role === 'pending' ? 'อนุมัติ' : user.role === 'admin' ? 'ยกเลิกสิทธิ์ admin' : 'ตั้งเป็น admin'}
                         </button>

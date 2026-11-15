@@ -527,12 +527,12 @@ function SubCategoryPanel({
                     }`}
                   >
                     {logoBusy === sc.id ? (
-                      <Loader2 className="w-3 h-3 animate-spin text-gray-900" />
+                      <Loader2 className="w-3.5 h-3.5 animate-spin text-gray-900" />
                     ) : sc.logo ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={`/api/files/${sc.logo}`} alt={`โลโก้ ${sc.name}`} className="w-full h-full object-contain p-0.5" />
                     ) : (
-                      <ImagePlus className="w-3 h-3 text-gray-400" />
+                      <ImagePlus className="w-3.5 h-3.5 text-gray-400" />
                     )}
                   </button>
                   <span className={`flex-1 min-w-0 truncate text-xs ${sc.isActive ? 'text-gray-800' : 'text-gray-400 line-through'}`}>

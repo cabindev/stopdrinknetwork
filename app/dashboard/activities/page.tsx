@@ -287,7 +287,7 @@ export default async function AllActivitiesPage({
                         className="font-medium text-gray-800 hover:text-gray-600 inline-flex items-center gap-1"
                       >
                         {a.title}
-                        <ExternalLink className="w-3 h-3 text-gray-300" />
+                        <ExternalLink className="w-3.5 h-3.5 text-gray-300" />
                       </Link>
                       {a._count.attachments > 0 && (
                         <span className="ml-2 text-[11px] text-gray-400">

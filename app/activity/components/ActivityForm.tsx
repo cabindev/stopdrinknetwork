@@ -977,7 +977,7 @@ export default function ActivityForm({
                     aria-label={`แนบไฟล์นโยบาย${label}`}
                     className="inline-flex items-center gap-1 px-2 py-1 rounded-lg border border-dashed border-gray-400 text-gray-900 hover:bg-gray-50"
                   >
-                    <Paperclip className="w-3 h-3" /> แนบไฟล์
+                    <Paperclip className="w-3.5 h-3.5" /> แนบไฟล์
                   </button>
                 </li>
               );
@@ -1520,7 +1520,7 @@ function ImageTile({
               shown ? 'bg-emerald-600 text-white' : 'bg-white/90 text-gray-600 hover:text-gray-900'
             }`}
           >
-            {shown ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
+            {shown ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
             {shown ? 'เปิดเผย' : 'ไม่เปิดเผย'}
           </button>
         )}

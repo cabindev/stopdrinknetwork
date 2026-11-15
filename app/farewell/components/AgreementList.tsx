@@ -37,7 +37,7 @@ function Item({ a, plain }: { a: LocalAgreement; plain: boolean }) {
                   : 'inline-flex items-center gap-1 rounded-full bg-gray-50 px-2.5 py-1 text-xs text-gray-700'
               }
             >
-              {!plain && <Landmark className="w-3 h-3 text-gray-900" />}
+              {!plain && <Landmark className="w-3.5 h-3.5 text-gray-900" />}
               ระดับ{p.levelLabel}
               {p.type && <span className="text-gray-500">· {p.type}</span>}
               {p.year && <span className="text-gray-500">· ปี {p.year}</span>}

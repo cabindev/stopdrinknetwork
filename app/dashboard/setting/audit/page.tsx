@@ -103,7 +103,7 @@ export default async function AuditPage({
                       className="inline-flex items-center gap-1 text-sm font-medium text-gray-800 hover:text-gray-600"
                     >
                       {log.entityName}
-                      <ExternalLink className="w-3 h-3 text-gray-300" />
+                      <ExternalLink className="w-3.5 h-3.5 text-gray-300" />
                     </Link>
                   )}
                 </div>

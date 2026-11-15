@@ -49,7 +49,7 @@ export default function QuickActions({ isAdmin }: QuickActionsProps) {
   ];
 
   return (
-    <div className="space-y-7">
+    <div className="grid gap-7 lg:grid-cols-2 lg:gap-3">
       {groups.map((group) => {
         const actions = group.actions.filter(a => !a.requireAdmin || isAdmin);
         if (actions.length === 0) return null;
@@ -58,25 +58,25 @@ export default function QuickActions({ isAdmin }: QuickActionsProps) {
           <div key={group.label}>
             <div className="flex items-baseline gap-2 mb-3 px-1">
               <h2 className="text-sm font-semibold text-gray-800">{group.label}</h2>
-              <span className="text-xs text-gray-400">· {group.sub}</span>
+              <span className="text-xs text-gray-500">· {group.sub}</span>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 gap-3">
               {actions.map((action) => {
                 const Icon = action.icon;
                 return (
                   <Link
                     key={action.href}
                     href={action.href}
-                    className={`group relative bg-white rounded-2xl border border-gray-200 p-5 transition-all hover:shadow-md ${group.ring} active:scale-[0.99]`}
+                    className={`group relative bg-white rounded-2xl border border-gray-200 p-4 sm:p-5 transition-all hover:shadow-md ${group.ring} active:scale-[0.99]`}
                   >
-                    <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-start justify-between mb-3 sm:mb-4">
                       <div className={`w-10 h-10 rounded-xl ${group.iconBg} flex items-center justify-center`}>
                         <Icon className={`w-5 h-5 ${group.accent}`} />
                       </div>
                     </div>
                     <h3 className="text-sm font-semibold text-gray-900 mb-0.5">{action.title}</h3>
-                    <p className="text-xs text-gray-400 leading-relaxed">{action.description}</p>
+                    <p className="text-xs text-gray-500 leading-relaxed">{action.description}</p>
                   </Link>
                 );
               })}

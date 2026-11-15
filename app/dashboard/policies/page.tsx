@@ -17,7 +17,9 @@ import PolicyPie, { LEVEL_FILL, LEVEL_TINT, LEVEL_INK } from '../components/Poli
 import AutoFilterForm from '../components/AutoFilterForm';
 
 const selCls =
-  'px-3 py-2 text-sm text-gray-900 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-300';
+  'w-full h-10 px-3 text-sm text-gray-900 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-300';
+// ป้ายช่องตัวกรอง — เข้มพอ (gray-600) ไม่ใช่เทาจาง · ช่องเท่ากันทุกช่องบนกริด (15 พ.ย. 2026)
+const labelCls = 'block text-xs font-medium text-gray-600';
 
 type Level = (typeof POLICY_LEVELS)[number]['value'];
 
@@ -207,10 +209,10 @@ export default async function PoliciesByAreaPage({
       <AutoFilterForm
         key={`${region}|${province}|${type}|${year}`}
         showClear={filtered}
-        className="flex flex-wrap items-end gap-x-2 gap-y-3 rounded-2xl border border-gray-200 bg-white p-4"
+        className="grid grid-cols-2 md:grid-cols-4 items-end gap-x-3 gap-y-3 rounded-2xl border border-gray-200 bg-white p-4 [&>div:last-child]:col-span-full [&>div:last-child]:-mb-1"
       >
-        <label className="text-xs text-gray-500">
-          <span className="block mb-1">ภาค</span>
+        <label className={labelCls}>
+          <span className="block mb-1.5">ภาค</span>
           <select name="region" defaultValue={region} className={selCls}>
             <option value="">ทุกภาค</option>
             {getAllHealthZones().map((z) => (
@@ -218,23 +220,23 @@ export default async function PoliciesByAreaPage({
             ))}
           </select>
         </label>
-        <label className="text-xs text-gray-500">
-          <span className="block mb-1">จังหวัด</span>
+        <label className={labelCls}>
+          <span className="block mb-1.5">จังหวัด</span>
           <select name="province" defaultValue={province} className={selCls}>
             <option value="">ทุกจังหวัด</option>
             {provinceOptions.map((p) => <option key={p} value={p}>{p}</option>)}
           </select>
         </label>
-        <label className="text-xs text-gray-500">
-          <span className="block mb-1">ประเภทนโยบาย</span>
+        <label className={labelCls}>
+          <span className="block mb-1.5">ประเภทนโยบาย</span>
           <select name="type" defaultValue={type} className={selCls}>
             <option value="">ทุกประเภท</option>
             {POLICY_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
             <option value={NO_TYPE}>ยังไม่ระบุประเภท</option>
           </select>
         </label>
-        <label className="text-xs text-gray-500">
-          <span className="block mb-1">ปีที่ประกาศ (พ.ศ.)</span>
+        <label className={labelCls}>
+          <span className="block mb-1.5">ปีที่ประกาศ (พ.ศ.)</span>
           <select name="year" defaultValue={year || ''} className={selCls}>
             <option value="">ทุกปี</option>
             {yearOptions.map((y) => y.year && <option key={y.year} value={y.year}>{y.year}</option>)}
@@ -243,48 +245,56 @@ export default async function PoliciesByAreaPage({
       </AutoFilterForm>
 
       {/* ตัวเลขสรุป (ตามตัวกรอง) */}
+      {/* มือถือ: ตัวเลขหลักเต็มแถว + 4 ใบ 2×2 (เดิมใบที่ 5 ค้างแถวเดียว) · ทุกใบมีบรรทัดหน่วย สูงเท่ากัน */}
       <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
-        <Kpi label="นโยบายทั้งหมด" value={totalPolicies} accent />
-        <Kpi label="จังหวัด" value={rows.length} />
+        <Kpi label="นโยบายทั้งหมด" value={totalPolicies} unit="ทุกระดับ" wide />
+        <Kpi label="จังหวัด" value={rows.length} unit="จาก 77 จังหวัด" />
         <Kpi label="ภาค" value={new Set(rows.map((r) => r.region)).size} unit="จาก 10 ภาค" />
-        <Kpi label="ตำบลที่มีนโยบายระดับตำบล" value={sum.SUBDISTRICT} />
-        <Kpi label="มีไฟล์เอกสารนโยบาย" value={withFile} unit={`จาก ${totalPolicies} นโยบาย`} />
+        <Kpi label="ตำบลที่มีนโยบาย" value={sum.SUBDISTRICT} unit="ระดับตำบล" />
+        <Kpi label="มีไฟล์เอกสาร" value={withFile} unit={`จาก ${totalPolicies} นโยบาย`} />
       </div>
 
       {/* สรุปรวมรายระดับ: พาย (ขนาด = จำนวนนโยบาย) — จิ้มชิ้นหรือคำอธิบาย = รายการทั้งหมดของระดับนั้น (?level=) */}
       <section id="by-level" className="rounded-2xl border border-gray-200 bg-white p-5 scroll-mt-20">
         <h2 className="text-sm font-semibold text-gray-900">นโยบายแยกตามระดับ</h2>
-        <p className="text-xs text-gray-500">ขนาดชิ้น = จำนวนนโยบาย · จิ้มชิ้นหรือรายการด้านขวาเพื่อดูพื้นที่ทั้งหมดของระดับนั้น</p>
-        <div className="mt-4 grid items-center gap-6 md:grid-cols-[260px_minmax(0,1fr)]">
+        <p className="text-xs text-gray-500">ขนาดชิ้น = จำนวนนโยบาย · จิ้มชิ้นหรือรายการเพื่อดูพื้นที่ทั้งหมดของระดับนั้น</p>
+        <div className="mt-4 grid items-center gap-6 md:grid-cols-[240px_minmax(0,1fr)] md:gap-10">
           <PolicyPie counts={policyCount} selected={level} href={levelHref} />
-          <ul className="grid gap-1.5 sm:grid-cols-2">
+          {/* รายการแบบรายงาน: แถวละระดับ + แถบสัดส่วนสีประจำระดับ (เดิมกล่องพื้นสีทุกใบ ดูรก + ใบสุดท้ายค้าง) ·
+              ไม่มีแถบหนาด้านซ้าย/วงดำ (ผู้ใช้ไม่เอา) · เลือกอยู่ = พื้นสีอ่อนของระดับ */}
+          <ul className="divide-y divide-gray-100 border-y border-gray-100">
             {POLICY_LEVELS.map(({ value, label }) => {
               const active = level === value;
               const n = policyCount[value];
+              const pct = totalPolicies ? Math.round((n / totalPolicies) * 100) : 0;
               return (
                 <li key={value}>
                   <Link
                     href={levelHref(active ? null : value)}
                     scroll={false}
                     aria-current={active ? 'true' : undefined}
-                    // ขอบบางเส้นเดียวสีของระดับ (ผู้ใช้ไม่เอาแถบหนาด้านซ้าย/วงดำ — "เหมือน AI") · เลือกอยู่ = พื้นสีเข้มขึ้น
-                    className={`flex items-center gap-3 rounded-lg border px-3 py-2.5 transition-colors ${
-                      n === 0 ? 'pointer-events-none opacity-50' : ''
+                    className={`grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1.5 rounded-lg px-3 py-3 transition-colors sm:grid-cols-[minmax(0,11rem)_minmax(0,1fr)_3.5rem] ${
+                      n === 0 ? 'pointer-events-none opacity-45' : 'hover:bg-gray-50'
                     }`}
-                    style={{ background: active ? LEVEL_FILL[value] : LEVEL_TINT[value], borderColor: LEVEL_FILL[value] }}
+                    style={active ? { background: LEVEL_TINT[value] } : undefined}
                   >
-                    <span className="h-4 w-4 shrink-0 rounded-full" style={{ background: active ? LEVEL_INK[value] : LEVEL_FILL[value] }} />
-                    <span className="min-w-0 flex-1">
-                      <span className="block text-sm font-medium text-gray-900">ระดับ{label}</span>
-                      <span className="block text-xs text-gray-500">
-                        {n.toLocaleString('th-TH')} นโยบาย
-                        {value === 'SUBDISTRICT' || value === 'DISTRICT' || value === 'PROVINCE'
-                          ? ` · ${sum[value].toLocaleString('th-TH')} ${UNIT[value]}`
-                          : ''}
+                    <span className="flex min-w-0 items-center gap-2.5">
+                      <span className="h-3 w-3 shrink-0 rounded-full" style={{ background: LEVEL_FILL[value] }} />
+                      <span className="min-w-0">
+                        <span className="block text-sm font-medium text-gray-900">ระดับ{label}</span>
+                        <span className="block text-xs text-gray-500 tabular-nums">
+                          {n.toLocaleString('th-TH')} นโยบาย
+                          {value === 'SUBDISTRICT' || value === 'DISTRICT' || value === 'PROVINCE'
+                            ? ` · ${sum[value].toLocaleString('th-TH')} ${UNIT[value]}`
+                            : ''}
+                        </span>
                       </span>
                     </span>
-                    <span className="text-base font-semibold tabular-nums" style={{ color: LEVEL_INK[value] }}>
-                      {totalPolicies ? `${Math.round((n / totalPolicies) * 100)}%` : '—'}
+                    <span className="order-last col-span-2 h-2 overflow-hidden rounded-full bg-gray-100 sm:order-none sm:col-span-1">
+                      <span className="block h-full rounded-full" style={{ width: `${pct}%`, background: LEVEL_FILL[value] }} />
+                    </span>
+                    <span className="text-right text-base font-semibold tabular-nums" style={{ color: n ? LEVEL_INK[value] : undefined }}>
+                      {totalPolicies ? `${pct}%` : '—'}
                     </span>
                   </Link>
                 </li>
@@ -325,12 +335,12 @@ export default async function PoliciesByAreaPage({
                       <td className="py-2 pr-3 text-gray-900">{pl.where}</td>
                       <td className="py-2 pr-3 text-gray-600">
                         {pl.name ?? '—'}
-                        {pl.type && <span className="block text-xs text-gray-400">{pl.type}</span>}
+                        {pl.type && <span className="block text-xs text-gray-500">{pl.type}</span>}
                       </td>
                       <td className="py-2 pr-3 text-right tabular-nums text-gray-600">{pl.year ?? '—'}</td>
                       <td className="py-2">
                         <Link href={`/activity/${pl.activityId}`} className="inline-flex items-center gap-1 whitespace-nowrap text-xs text-gray-500 hover:text-gray-900">
-                          เปิดงาน <ExternalLink className="w-3 h-3" />
+                          เปิดงาน <ExternalLink className="w-3.5 h-3.5" />
                         </Link>
                       </td>
                     </tr>
@@ -357,8 +367,8 @@ export default async function PoliciesByAreaPage({
               <span className="text-sm font-semibold text-gray-900">ข้อมูลที่ควรแก้ {issues.length} รายการ</span>
               <span className="block text-xs text-gray-500">นโยบายที่ยังไม่ระบุประเภท/ปี หรือประเภทไม่ตรงกับระดับ — กดแก้ไขงานเพื่อเติมข้อมูล</span>
             </span>
-            <span className="text-xs text-gray-500 underline underline-offset-2 group-open:hidden">ดูรายการ</span>
-            <span className="hidden text-xs text-gray-500 underline underline-offset-2 group-open:inline">ซ่อน</span>
+            <span className="shrink-0 whitespace-nowrap text-xs text-gray-500 underline underline-offset-2 group-open:hidden">ดูรายการ</span>
+            <span className="hidden shrink-0 whitespace-nowrap text-xs text-gray-500 underline underline-offset-2 group-open:inline">ซ่อน</span>
           </summary>
           <div className="overflow-x-auto border-t border-gray-200 px-5 pb-4">
             <table className="w-full text-left text-sm">
@@ -380,12 +390,12 @@ export default async function PoliciesByAreaPage({
                     </td>
                     <td className="py-2 pr-3 text-gray-600">
                       ระดับ{POLICY_LEVELS.find((l) => l.value === p.level)?.label}
-                      {p.name && <span className="block text-xs text-gray-400">{p.name}</span>}
+                      {p.name && <span className="block text-xs text-gray-500">{p.name}</span>}
                     </td>
                     <td className="py-2 pr-3 text-gray-900">{why.join(' · ')}</td>
                     <td className="py-2">
                       <Link href={`/activity/${p.activity.id}/edit`} className="inline-flex items-center gap-1 whitespace-nowrap text-xs text-gray-500 hover:text-gray-900">
-                        แก้ไขงาน <ExternalLink className="w-3 h-3" />
+                        แก้ไขงาน <ExternalLink className="w-3.5 h-3.5" />
                       </Link>
                     </td>
                   </tr>
@@ -399,15 +409,13 @@ export default async function PoliciesByAreaPage({
   );
 }
 
-function Kpi({ label, value, unit, accent }: { label: string; value: number; unit?: string; accent?: boolean }) {
+function Kpi({ label, value, unit, wide }: { label: string; value: number; unit?: string; wide?: boolean }) {
+  // ตัวเลขดำทุกใบ — ส้มสงวนให้หมุด/โลโก้ (CLAUDE.md) · wide = เต็มแถวบนมือถือ
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white px-4 py-3">
-      <p className="text-xs text-gray-500">{label}</p>
-      <p className={`mt-1 text-3xl font-bold tabular-nums ${accent ? 'text-orange-600' : 'text-gray-900'}`}>
-        {value.toLocaleString('th-TH')}
-      </p>
-      {unit && <p className="text-xs text-gray-400">{unit}</p>}
+    <div className={`rounded-2xl border border-gray-200 bg-white px-4 py-3.5 ${wide ? 'col-span-2 md:col-span-1' : ''}`}>
+      <p className="text-xs font-medium text-gray-600">{label}</p>
+      <p className="mt-1 text-3xl font-bold tabular-nums text-gray-900">{value.toLocaleString('th-TH')}</p>
+      {unit && <p className="mt-0.5 text-xs text-gray-500">{unit}</p>}
     </div>
   );
 }
-

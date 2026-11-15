@@ -22,7 +22,7 @@ const THAI_MONTHS = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.
 const STATUS_META: Record<string, { text: string; cls: string }> = {
   ACTIVE: { text: 'กำลังดำเนินการ', cls: 'bg-gray-100 text-gray-900' },
   PLANNING: { text: 'วางแผน', cls: 'bg-gray-100 text-gray-600' },
-  COMPLETED: { text: 'เสร็จสิ้น', cls: 'bg-green-50 text-green-700' },
+  COMPLETED: { text: 'เสร็จสิ้น', cls: 'border border-gray-300 text-gray-900' }, // ไม่ใช้เขียว — ธีมขาวดำ
 };
 
 export default async function StatsOverview({ year, second }: { year?: number; second?: React.ReactNode }) {
@@ -138,12 +138,12 @@ export default async function StatsOverview({ year, second }: { year?: number; s
 
   return (
     <div className="space-y-5">
-      {/* ตัวกรองปี */}
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="text-xs text-gray-500">ช่วงเวลา:</span>
+      {/* ตัวกรองปี — แถวเดียวเลื่อนข้างได้ (ปีเยอะ ห่อหลายแถวแล้วกินที่ โดยเฉพาะมือถือ) */}
+      <div className="flex items-center gap-2 overflow-x-auto -mx-5 px-5 pb-1 [scrollbar-width:thin]">
+        <span className="shrink-0 text-xs text-gray-500">ช่วงเวลา:</span>
         <Link
           href={yearHref()}
-          className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+          className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
             !year ? 'bg-gray-900 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
           }`}
         >
@@ -153,7 +153,7 @@ export default async function StatsOverview({ year, second }: { year?: number; s
           <Link
             key={y}
             href={yearHref(y)}
-            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+            className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
               year === y ? 'bg-gray-900 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
             }`}
           >
@@ -165,49 +165,53 @@ export default async function StatsOverview({ year, second }: { year?: number; s
       {/* ตัวเลขรวม */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {stats.map(({ icon: Icon, label, value, sub }) => (
-          <div key={label} className="bg-white rounded-2xl border border-gray-200 p-4">
-            <Icon className="w-5 h-5 text-gray-600" />
-            <p className="mt-2 text-3xl font-bold text-gray-800">{value}</p>
-            <p className="text-xs text-gray-600">{label}</p>
-            <p className="text-[11px] text-gray-400 mt-0.5">{sub}</p>
+          // แบบเดียวกับ /dashboard/policies: ป้ายบน (ไอคอนเล็กนำ) · ตัวเลขดำ · บรรทัดหน่วย (15 พ.ย. 2026)
+          <div key={label} className="bg-white rounded-2xl border border-gray-200 px-4 py-3.5">
+            <p className="flex items-center gap-1.5 text-xs font-medium text-gray-600">
+              <Icon className="w-4 h-4 text-gray-500" /> {label}
+            </p>
+            <p className="mt-1 text-3xl font-bold tabular-nums text-gray-900">{value.toLocaleString('th-TH')}</p>
+            <p className="mt-0.5 text-xs text-gray-500">{sub}</p>
           </div>
         ))}
       </div>
 
       {/* ส่วนที่ 2 (ต่อจากตัวเลขรวม): พายนโยบายงานศพ — ส่งมาจาก page.tsx (ผู้ใช้ขอ 30 ต.ค. 2026) */}
-      {second}
+      {/* จอใหญ่: พาย (2 ส่วน) + การ์ดสัญญาณ 3 ใบซ้อนแนวตั้งข้าง ๆ — เดิมพายลอยกลางการ์ดกว้าง ที่ว่างเยอะ (15 พ.ย. 2026) */}
+      <div className={second ? 'grid lg:grid-cols-3 gap-3' : ''}>
+      {second && <div className="lg:col-span-2 [&>section]:h-full">{second}</div>}
 
       {/* สัญญาณที่ผู้บริหารต้องเห็น */}
-      <div className="grid sm:grid-cols-3 gap-3">
-        <div className="bg-white rounded-2xl border border-gray-200 p-4">
-          <p className="flex items-center gap-1.5 text-xs text-gray-500">
-            <MapPinOff className="w-4 h-4 text-gray-400" /> ช่องว่างพื้นที่
+      <div className={`grid gap-3 ${second ? 'sm:grid-cols-3 lg:grid-cols-1' : 'sm:grid-cols-3'}`}>
+        <div className="bg-white rounded-2xl border border-gray-200 px-4 py-3.5">
+          <p className="flex items-center gap-1.5 text-xs font-medium text-gray-600">
+            <MapPinOff className="w-4 h-4 text-gray-500" /> ช่องว่างพื้นที่
           </p>
-          <p className="mt-1 text-2xl font-bold text-gray-800">
+          <p className="mt-1 text-2xl font-bold tabular-nums text-gray-900">
             {TOTAL_PROVINCES - provinces.size} <span className="text-sm font-normal text-gray-500">จังหวัด</span>
           </p>
-          <p className="text-[11px] text-gray-400">
+          <p className="text-xs text-gray-500">
             ยังไม่มีงานในระบบเลย · ครอบคลุมแล้ว {nationalProvincePct.toFixed(0)}% ของประเทศ
           </p>
         </div>
 
-        <div className="bg-white rounded-2xl border border-gray-200 p-4">
-          <p className="flex items-center gap-1.5 text-xs text-gray-500">
-            <Users2 className="w-4 h-4 text-gray-600" /> พื้นที่ทำงานทับซ้อน
+        <div className="bg-white rounded-2xl border border-gray-200 px-4 py-3.5">
+          <p className="flex items-center gap-1.5 text-xs font-medium text-gray-600">
+            <Users2 className="w-4 h-4 text-gray-500" /> พื้นที่ทำงานทับซ้อน
           </p>
-          <p className="mt-1 text-2xl font-bold text-gray-800">
+          <p className="mt-1 text-2xl font-bold tabular-nums text-gray-900">
             {overlapProvinces.length} <span className="text-sm font-normal text-gray-500">จังหวัด</span>
           </p>
-          <p className="text-[11px] text-gray-400 truncate">
+          <p className="text-xs text-gray-500 truncate">
             {overlapProvinces.slice(0, 3).map(([p, u]) => `${p} ${u.size} คน`).join(' · ') || 'ยังไม่มี'}
           </p>
         </div>
 
-        <div className="bg-white rounded-2xl border border-gray-200 p-4">
-          <p className="flex items-center gap-1.5 text-xs text-gray-500">
-            <TrendingUp className="w-4 h-4 text-gray-600" /> เทียบปีก่อน
+        <div className="bg-white rounded-2xl border border-gray-200 px-4 py-3.5">
+          <p className="flex items-center gap-1.5 text-xs font-medium text-gray-600">
+            <TrendingUp className="w-4 h-4 text-gray-500" /> เทียบปีก่อน
           </p>
-          <p className="mt-1 text-2xl font-bold text-gray-800">
+          <p className="mt-1 text-2xl font-bold tabular-nums text-gray-900">
             {thisYearCount}
             {yoy !== null && (
               <span className={`ml-2 text-sm font-medium ${yoy >= 0 ? 'text-green-600' : 'text-red-500'}`}>
@@ -216,16 +220,17 @@ export default async function StatsOverview({ year, second }: { year?: number; s
               </span>
             )}
           </p>
-          <p className="text-[11px] text-gray-400">
+          <p className="text-xs text-gray-500">
             พ.ศ. {now.getFullYear() + 543} · ปีก่อน {lastYearCount} งาน
           </p>
         </div>
       </div>
+      </div>
 
       {/* แนวโน้มรายเดือน */}
       <section className="bg-white rounded-2xl border border-gray-200 p-5">
-        <h2 className="text-sm font-semibold text-gray-800">แนวโน้มการบันทึกงาน 12 เดือนล่าสุด</h2>
-        <p className="text-[11px] text-gray-400 mb-4">นับตามวันเริ่มดำเนินการ (ถ้าไม่ระบุใช้วันที่บันทึก)</p>
+        <h2 className="text-sm font-semibold text-gray-900">แนวโน้มการบันทึกงาน 12 เดือนล่าสุด</h2>
+        <p className="text-xs text-gray-500 mb-4">นับตามวันเริ่มดำเนินการ (ถ้าไม่ระบุใช้วันที่บันทึก)</p>
         <div className="flex items-end gap-1.5 h-32">
           {months.map((m, i) => (
             <div key={i} className="flex-1 flex flex-col items-center gap-1">
@@ -235,16 +240,17 @@ export default async function StatsOverview({ year, second }: { year?: number; s
                 style={{ height: `${Math.max(2, (m.count / maxMonth) * 88)}px` }}
                 title={`${THAI_MONTHS[m.m]} ${m.y + 543}: ${m.count} งาน`}
               />
-              <span className="text-[9px] text-gray-400">{THAI_MONTHS[m.m]}</span>
+              <span className="text-[10px] text-gray-500">{THAI_MONTHS[m.m]}</span>
             </div>
           ))}
         </div>
       </section>
 
       {/* ประเด็นงาน + ภาค */}
-      <div className="grid lg:grid-cols-2 gap-3">
-        <section className="bg-white rounded-2xl border border-gray-200 p-5">
-          <h2 className="text-sm font-semibold text-gray-800 mb-3">งานรายประเด็น</h2>
+      {/* ประเด็นเดียว (โหมดงานศพ FOCUS_SUB) = แถบ 100% แท่งเดียว ไม่มีข้อมูล → ซ่อน ให้ภาคเต็มแถว (15 พ.ย. 2026) */}
+      <div className={`grid items-start gap-3 ${catRows.length > 1 ? 'lg:grid-cols-2' : ''}`}>
+        {catRows.length > 1 && <section className="bg-white rounded-2xl border border-gray-200 p-5">
+          <h2 className="text-sm font-semibold text-gray-900 mb-3">งานรายประเด็น</h2>
           {catRows.length === 0 ? (
             <p className="text-sm text-gray-400">ยังไม่มีข้อมูล</p>
           ) : (
@@ -264,21 +270,21 @@ export default async function StatsOverview({ year, second }: { year?: number; s
               ))}
             </ul>
           )}
-        </section>
+        </section>}
 
         <section className="bg-white rounded-2xl border border-gray-200 p-5">
-          <h2 className="text-sm font-semibold text-gray-800 mb-3">งานรายภาค</h2>
-          <ul className="space-y-2">
+          <h2 className="text-sm font-semibold text-gray-900 mb-3">งานรายภาค</h2>
+          <ul className={`grid gap-y-2 gap-x-10 ${catRows.length > 1 ? '' : 'md:grid-cols-2 md:grid-flow-col md:grid-rows-5'}`}>
             {zoneRows.map((z) => (
               <li key={z.zone} className="flex items-center gap-3">
-                <span className="text-xs text-gray-700 w-20 truncate">{z.label}</span>
+                <span className={`text-xs w-20 truncate ${z.count ? 'text-gray-700' : 'text-gray-400'}`}>{z.label}</span>
                 <span className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
                   <span
                     className="block h-full rounded-full bg-gray-800"
                     style={{ width: `${(z.count / maxZone) * 100}%` }}
                   />
                 </span>
-                <span className="text-xs text-gray-500 w-6 text-right">{z.count}</span>
+                <span className="text-xs text-gray-500 w-6 text-right tabular-nums">{z.count}</span>
               </li>
             ))}
           </ul>
@@ -287,8 +293,8 @@ export default async function StatsOverview({ year, second }: { year?: number; s
 
       {/* ความหนาแน่นการทำงานรายจังหวัด */}
       <section className="bg-white rounded-2xl border border-gray-200 p-5">
-        <h2 className="text-sm font-semibold text-gray-800">ความหนาแน่นการทำงานรายจังหวัด</h2>
-        <p className="text-[11px] text-gray-400 mb-4">
+        <h2 className="text-sm font-semibold text-gray-900">ความหนาแน่นการทำงานรายจังหวัด</h2>
+        <p className="text-xs text-gray-500 mb-4">
           เรียงจากจังหวัดที่มีงานมากที่สุด — คอลัมน์ท้ายบอกว่าภายในจังหวัดนั้นลงลึกกี่อำเภอแล้ว
         </p>
         {coverageRows.length === 0 ? (
@@ -300,35 +306,35 @@ export default async function StatsOverview({ year, second }: { year?: number; s
                 <tr>
                   <th className="text-left font-medium pb-2 w-8">#</th>
                   <th className="text-left font-medium pb-2">จังหวัด</th>
-                  <th className="text-left font-medium pb-2 w-[42%]">จำนวนงาน</th>
+                  <th className="text-right sm:text-left font-medium pb-2 sm:w-[42%]">งาน</th>
                   <th className="text-right font-medium pb-2 whitespace-nowrap">สัดส่วน</th>
-                  <th className="text-right font-medium pb-2 whitespace-nowrap">เจ้าหน้าที่</th>
-                  <th className="text-right font-medium pb-2 whitespace-nowrap text-gray-400">
-                    อำเภอที่มีงาน / ทั้งหมด
+                  <th className="hidden sm:table-cell text-right font-medium pb-2 whitespace-nowrap">เจ้าหน้าที่</th>
+                  <th className="text-right font-medium pb-2 whitespace-nowrap">
+                    <span className="sm:hidden">อำเภอ</span><span className="hidden sm:inline">อำเภอที่มีงาน / ทั้งหมด</span>
                   </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {coverageRows.map((c, i) => (
                   <tr key={c.province}>
-                    <td className="py-2 text-gray-400 tabular-nums">{i + 1}</td>
+                    <td className="py-2 text-gray-500 tabular-nums">{i + 1}</td>
                     <td className="py-2 text-gray-700 whitespace-nowrap font-medium">{c.province}</td>
                     <td className="py-2">
                       <span className="flex items-center gap-2">
-                        <span className="flex-1 h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                        <span className="hidden sm:block flex-1 h-2.5 bg-gray-100 rounded-full overflow-hidden">
                           <span
                             className="block h-full rounded-full bg-gray-800"
                             style={{ width: `${Math.max(3, (c.activities / maxProvinceActivities) * 100)}%` }}
                           />
                         </span>
-                        <span className="text-gray-700 tabular-nums w-6 text-right">{c.activities}</span>
+                        <span className="ml-auto text-gray-700 tabular-nums w-6 text-right">{c.activities}</span>
                       </span>
                     </td>
                     <td className="py-2 text-right text-gray-500 tabular-nums">
                       {c.sharePct.toFixed(1)}%
                     </td>
-                    <td className="py-2 text-right text-gray-500 tabular-nums">{c.people}</td>
-                    <td className="py-2 text-right text-gray-400 tabular-nums whitespace-nowrap">
+                    <td className="hidden sm:table-cell py-2 text-right text-gray-500 tabular-nums">{c.people}</td>
+                    <td className="py-2 text-right text-gray-500 tabular-nums whitespace-nowrap">
                       {c.amphoeDone}/{c.amphoeTotal} ({c.amphoePct.toFixed(0)}%)
                     </td>
                   </tr>

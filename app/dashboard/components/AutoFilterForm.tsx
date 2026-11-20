@@ -1,7 +1,7 @@
 'use client';
 
 // ฟอร์มตัวกรองแบบ "คลิกแล้วกรองเลย" (ผู้ใช้ขอ 11 พ.ย. 2026 — ไม่ต้องกดปุ่มค้นหา/กรอง)
-// เลือก select = เปลี่ยน URL ทันที · พิมพ์ในช่องข้อความ = รอหยุดพิมพ์ 400ms · Enter = ทันที
+// เลือก select = เปลี่ยน URL ทันที · พิมพ์ในช่องข้อความ = รอหยุดพิมพ์ 300ms · ลบจนว่าง/Enter = ทันที
 // ยังเป็น GET params เหมือนเดิม (URL แชร์/บุ๊กมาร์กได้) · router.replace ไม่โหลดหน้าใหม่ทั้งหน้า ไม่เลื่อนจอ
 // ผู้เรียกควรใส่ key = ค่าตัวกรอง (ยกเว้นช่องพิมพ์) ให้ select ตามทันเมื่อ URL เปลี่ยนจากลิงก์อื่น
 import { useRef, useTransition } from 'react';
@@ -12,10 +12,12 @@ export default function AutoFilterForm({
   children,
   className,
   showClear,
+  hideStatus,
 }: {
   children: React.ReactNode;
   className?: string;
   showClear?: boolean; // มีตัวกรองอยู่ → แสดงปุ่ม "ล้างตัวกรอง"
+  hideStatus?: boolean; // ไม่มีแถว "เลือกแล้วกรองทันที/ล้างตัวกรอง" (หน้านโยบาย — ผู้ใช้ขอให้เรียบ 20 พ.ย. 2026)
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -54,17 +56,23 @@ export default function AutoFilterForm({
       }}
       onChange={(e) => {
         const form = e.currentTarget;
-        // data-resets="ชื่อช่อง": เปลี่ยนค่านี้แล้วล้างช่องที่ขึ้นกับมัน (เช่น เปลี่ยนประเด็น → ล้างประเด็นย่อย)
-        const dep = e.target instanceof HTMLElement ? e.target.dataset.resets : undefined;
-        const depField = dep ? form.elements.namedItem(dep) : null;
-        if (depField instanceof HTMLSelectElement || depField instanceof HTMLInputElement) depField.value = '';
+        // data-resets="ชื่อช่อง ชื่อช่อง": เปลี่ยนค่านี้แล้วล้างช่องที่ขึ้นกับมัน (เช่น เปลี่ยนประเด็น → ล้างประเด็นย่อย,
+        //   จังหวัด → ล้างอำเภอ ตำบล) · คั่นหลายช่องด้วยช่องว่าง
+        const deps = e.target instanceof HTMLElement ? (e.target.dataset.resets ?? '').split(/\s+/).filter(Boolean) : [];
+        for (const dep of deps) {
+          const depField = form.elements.namedItem(dep);
+          if (depField instanceof HTMLSelectElement || depField instanceof HTMLInputElement) depField.value = '';
+        }
         if (e.target instanceof HTMLInputElement && e.target.type !== 'checkbox' && e.target.type !== 'radio') {
           if (timer.current) clearTimeout(timer.current);
-          timer.current = setTimeout(() => apply(form), 400);
+          // ลบคำค้นจนว่าง = กรองทันที (ผลค้นหาหายเลย ไม่ต้องรอ/กดล้าง)
+          if (!e.target.value.trim()) apply(form);
+          else timer.current = setTimeout(() => apply(form), 300);
         } else apply(form);
       }}
     >
       {children}
+      {!hideStatus && (
       <div className="flex min-h-8 items-center gap-3 text-xs">
         {pending ? (
           <span className="inline-flex items-center gap-1.5 text-gray-500" role="status">
@@ -83,6 +91,7 @@ export default function AutoFilterForm({
           </button>
         )}
       </div>
+      )}
     </form>
   );
 }

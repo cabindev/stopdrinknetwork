@@ -6,7 +6,7 @@
 //   หมู่บ้าน/จังหวัด/ประเทศ = จำนวนนโยบาย · นับจากพื้นที่หลักของงานเท่านั้น (ไม่รวม ActivityArea) · ไม่นับงานในถังขยะ
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { ExternalLink } from 'lucide-react';
+import { ExternalLink, Search } from 'lucide-react';
 import prisma, { ACTIVE_ACTIVITY } from '@/app/lib/db';
 import { getAdminUser } from '@/app/lib/adminAuth';
 import { POLICY_LEVELS, POLICY_TYPES } from '@/app/lib/activityMeta';
@@ -51,7 +51,10 @@ const emptyPlaces = (): Record<Level, Place[]> => ({ VILLAGE: [], SUBDISTRICT: [
 export default async function PoliciesByAreaPage({
   searchParams,
 }: {
-  searchParams: Promise<{ region?: string; province?: string; type?: string; year?: string; level?: string }>;
+  searchParams: Promise<{
+    region?: string; province?: string; amphoe?: string; district?: string; q?: string;
+    type?: string; year?: string; level?: string;
+  }>;
 }) {
   const admin = await getAdminUser();
   if (!admin) redirect('/dashboard');
@@ -59,18 +62,43 @@ export default async function PoliciesByAreaPage({
   const sp = await searchParams;
   const region = getAllHealthZones().find((z) => z === sp.region) ?? '';
   const province = sp.province ?? '';
+  // อำเภอ/ตำบล ชื่อซ้ำข้ามจังหวัดได้ (อ.เมือง) → ใช้ได้เมื่อเลือกชั้นบนแล้วเท่านั้น (ผู้ใช้แนะนำ 18 พ.ย. 2026)
+  const amphoe = province ? (sp.amphoe ?? '') : '';
+  const district = amphoe ? (sp.district ?? '') : '';
+  // ช่องค้นหา: หมู่บ้าน/ชุมชน/สถานที่ (areaName) + ตำบล/อำเภอ/จังหวัด + ชื่องาน/ชื่อนโยบาย — ผลขึ้นใต้ตัวกรองทันที (ผู้ใช้ขอ 20 พ.ย. 2026)
+  const q = (sp.q ?? '').trim().slice(0, 100);
   const type = sp.type === NO_TYPE ? NO_TYPE : (POLICY_TYPES.find((t) => t === sp.type) ?? '');
   const year = Number(sp.year) || 0; // พ.ศ. ของนโยบาย
   const level = POLICY_LEVELS.find((l) => l.value === sp.level)?.value ?? null; // ชิ้นพายที่เลือก
 
   // ActivityPolicy ไม่ผ่านตัวกรองถังขยะอัตโนมัติ (relation ซ้อน) — ต้องใส่ ACTIVE_ACTIVITY เอง
   const funeral = { ...ACTIVE_ACTIVITY, subCategory: { name: FUNERAL_SUB } };
-  const [policies, yearOptions, funeralSub] = await Promise.all([
+  const areaWhere = {
+    ...(region ? { region } : {}),
+    ...(province ? { province } : {}),
+    ...(amphoe ? { amphoe } : {}),
+    ...(district ? { district } : {}),
+  };
+  const [policies, yearOptions, funeralSub, areaOptions, provinceRows] = await Promise.all([
     prisma.activityPolicy.findMany({
       where: {
-        ...(type === NO_TYPE ? { OR: [{ type: null }, { type: '' }] } : type ? { type } : {}),
+        AND: [
+          type === NO_TYPE ? { OR: [{ type: null }, { type: '' }] } : type ? { type } : {},
+          q
+            ? {
+                OR: [
+                  { name: { contains: q } },
+                  { activity: { areaName: { contains: q } } },
+                  { activity: { district: { contains: q } } },
+                  { activity: { amphoe: { contains: q } } },
+                  { activity: { province: { contains: q } } },
+                  { activity: { title: { contains: q } } },
+                ],
+              }
+            : {},
+        ],
         ...(year ? { year } : {}),
-        activity: { ...funeral, ...(region ? { region } : {}), ...(province ? { province } : {}) },
+        activity: { ...funeral, ...areaWhere },
       },
       select: {
         level: true,
@@ -92,7 +120,25 @@ export default async function PoliciesByAreaPage({
       orderBy: { year: 'desc' },
     }),
     prisma.workSubCategory.findFirst({ where: { name: FUNERAL_SUB }, select: { id: true, logo: true } }),
+    // ตัวเลือกอำเภอ/ตำบล = พื้นที่ที่มีนโยบายจริงในจังหวัดที่เลือก (ไม่ขึ้นกับตัวกรองอำเภอ/ตำบล/หมู่บ้านเอง)
+    province
+      ? prisma.activityPolicy.findMany({
+          where: { activity: { ...funeral, province } },
+          select: { activity: { select: { amphoe: true, district: true } } },
+        })
+      : Promise.resolve([]),
+    // ตัวเลือกจังหวัด = ทุกจังหวัดที่มีนโยบายในภาคที่เลือก (เดิมดึงจากผลที่กรองจังหวัดแล้ว → เลือกแล้วเหลือตัวเลือกเดียว)
+    prisma.activityPolicy.findMany({
+      where: { activity: { ...funeral, ...(region ? { region } : {}) } },
+      select: { activity: { select: { province: true } } },
+    }),
   ]);
+  const amphoeOptions = [...new Set(areaOptions.map((o) => o.activity.amphoe))].sort((a, b) => a.localeCompare(b, 'th'));
+  if (amphoe && !amphoeOptions.includes(amphoe)) amphoeOptions.unshift(amphoe);
+  const districtOptions = [
+    ...new Set(areaOptions.filter((o) => o.activity.amphoe === amphoe).map((o) => o.activity.district)),
+  ].sort((a, b) => a.localeCompare(b, 'th'));
+  if (district && !districtOptions.includes(district)) districtOptions.unshift(district);
   // โลโก้ประเด็นย่อยงานศพ (ชุดเดียวกับหมุดบนแผนที่/การ์ดกรณีศึกษา) ผ่าน route สาธารณะ
   const logoUrl = funeralSub?.logo
     ? `/api/public-logo/sub/${funeralSub.id}?v=${encodeURIComponent(funeralSub.logo.split('/').pop()!)}`
@@ -152,13 +198,16 @@ export default async function PoliciesByAreaPage({
     POLICY_LEVELS.map(({ value }) => [value, rows.reduce((n, r) => n + r.places[value].length, 0)]),
   ) as Record<Level, number>;
   const levelHref = (l: Level | null) => {
-    const q = new URLSearchParams();
-    if (region) q.set('region', region);
-    if (province) q.set('province', province);
-    if (type) q.set('type', type);
-    if (year) q.set('year', String(year));
-    if (l) q.set('level', l);
-    const qs = q.toString();
+    const sp2 = new URLSearchParams();
+    if (region) sp2.set('region', region);
+    if (province) sp2.set('province', province);
+    if (amphoe) sp2.set('amphoe', amphoe);
+    if (district) sp2.set('district', district);
+    if (q) sp2.set('q', q);
+    if (type) sp2.set('type', type);
+    if (year) sp2.set('year', String(year));
+    if (l) sp2.set('level', l);
+    const qs = sp2.toString();
     return `/dashboard/policies${qs ? `?${qs}` : ''}#by-level`;
   };
   // รายการทั้งหมดของระดับที่เลือก เรียงตามจังหวัด แล้วพื้นที่
@@ -186,9 +235,33 @@ export default async function PoliciesByAreaPage({
     .filter((x) => x.why.length)
     .sort((a, b) => a.p.activity.province.localeCompare(b.p.activity.province, 'th') || a.p.activity.id - b.p.activity.id);
 
-  const provinceOptions = [...new Set(policies.map((p) => p.activity.province))].sort((a, b) => a.localeCompare(b, 'th'));
+  const searchResults: SearchHit[] = q
+    ? policies
+        .map((p) => ({
+          activityId: p.activity.id,
+          title: p.activity.title,
+          areaName: p.activity.areaName,
+          district: p.activity.district,
+          amphoe: p.activity.amphoe,
+          province: p.activity.province,
+          level: p.level as Level,
+          name: p.name,
+          type: p.type,
+          year: p.year,
+          file: hasFile(p),
+        }))
+        // ชื่อสถานที่/ตำบลที่ตรงคำค้นขึ้นก่อน แล้วเรียงตามจังหวัด
+        .sort(
+          (a, b) =>
+            hitRank(a, q) - hitRank(b, q) ||
+            a.province.localeCompare(b.province, 'th') ||
+            a.amphoe.localeCompare(b.amphoe, 'th') ||
+            a.district.localeCompare(b.district, 'th'),
+        )
+    : [];
+
+  const provinceOptions = [...new Set(provinceRows.map((p) => p.activity.province))].sort((a, b) => a.localeCompare(b, 'th'));
   if (province && !provinceOptions.includes(province)) provinceOptions.unshift(province);
-  const filtered = Boolean(region || province || type || year);
 
   return (
     <div className="max-w-6xl mx-auto px-5 py-8 space-y-6">
@@ -207,13 +280,13 @@ export default async function PoliciesByAreaPage({
 
       {/* ตัวกรอง — เลือกแล้วกรองทันที (GET params แชร์ได้) · key ให้ select ตามทันเมื่อกดแถบสถิติด้านล่าง */}
       <AutoFilterForm
-        key={`${region}|${province}|${type}|${year}`}
-        showClear={filtered}
-        className="grid grid-cols-2 md:grid-cols-4 items-end gap-x-3 gap-y-3 rounded-2xl border border-gray-200 bg-white p-4 [&>div:last-child]:col-span-full [&>div:last-child]:-mb-1"
+        key={`${region}|${province}|${amphoe}|${district}|${type}|${year}`}
+        hideStatus
+        className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 items-end gap-x-3 gap-y-3 rounded-2xl border border-gray-200 bg-white p-4"
       >
         <label className={labelCls}>
           <span className="block mb-1.5">ภาค</span>
-          <select name="region" defaultValue={region} className={selCls}>
+          <select name="region" defaultValue={region} data-resets="province amphoe district" className={selCls}>
             <option value="">ทุกภาค</option>
             {getAllHealthZones().map((z) => (
               <option key={z} value={z}>{getRegionLabel(z)}</option>
@@ -222,9 +295,34 @@ export default async function PoliciesByAreaPage({
         </label>
         <label className={labelCls}>
           <span className="block mb-1.5">จังหวัด</span>
-          <select name="province" defaultValue={province} className={selCls}>
+          <select name="province" defaultValue={province} data-resets="amphoe district" className={selCls}>
             <option value="">ทุกจังหวัด</option>
             {provinceOptions.map((p) => <option key={p} value={p}>{p}</option>)}
+          </select>
+        </label>
+        <label className={labelCls}>
+          <span className="block mb-1.5">อำเภอ</span>
+          <select
+            name="amphoe"
+            defaultValue={amphoe}
+            disabled={!province}
+            data-resets="district"
+            className={`${selCls} disabled:bg-gray-50 disabled:text-gray-500`}
+          >
+            <option value="">{province ? 'ทุกอำเภอ' : 'เลือกจังหวัดก่อน'}</option>
+            {amphoeOptions.map((a) => <option key={a} value={a}>{a}</option>)}
+          </select>
+        </label>
+        <label className={labelCls}>
+          <span className="block mb-1.5">ตำบล</span>
+          <select
+            name="district"
+            defaultValue={district}
+            disabled={!amphoe}
+            className={`${selCls} disabled:bg-gray-50 disabled:text-gray-500`}
+          >
+            <option value="">{amphoe ? 'ทุกตำบล' : 'เลือกอำเภอก่อน'}</option>
+            {districtOptions.map((d) => <option key={d} value={d}>{d}</option>)}
           </select>
         </label>
         <label className={labelCls}>
@@ -242,7 +340,25 @@ export default async function PoliciesByAreaPage({
             {yearOptions.map((y) => y.year && <option key={y.year} value={y.year}>{y.year}</option>)}
           </select>
         </label>
+        {/* ช่องค้นหาแบบแคปซูลเต็มแถว ขอบดำ (ผู้ใช้ส่งแบบมา 20 พ.ย. 2026) — ตัวเลือก 6 ช่องอยู่ด้านบน */}
+        <label className="col-span-full block">
+          <span className="sr-only">ค้นหาพื้นที่</span>
+          <span className="sdn-search-ring rounded-full">
+            <Search className="pointer-events-none absolute left-5 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-900" />
+            <input
+              type="search"
+              name="q"
+              defaultValue={q}
+              autoComplete="off"
+              placeholder="ค้นหาหมู่บ้าน ตำบล อำเภอ"
+              className="block h-12 w-full rounded-full border-2 border-gray-900 bg-white pl-12 pr-5 text-base text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-4 focus:ring-gray-200"
+            />
+          </span>
+        </label>
       </AutoFilterForm>
+
+      {/* ผลการค้นหา — ขึ้นใต้ตัวกรองทันทีแบบหน้าผลค้นหา (ผู้ใช้ขอ 20 พ.ย. 2026) · ลบคำค้นออก = หายเอง (ไม่ต้องกดล้าง) */}
+      {q && <SearchResults q={q} results={searchResults} />}
 
       {/* ตัวเลขสรุป (ตามตัวกรอง) */}
       {/* มือถือ: ตัวเลขหลักเต็มแถว + 4 ใบ 2×2 (เดิมใบที่ 5 ค้างแถวเดียว) · ทุกใบมีบรรทัดหน่วย สูงเท่ากัน */}
@@ -417,5 +533,113 @@ function Kpi({ label, value, unit, wide }: { label: string; value: number; unit?
       <p className="mt-1 text-3xl font-bold tabular-nums text-gray-900">{value.toLocaleString('th-TH')}</p>
       {unit && <p className="mt-0.5 text-xs text-gray-500">{unit}</p>}
     </div>
+  );
+}
+
+interface SearchHit {
+  activityId: number;
+  title: string;
+  areaName: string | null;
+  district: string;
+  amphoe: string;
+  province: string;
+  level: Level;
+  name: string | null;
+  type: string | null;
+  year: number | null;
+  file: boolean;
+}
+
+// ลำดับความตรง: ชื่อสถานที่ขึ้นต้นด้วยคำค้น > ตำบลตรง > อำเภอตรง > อื่น ๆ
+function hitRank(h: SearchHit, q: string) {
+  if (h.areaName?.startsWith(q)) return 0;
+  if (h.district === q || h.district.startsWith(q)) return 1;
+  if (h.areaName?.includes(q)) return 2;
+  if (h.amphoe === q || h.amphoe.startsWith(q)) return 3;
+  return 4;
+}
+
+// ตัวหนาเฉพาะส่วนที่ตรงคำค้น (แบบหน้าผลค้นหา Google) — ไม่ใช้สีพื้น
+function Hl({ text, q }: { text: string; q: string }) {
+  const i = text.indexOf(q);
+  if (!q || i < 0) return <>{text}</>;
+  return (
+    <>
+      {text.slice(0, i)}
+      <b className="font-bold">{text.slice(i, i + q.length)}</b>
+      {text.slice(i + q.length)}
+    </>
+  );
+}
+
+const MAX_HITS = 30;
+
+function SearchResults({ q, results }: { q: string; results: SearchHit[] }) {
+  const places = new Set(results.map((r) => `${r.province}|${r.amphoe}|${r.district}|${r.areaName ?? ''}`)).size;
+  return (
+    <section aria-live="polite" className="rounded-2xl border border-gray-200 bg-white">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 border-b border-gray-200 px-5 py-3.5">
+        <h2 className="text-sm font-semibold text-gray-900">
+          ผลการค้นหา “{q}”
+        </h2>
+        <p className="text-xs text-gray-500 tabular-nums">
+          {results.length
+            ? `พบ ${results.length.toLocaleString('th-TH')} นโยบาย · ${places.toLocaleString('th-TH')} พื้นที่`
+            : 'ไม่พบ'}
+        </p>
+      </div>
+      {results.length === 0 ? (
+        <p className="px-5 py-6 text-sm text-gray-600">
+          ไม่พบนโยบายที่ตรงกับ “{q}” — ลองพิมพ์ชื่อตำบลหรืออำเภอ หรือคำที่สั้นลง
+        </p>
+      ) : (
+        <ul className="divide-y divide-gray-100">
+          {results.slice(0, MAX_HITS).map((r) => {
+            const label = POLICY_LEVELS.find((l) => l.value === r.level)?.label;
+            return (
+              <li key={`${r.activityId}-${r.level}`}>
+                <Link
+                  href={`/activity/${r.activityId}`}
+                  className="group grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-4 px-5 py-3 hover:bg-gray-50"
+                >
+                  <span className="min-w-0">
+                    <span className="block text-sm text-gray-700 group-hover:underline underline-offset-2">
+                      <Hl text={r.areaName || `ต.${r.district}`} q={q} />
+                    </span>
+                    {/* ตำบล/จังหวัด เป็นชิปสีประจำระดับ (ตำบล emerald · จังหวัด violet ชุดเดียวกับพาย) ให้กวาดตาเจอเร็ว */}
+                    <span className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-gray-500">
+                      <span className="rounded px-1.5 py-0.5 font-medium" style={{ background: LEVEL_TINT.SUBDISTRICT, color: LEVEL_INK.SUBDISTRICT }}>
+                        <Hl text={`ต.${r.district}`} q={q} />
+                      </span>
+                      <span><Hl text={`อ.${r.amphoe}`} q={q} /></span>
+                      <span className="rounded px-1.5 py-0.5 font-medium" style={{ background: LEVEL_TINT.PROVINCE, color: LEVEL_INK.PROVINCE }}>
+                        <Hl text={`จ.${r.province}`} q={q} />
+                      </span>
+                    </span>
+                    <span className="mt-1 block truncate text-xs text-gray-600">
+                      {r.name ? <Hl text={r.name} q={q} /> : <span className="text-gray-500">ยังไม่มีชื่อนโยบาย</span>}
+                      {r.type && ` · ${r.type}`}
+                      {r.year && ` · ปี ${r.year}`}
+                      {r.file && ' · มีไฟล์'}
+                    </span>
+                  </span>
+                  <span
+                    className="shrink-0 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium"
+                    style={{ background: LEVEL_TINT[r.level], color: LEVEL_INK[r.level] }}
+                  >
+                    ระดับ{label}
+                  </span>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+      {results.length > MAX_HITS && (
+        <p className="border-t border-gray-100 px-5 py-3 text-xs text-gray-500">
+          แสดง {MAX_HITS} รายการแรก — พิมพ์คำให้เจาะจงขึ้น หรือเลือกจังหวัด/อำเภอเพื่อกรองเพิ่ม
+        </p>
+      )}
+    </section>
   );
 }

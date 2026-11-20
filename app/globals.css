@@ -71,6 +71,36 @@ input:-webkit-autofill {
   }
 }
 
+/* ── ช่องค้นหาแดชบอร์ด: เส้นเหลืองอ่อนวิ่งรอบกรอบ "ก่อนพิมพ์" ชวนให้ค้นหา — พิมพ์แล้วหาย ลบจนว่างกลับมา
+   (ผู้ใช้ขอ 20 พ.ย. 2026 — ลองแบบเขียวระหว่างค้นแล้ว ไม่เอา) · CSS ล้วน: :placeholder-shown = ช่องว่าง (input ต้องมี placeholder)
+   เส้นเป็นเหลืองทึบ (conic-gradient ตัดขอบแข็ง = แค่วาดส่วนโค้ง ไม่ไล่สี) · mask เจาะกลางให้เหลือแต่ขอบ 2px */
+@property --sdn-ring-angle {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+.sdn-search-ring { position: relative; display: block; } /* ใส่ rounded-* ให้ตรงกับช่อง input (เส้นใช้ radius เดียวกัน) */
+.sdn-search-ring:has(input:placeholder-shown)::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit; /* ตามกรอบ — .rounded-full = แคปซูล */
+  padding: 2px;
+  background: conic-gradient(from var(--sdn-ring-angle), #fde047 0 30%, transparent 30% 100%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  animation: sdn-ring-spin 2.4s linear infinite;
+  pointer-events: none;
+}
+@keyframes sdn-ring-spin { to { --sdn-ring-angle: 360deg; } }
+@media (prefers-reduced-motion: reduce) {
+  .sdn-search-ring:has(input:placeholder-shown)::after {
+    animation: none;
+    background: #fde047;
+  }
+}
+
 /* ── แผนที่: หมุดโลโก้ประเด็นงาน — โลโก้ล้วน ไม่มีวงพื้นขาว (ผู้ใช้เลือก 4 พ.ย. 2026) สีตามระดับนโยบาย (MapView tintLogo) */
 .sdn-logo-pin {
   box-sizing: border-box;

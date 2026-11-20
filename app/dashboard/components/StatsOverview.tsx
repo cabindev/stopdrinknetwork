@@ -13,6 +13,7 @@ import {
   FileSpreadsheet,
 } from 'lucide-react';
 import prisma from '@/app/lib/db';
+import AutoFilterForm from './AutoFilterForm';
 import { FOCUS_WHERE } from '@/app/lib/focus';
 import { categoryColor } from '@/app/lib/categoryColors';
 import { getThaiZoneName, getAllHealthZones } from '@/app/utils/healthZones';
@@ -134,33 +135,23 @@ export default async function StatsOverview({ year, second }: { year?: number; s
     { icon: Layers, label: 'ประเด็นงานที่ใช้จริง', value: byCategory.size, sub: 'หมวด' },
   ];
 
-  const yearHref = (y?: number) => (y ? `/dashboard?year=${y}` : '/dashboard');
-
   return (
     <div className="space-y-5">
-      {/* ตัวกรองปี — แถวเดียวเลื่อนข้างได้ (ปีเยอะ ห่อหลายแถวแล้วกินที่ โดยเฉพาะมือถือ) */}
-      <div className="flex items-center gap-2 overflow-x-auto -mx-5 px-5 pb-1 [scrollbar-width:thin]">
-        <span className="shrink-0 text-xs text-gray-500">ช่วงเวลา:</span>
-        <Link
-          href={yearHref()}
-          className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-            !year ? 'bg-gray-900 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
-          }`}
+      {/* ตัวกรองปี — ช่องเลือกเดียว ประหยัดที่ (ผู้ใช้ขอ 20 พ.ย. 2026 — เดิมชิปทีละปีเรียงแถว) · เลือกแล้วกรองทันที */}
+      <AutoFilterForm key={year ?? 'all'} hideStatus className="flex items-center gap-2">
+        <label htmlFor="dash-year" className="text-xs font-medium text-gray-600">ปี</label>
+        <select
+          id="dash-year"
+          name="year"
+          defaultValue={year ?? ''}
+          className="h-9 rounded-lg border border-gray-300 bg-white pl-3 pr-8 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-300"
         >
-          ทุกปี
-        </Link>
-        {years.map((y) => (
-          <Link
-            key={y}
-            href={yearHref(y)}
-            className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-              year === y ? 'bg-gray-900 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
-            }`}
-          >
-            พ.ศ. {y + 543}
-          </Link>
-        ))}
-      </div>
+          <option value="">ทุกปี</option>
+          {years.map((y) => (
+            <option key={y} value={y}>พ.ศ. {y + 543}</option>
+          ))}
+        </select>
+      </AutoFilterForm>
 
       {/* ตัวเลขรวม */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">

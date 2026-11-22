@@ -811,6 +811,7 @@ export default function ActivityForm({
             ) : (
               <ThaiDateField
                 id="startDate"
+                yearsBack={25}
                 value={form.startDate}
                 onChange={(v) => setForm((prev) => ({ ...prev, startDate: v }))}
               />
@@ -820,6 +821,7 @@ export default function ActivityForm({
             <label className={labelCls} htmlFor="endDate">วันสิ้นสุด</label>
             <ThaiDateField
               id="endDate"
+              yearsBack={25}
               value={form.endDate}
               onChange={(v) => setForm((prev) => ({ ...prev, endDate: v }))}
             />

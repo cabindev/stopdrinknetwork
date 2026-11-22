@@ -67,10 +67,13 @@ export default function ThaiDateField({
     };
   }, [open]);
 
+  // ช่วงปีในตัวเลือก + ปีของค่าที่เลือกอยู่/กำลังดู (งานเก่าที่อยู่นอกช่วงยังแก้ได้ ไม่หายจากรายการ)
   const years = useMemo(() => {
     const nowBE = today.y + 543;
-    return Array.from({ length: yearsBack + yearsForward + 1 }, (_, i) => nowBE - yearsBack + i);
-  }, [today.y, yearsBack, yearsForward]);
+    const from = Math.min(nowBE - yearsBack, view.y + 543);
+    const to = Math.max(nowBE + yearsForward, view.y + 543);
+    return Array.from({ length: to - from + 1 }, (_, i) => from + i);
+  }, [today.y, view.y, yearsBack, yearsForward]);
 
   // ตารางวัน: ช่องว่างนำหน้าตามวันในสัปดาห์ของวันที่ 1
   const cells = useMemo(() => {

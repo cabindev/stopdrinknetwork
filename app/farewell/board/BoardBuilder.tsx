@@ -11,8 +11,9 @@ import { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { motion, useReducedMotion } from 'framer-motion';
-import { ArrowRight, Check, Eye, ImageDown, Quote, RotateCcw, X } from 'lucide-react';
+import { ArrowRight, Check, Download, Eye, FileImage, Quote, RotateCcw, Share2, X } from 'lucide-react';
 import { type ExtraKey, type QuestionKey } from '../content';
 import { track } from '../track';
 import { EMPTY_PLAN, baht, nightly, planBudget, planSaving, usePlan } from '../planStore';
@@ -203,22 +204,27 @@ export default function BoardBuilder({
   intro?: boolean;
 }) {
   const { plan, update, reset } = usePlan();
+  const router = useRouter();
   const reduce = useReducedMotion();
   const [active, setActive] = useState<CategoryKey>('place');
   /** ยอดรวมขยับเท่าไรจากการเลือกครั้งล่าสุด (k = ให้ชิปเล่นอนิเมชันใหม่ทุกครั้ง) */
   const [bump, setBump] = useState<{ v: number; k: number } | null>(null);
   const [saving, setSaving] = useState(false);
   const receiptRef = useRef<HTMLElement>(null);
+  const tabsRef = useRef<HTMLElement>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
   const advanceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   /** รูปใบสรุปที่เปิดให้กดค้างบันทึก (เบราว์เซอร์ในแอป LINE/Facebook ดาวน์โหลดไฟล์ไม่ได้) */
-  const [preview, setPreview] = useState<string | null>(null);
+  const [preview, setPreview] = useState<{ url: string; file: File } | null>(null);
   /** จอที่บูธ: หน้าจอชวนลอง (เริ่มต้นเปิดอยู่) */
   const [attract, setAttract] = useState(booth);
   /** หน้าจอชวนลอง: 'play' = กำลังเลือกตัวอย่างทีละเรื่อง · 'result' = จบรอบ โชว์ยอดประหยัดตัวใหญ่ */
   const [demo, setDemo] = useState<'play' | 'result'>('play');
   const demoTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
   const attractRef = useRef(booth);
+  /** ทางออกของทีมงาน: แตะมุมซ้ายบนค้าง 3 วิ (ผู้ใช้ขอ 22 พ.ย. 2026) */
+  const exitTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [exiting, setExiting] = useState(false);
   const started = useRef(false);
   const completed = useRef(false);
 
@@ -302,7 +308,7 @@ export default function BoardBuilder({
     setActive('place');
   };
 
-  // บันทึกกระดานเป็นรูป: มือถือที่แชร์ไฟล์ได้ = เปิดแผ่นแชร์ (เลือก LINE ได้) · คอม = ดาวน์โหลด PNG
+  // วาดใบสรุปเป็นรูปแล้วเปิดดูใน popup (ดาวน์โหลด/แชร์จากใน popup)
   const saveImage = async () => {
     setSaving(true);
     try {
@@ -345,29 +351,8 @@ export default function BoardBuilder({
         siteUrl,
       });
       const file = new File([blob], 'แผนงานของบ้านเรา.png', { type: 'image/png' });
-      track('SHARE');
-      const mobile = window.matchMedia('(pointer: coarse)').matches;
-      // เบราว์เซอร์ในแอป (LINE/Facebook/IG) แชร์ไฟล์/ดาวน์โหลดไม่ได้ → เปิดรูปให้กดค้างบันทึก
-      const inApp = /\bLine\/|FBAN|FBAV|Instagram/i.test(navigator.userAgent);
-      if (mobile && !inApp && navigator.canShare?.({ files: [file] })) {
-        try {
-          await navigator.share({ files: [file], title: 'แผนงานของบ้านเรา' });
-          return;
-        } catch (e) {
-          if ((e as Error).name === 'AbortError') return;
-        }
-      }
-      const url = URL.createObjectURL(blob);
-      if (mobile) {
-        setPreview(url);
-        return;
-      }
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = file.name;
-      a.click();
-      setTimeout(() => URL.revokeObjectURL(url), 2000);
-      toast.success('บันทึกรูปแล้ว ส่งให้ญาติทาง LINE ได้เลย');
+      // เปิดดูใบสรุปก่อนเสมอ — ปุ่มดาวน์โหลด/แชร์อยู่ใน popup (ผู้ใช้ขอ 22 พ.ย. 2026)
+      setPreview({ url: URL.createObjectURL(blob), file });
     } catch (e) {
       console.error('[farewell/board] export failed', e);
       toast.error('บันทึกรูปไม่สำเร็จ ลองอีกครั้ง');
@@ -375,6 +360,40 @@ export default function BoardBuilder({
       setSaving(false);
     }
   };
+
+  const closePreview = () => {
+    if (preview) URL.revokeObjectURL(preview.url);
+    setPreview(null);
+  };
+  const downloadPreview = () => {
+    if (!preview) return;
+    track('SHARE');
+    const a = document.createElement('a');
+    a.href = preview.url;
+    a.download = preview.file.name;
+    a.click();
+    toast.success('บันทึกรูปแล้ว ส่งให้ญาติทาง LINE ได้เลย');
+  };
+  const sharePreview = async () => {
+    if (!preview) return;
+    try {
+      await navigator.share({ files: [preview.file], title: 'แผนงานของบ้านเรา' });
+      track('SHARE');
+    } catch (e) {
+      if ((e as Error).name !== 'AbortError') downloadPreview();
+    }
+  };
+  /** เบราว์เซอร์ในแอป (LINE/Facebook/IG) ดาวน์โหลด/แชร์ไฟล์ไม่ได้ → บอกให้กดค้างที่รูป */
+  const inApp = typeof navigator !== 'undefined' && /\bLine\/|FBAN|FBAV|Instagram/i.test(navigator.userAgent);
+  const canShareFile = !!preview && typeof navigator !== 'undefined' && !!navigator.canShare?.({ files: [preview.file] });
+
+  // มือถือ: แถบหมวดยาวเกินจอ — เลื่อนหมวดที่เปิดอยู่มาไว้กลางแถบ (เลื่อนเฉพาะแนวนอน ไม่ดึงหน้า)
+  useEffect(() => {
+    const nav = tabsRef.current;
+    const btn = nav?.querySelector<HTMLElement>('[aria-current="step"]');
+    if (!nav || !btn || nav.scrollWidth <= nav.clientWidth) return;
+    nav.scrollTo({ left: btn.offsetLeft - (nav.clientWidth - btn.offsetWidth) / 2, behavior: reduce ? 'auto' : 'smooth' });
+  }, [active, reduce]);
 
   const fact = cat.facts[0];
   const lines = budget.lines.filter((l) => l.total > 0);
@@ -471,6 +490,21 @@ export default function BoardBuilder({
     };
   }, [booth]);
 
+  const holdExit = () => {
+    setExiting(true);
+    exitTimer.current = setTimeout(() => {
+      stopDemo();
+      if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+      setExiting(false);
+      router.push('/');
+    }, 3000);
+  };
+  const cancelExit = () => {
+    if (exitTimer.current) clearTimeout(exitTimer.current);
+    exitTimer.current = null;
+    setExiting(false);
+  };
+
   /** แตะหน้าจอชวนลอง = เริ่มกระดานเปล่าให้คนนี้ */
   const startFromAttract = () => {
     stopDemo();
@@ -498,7 +532,7 @@ export default function BoardBuilder({
 
   return (
     // จอที่บูธ (จอใหญ่ในห้าง): ขยายทั้งหน้า ให้มองเห็นจากระยะยืน — zoom ไม่กระทบผังของมือถือ/หน้าปกติ
-    <div className="mx-auto max-w-6xl" style={booth ? { zoom: 1.25 } : undefined}>
+    <div className={`mx-auto max-w-6xl ${booth ? 'lg:[zoom:1.25]' : ''}`}>
       {/* หัวเรื่องบนหน้าตัดออก (ผู้ใช้ขอ 22 พ.ย. 2026) เหลือ h1 ซ่อนไว้ให้โปรแกรมอ่านหน้าจอ และใช้อ่านฟอนต์หัวเรื่องให้ใบสรุป */}
       <h1 ref={titleRef} className={`sr-only ${fontStyles.sao}`}>{title}</h1>
 
@@ -520,8 +554,9 @@ export default function BoardBuilder({
       )}
 
       {/* แถบหมวด */}
-      <nav aria-label="หมวด" className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
-        <ol className="flex w-max gap-1.5 rounded-full border border-gray-200 bg-white p-1">
+      {/* อยู่กลางจอ · มือถือย่อขนาด (ผู้ใช้ขอ 22 พ.ย. 2026) — ยาวเกินจอ = เลื่อนข้าง และเลื่อนหมวดที่เปิดอยู่มาไว้กลางให้เอง */}
+      <nav ref={tabsRef} aria-label="หมวด" className="relative -mx-4 overflow-x-auto px-4 [scrollbar-width:none] sm:mx-0 sm:px-0">
+        <ol className="mx-auto flex w-max gap-0.5 rounded-full border border-gray-200 bg-white p-1 sm:gap-1.5">
           {CATEGORIES.map((c) => {
             const done = !!choiceOf(c.key);
             const on = c.key === active;
@@ -531,14 +566,14 @@ export default function BoardBuilder({
                   type="button"
                   onClick={() => goTo(c.key)}
                   aria-current={on ? 'step' : undefined}
-                  className={`inline-flex h-9 items-center gap-1.5 whitespace-nowrap rounded-full px-3 text-sm transition-colors ${
+                  className={`inline-flex h-8 items-center gap-1 whitespace-nowrap rounded-full px-2.5 text-xs transition-colors sm:h-9 sm:gap-1.5 sm:px-3 sm:text-sm ${
                     on ? 'bg-gray-900 text-white' : 'text-gray-700 hover:bg-gray-100'
                   }`}
                 >
                   {/* วงกลมแบบเดียวกับการ์ดตัวเลือก (ผู้ใช้ขอ 22 พ.ย. 2026): ยังไม่เลือก = วงเปล่า · เลือกแล้ว = วงทึบมีถูก */}
                   <span
                     aria-hidden="true"
-                    className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${
+                    className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border sm:h-5 sm:w-5 ${
                       done
                         ? on
                           ? 'border-white bg-white text-gray-900'
@@ -717,6 +752,23 @@ export default function BoardBuilder({
             เลือกแล้ว {chosenCount} จาก {CATEGORIES.length} เรื่อง{answers.days && budget.days > 1 ? ` · งาน ${budget.days} คืน` : ''}
           </p>
 
+          {/* ปุ่มหลักอยู่ใต้ยอดรวม — จอบูธ/จอเตี้ยต้องเห็นโดยไม่ต้องเลื่อน (ผู้ใช้ขอ 22 พ.ย. 2026) */}
+          <div className="mt-3 grid gap-2">
+            <button
+              type="button"
+              onClick={saveImage}
+              disabled={saving || chosenCount === 0}
+              className="inline-flex h-11 items-center justify-center gap-1.5 rounded-full bg-gray-900 px-4 text-sm font-medium text-white hover:bg-gray-700 disabled:bg-gray-200 disabled:text-gray-500"
+            >
+              <FileImage className="w-4 h-4" /> {saving ? 'กำลังทำใบสรุป…' : 'เปิดดูใบสรุป ส่งให้ญาติ'}
+            </button>
+            <Link
+              href="/farewell/plan?step=budget"
+              className="inline-flex h-11 items-center justify-center gap-1.5 rounded-full border border-gray-300 px-4 text-sm text-gray-900 hover:bg-gray-50"
+            >
+              ปรับราคาเอง <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
           {lines.length > 0 ? (
             <ul className="mt-3 divide-y divide-gray-100 border-t border-gray-100 text-sm">
               {lines.map((l) => (
@@ -757,21 +809,7 @@ export default function BoardBuilder({
             )
           )}
 
-          <div className="mt-4 grid gap-2">
-            <Link
-              href="/farewell/plan?step=budget"
-              className="inline-flex h-11 items-center justify-center gap-1.5 rounded-full bg-gray-900 px-4 text-sm font-medium text-white hover:bg-gray-700"
-            >
-              ปรับราคาและทำใบสรุป <ArrowRight className="w-4 h-4" />
-            </Link>
-            <button
-              type="button"
-              onClick={saveImage}
-              disabled={saving || chosenCount === 0}
-              className="inline-flex h-11 items-center justify-center gap-1.5 rounded-full border border-gray-300 px-4 text-sm text-gray-900 hover:bg-gray-50 disabled:text-gray-400 disabled:hover:bg-white"
-            >
-              <ImageDown className="w-4 h-4" /> {saving ? 'กำลังสร้างรูป…' : 'บันทึกเป็นรูป ส่งให้ญาติ'}
-            </button>
+          <div className="mt-3">
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
@@ -823,21 +861,74 @@ export default function BoardBuilder({
 
       {/* รูปใบสรุปให้กดค้างบันทึก (มือถือที่แชร์ไฟล์ไม่ได้ / เบราว์เซอร์ในแอป LINE) */}
       {preview && (
-        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-3 bg-black/80 p-4" role="dialog" aria-modal="true" aria-label="รูปใบสรุป">
-          <p className="text-center text-sm text-white">กดค้างที่รูป แล้วเลือก “บันทึกรูป” หรือ “แชร์” ส่งให้ญาติ</p>
+        <div className="fixed inset-0 z-[2100] flex flex-col items-center justify-center gap-3 bg-black/80 p-4" role="dialog" aria-modal="true" aria-label="ใบสรุป">
           {/* eslint-disable-next-line @next/next/no-img-element -- blob URL ที่เพิ่งวาดในเครื่อง */}
-          <img src={preview} alt="ใบสรุปแผนงานของบ้านเรา" className="max-h-[78svh] w-auto rounded-xl bg-white" />
-          <button
-            type="button"
-            onClick={() => {
-              URL.revokeObjectURL(preview);
-              setPreview(null);
-            }}
-            className="inline-flex h-11 items-center gap-1.5 rounded-full bg-white px-5 text-sm font-medium text-gray-900"
-          >
-            <X className="w-4 h-4" /> ปิด
-          </button>
+          <img src={preview.url} alt="ใบสรุปแผนงานของบ้านเรา" className="max-h-[72svh] w-auto rounded-xl bg-white" />
+          {inApp ? (
+            <p className="text-center text-sm text-white">กดค้างที่รูป แล้วเลือก “บันทึกรูป” หรือ “แชร์” ส่งให้ญาติ</p>
+          ) : booth ? (
+            <p className="text-center text-sm text-white">สแกน QR ที่บูธเพื่อจัดงานและบันทึกใบสรุปในมือถือของคุณ</p>
+          ) : null}
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            {!inApp && !booth && (
+              <button
+                type="button"
+                onClick={downloadPreview}
+                className="inline-flex h-11 items-center gap-1.5 rounded-full bg-white px-5 text-sm font-medium text-gray-900 hover:bg-gray-100"
+              >
+                <Download className="w-4 h-4" /> ดาวน์โหลดรูป
+              </button>
+            )}
+            {!inApp && !booth && canShareFile && (
+              <button
+                type="button"
+                onClick={sharePreview}
+                className="inline-flex h-11 items-center gap-1.5 rounded-full bg-white px-5 text-sm font-medium text-gray-900 hover:bg-gray-100"
+              >
+                <Share2 className="w-4 h-4" /> แชร์ / ส่ง LINE
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={closePreview}
+              className="inline-flex h-11 items-center gap-1.5 rounded-full border border-white/40 px-5 text-sm font-medium text-white hover:bg-white/10"
+            >
+              <X className="w-4 h-4" /> ปิด
+            </button>
+          </div>
         </div>
+      )}
+
+      {/* จอที่บูธ: ทางออกของทีมงาน — มุมซ้ายบน มองไม่เห็น แตะ/กดค้าง 3 วิ = ออกเต็มจอ แล้วกลับหน้าแรกปกติ (วงจะค่อย ๆ เต็มระหว่างค้าง) */}
+      {booth && (
+        <button
+          type="button"
+          aria-label="ทีมงาน: กดค้าง 3 วินาทีเพื่อออกจากโหมดจัดแสดง"
+          onPointerDown={holdExit}
+          onPointerUp={cancelExit}
+          onPointerLeave={cancelExit}
+          onPointerCancel={cancelExit}
+          onContextMenu={(e) => e.preventDefault()}
+          className="fixed left-0 top-0 z-[60] flex h-20 w-20 touch-none select-none items-center justify-center"
+        >
+          {exiting && (
+            <svg viewBox="0 0 36 36" className="h-10 w-10 -rotate-90" aria-hidden="true">
+              <circle cx="18" cy="18" r="15" fill="white" stroke="#e5e7eb" strokeWidth="3" />
+              <motion.circle
+                cx="18"
+                cy="18"
+                r="15"
+                fill="none"
+                stroke="#111827"
+                strokeWidth="3"
+                strokeLinecap="round"
+                initial={{ pathLength: 0 }}
+                animate={{ pathLength: 1 }}
+                transition={{ duration: 3, ease: 'linear' }}
+              />
+            </svg>
+          )}
+        </button>
       )}
 
       {/* จอที่บูธ: หน้าจอชวนลอง — กระดานด้านหลังเป็นตัวอย่างงานเรียบง่าย แตะที่ไหนก็ได้ = เริ่มจัดเอง */}
@@ -845,27 +936,32 @@ export default function BoardBuilder({
         <button
           type="button"
           onClick={startFromAttract}
-          className={`fixed inset-0 z-40 flex items-end justify-center p-6 text-left transition-colors ${demo === 'result' ? 'bg-white/60' : 'bg-transparent'}`}
+          className={`fixed inset-0 z-40 flex items-end justify-center p-4 pb-6 text-left transition-colors sm:p-6 ${demo === 'result' ? 'bg-white/60' : 'bg-transparent'}`}
           aria-label="แตะเพื่อเริ่มจัดงานของคุณ"
         >
           {demo === 'play' ? (
             // ระหว่างสาธิต: แถบเล็กด้านล่าง ไม่บังกระดาน ให้เห็นของเด้งลงและยอดวิ่ง
-            <span className="flex w-full max-w-4xl items-center justify-between gap-4 rounded-full bg-gray-900 px-6 py-4 text-white shadow-2xl">
-              <span className="text-lg font-medium sm:text-xl">ตัวอย่าง: จัดงานเรียบง่าย ใช้เงินเท่าไร?</span>
-              <span className="shrink-0 text-base text-white/80 sm:text-lg">แตะเพื่อลองจัดเอง</span>
+            // แถบเล็กกลางจอ (ผู้ใช้ขอ 22 พ.ย. 2026)
+            // จอแคบ = สองบรรทัดกลาง (แต่ละท่อนไม่ตัดกลางคำ)
+            <span className="inline-flex flex-col items-center gap-0.5 rounded-3xl bg-gray-900 px-5 py-2.5 text-center text-white shadow-xl sm:flex-row sm:gap-3 sm:rounded-full">
+              <span className="whitespace-nowrap text-sm font-medium sm:text-base">ตัวอย่าง: จัดงานเรียบง่าย ใช้เงินเท่าไร?</span>
+              <span aria-hidden="true" className="hidden text-white/40 sm:inline">·</span>
+              <span className="whitespace-nowrap text-xs text-white/80 sm:text-base">แตะเพื่อลองจัดเอง</span>
             </span>
           ) : (
             <motion.span
               initial={reduce ? false : { opacity: 0, y: 24 }}
               animate={{ opacity: 1, y: 0 }}
-              className="flex w-full max-w-4xl items-center gap-6 rounded-3xl bg-gray-900 p-6 text-white shadow-2xl sm:p-8"
+              className="flex w-full max-w-4xl items-center gap-6 rounded-3xl bg-gray-900 p-5 text-white shadow-2xl sm:p-8"
             >
               <span className="min-w-0 flex-1">
-                <span className="block text-lg text-white/80 sm:text-2xl">งานเรียบง่ายแบบนี้ ~{totalText} · เทียบงานแบบที่นิยม</span>
-                <span className="mt-1 block whitespace-nowrap text-3xl font-bold leading-tight text-emerald-300 sm:text-5xl">
-                  ประหยัดได้ ~{baht(saved)}
+                <span className="block text-sm text-white/80 sm:text-2xl">
+                  งานเรียบง่ายแบบนี้ <span className="whitespace-nowrap">~{totalText}</span> · เทียบงานแบบที่นิยม
                 </span>
-                <span className="mt-3 block text-base text-white/80 sm:text-xl">แตะหน้าจอเพื่อลองจัดงานของคุณเอง</span>
+                <span className="mt-1 block text-2xl font-bold leading-tight text-emerald-300 sm:text-5xl">
+                  ประหยัดได้ <span className="whitespace-nowrap">~{baht(saved)}</span>
+                </span>
+                <span className="mt-2 block text-sm text-white/80 sm:mt-3 sm:text-xl">แตะหน้าจอเพื่อลองจัดงานของคุณเอง</span>
               </span>
               <span className="hidden shrink-0 flex-col items-center gap-2 sm:flex">
                 <span className="rounded-2xl bg-white p-2">

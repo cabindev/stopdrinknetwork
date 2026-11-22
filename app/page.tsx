@@ -2,7 +2,7 @@
 // หน้าแรกเดิม (แผนที่จุด halftone ของเครือข่าย) ย้ายไป /network · แผนเก็บในเครื่องผู้ใช้เท่านั้น (farewell/planStore.ts)
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { ArrowRight, ClipboardList, Landmark, Megaphone } from 'lucide-react';
+import { ArrowRight, ClipboardList, Landmark, Megaphone, MonitorPlay } from 'lucide-react';
 import { SITE_NAME } from './farewell/content';
 import BoardBuilder from './farewell/board/BoardBuilder';
 import TrackView from './farewell/components/TrackView';
@@ -64,12 +64,21 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
               </Link>
             ))}
           </div>
-          <Link
-            href="/farewell"
-            className="mt-3 inline-flex min-h-10 items-center gap-1 text-sm font-medium text-gray-900 underline-offset-4 hover:underline"
-          >
-            ดูเครื่องมือและข้อมูลทั้งหมด <ArrowRight className="w-4 h-4" />
-          </Link>
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-x-4">
+            <Link
+              href="/farewell"
+              className="inline-flex min-h-10 items-center gap-1 text-sm font-medium text-gray-900 underline-offset-4 hover:underline"
+            >
+              ดูเครื่องมือและข้อมูลทั้งหมด <ArrowRight className="w-4 h-4" />
+            </Link>
+            {/* ทางเข้าจอในงาน (?booth=1) — ตัวเล็กสีเทา ให้ทีมงานหาเจอ คนทั่วไปไม่สะดุด (ผู้ใช้เลือกคำ "โหมดจัดแสดง" 22 พ.ย. 2026) */}
+            <Link
+              href="/?booth=1"
+              className="inline-flex min-h-10 items-center gap-1.5 text-xs text-gray-500 underline-offset-4 hover:text-gray-900 hover:underline"
+            >
+              <MonitorPlay className="w-3.5 h-3.5" /> เปิดโหมดจัดแสดง (สำหรับจอในงาน)
+            </Link>
+          </div>
         </section>
       )}
     </main>

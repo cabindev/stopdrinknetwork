@@ -95,7 +95,7 @@ export default function AreaPicker({ value, onChange, plain = false }: AreaPicke
       <div
         className={
           plain
-            ? 'flex items-center rounded-md border border-gray-300 bg-white px-3 focus-within:border-gray-900 focus-within:ring-2 focus-within:ring-gray-200'
+            ? 'flex items-center rounded-xl border border-gray-300 bg-white px-3 focus-within:border-gray-900 focus-within:ring-2 focus-within:ring-gray-200'
             : 'flex items-center gap-2 rounded-2xl border border-gray-300 bg-white px-4 focus-within:border-gray-900 focus-within:ring-2 focus-within:ring-gray-200'
         }
       >
@@ -134,7 +134,7 @@ export default function AreaPicker({ value, onChange, plain = false }: AreaPicke
                   <span className="block text-xs text-gray-500">อ.{r.amphoe}</span>
                 </span>
                 {r.agreement === 'here' && (
-                  <span className="shrink-0 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700">มีข้อตกลงแล้ว</span>
+                  <span className="shrink-0 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">มีข้อตกลงแล้ว</span>
                 )}
               </button>
             </li>

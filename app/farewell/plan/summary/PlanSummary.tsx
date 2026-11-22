@@ -5,7 +5,8 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Check, ClipboardCopy, Download, ListChecks, MessageCircle, Pencil, Printer, Share2, Trash2 } from 'lucide-react';
 import { QUESTIONS, buildChecklist } from '../../content';
-import { baht, planBudget, usePlan, type Plan } from '../../planStore';
+import { baht, planBudget, planSaving, usePlan, type Plan } from '../../planStore';
+import { placeLabel, withExtrasText } from '../../planText';
 import { areaText } from '../../components/AreaPicker';
 import Receipt, { receiptImage } from '../Receipt';
 import { track } from '../../track';
@@ -19,15 +20,18 @@ function summaryText(plan: Plan) {
     `แผนงานศพ${plan.deceasedName ? ` ${plan.deceasedName}` : ''}`,
     ...(plan.area ? [`พื้นที่: ${areaText(plan.area)}`] : []),
     '',
+    ...(placeLabel(plan.place) ? [`• ตั้งศพที่ไหน: ${placeLabel(plan.place)}`] : []),
     ...QUESTIONS.flatMap((q) => {
       const o = q.options.find((x) => x.id === plan.answers[q.key]);
-      return o ? [`• ${q.title}: ${o.label}`] : [];
+      return o ? [`• ${q.title}: ${withExtrasText(plan.answers, q.key, o.label)}`] : [];
     }),
   ];
   if (b.filled) {
     lines.push('', 'งบประมาณโดยประมาณ');
     for (const l of b.lines) if (l.total > 0) lines.push(`• ${l.label}: ${baht(l.total)}`);
     lines.push(`รวม ${baht(b.total)}`);
+    const sv = planSaving(plan);
+    if (sv.saved > 0) lines.push(`ประหยัดได้ ~${baht(sv.saved)} เมื่อเทียบงานแบบที่นิยม 5 คืน เลี้ยงเหล้า`);
   }
   lines.push('', 'ทำแผนด้วย “ส่งด้วยใจ” เครือข่ายงดเหล้า');
   return lines.join('\n');
@@ -49,7 +53,10 @@ export default function PlanSummary() {
     } catch {
       return; // storage ปิด → ไม่ส่ง กันนับซ้ำทุกครั้งที่เปิด
     }
-    track('PLAN_COMPLETE', { province: plan.area?.province, answers: plan.answers as Record<string, string> });
+    track('PLAN_COMPLETE', {
+      province: plan.area?.province,
+      answers: { ...(plan.answers as Record<string, string>), ...(plan.place ? { place: plan.place } : {}) },
+    });
   }, [plan]);
 
   if (!plan) return <div className="min-h-[60vh]" aria-busy="true" />;
@@ -69,7 +76,7 @@ export default function PlanSummary() {
     );
   }
 
-  const checklist = buildChecklist(plan.answers);
+  const checklist = buildChecklist(plan.answers, plan.place);
   const text = summaryText(plan);
 
   const share = async () => {

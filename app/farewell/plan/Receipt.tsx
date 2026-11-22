@@ -1,17 +1,18 @@
 'use client';
 // app/farewell/plan/Receipt.tsx — "ใบสรุปแผน" ของครอบครัว (ข้างฟอร์มวางแผน + หน้าสรุป + บันทึกเป็นรูป PNG)
 // ค่อย ๆ เติมทีละแถวตามที่เลือก (ผู้ใช้ขอ 3 ต.ค. 2026) — แต่ละแถว = เรื่อง + ตัวเลือก + ค่าใช้จ่ายของเรื่องนั้น
-// ตัวเลขมาจากค่าเริ่มต้นตามตัวเลือก (DEFAULT_COST) หรือที่ครอบครัวแก้เอง · ธีมส้ม-ขาว-ดำ กระดาษขาวแถบส้ม
+// ตัวเลขมาจากค่าเริ่มต้นตามตัวเลือก (DEFAULT_COST) หรือที่ครอบครัวแก้เอง · ขาว-ดำแบบหน้าแรก (ประหยัดได้ = เขียว)
 // ข้อมูลทั้งหมดอยู่ในเครื่องผู้ใช้ ไม่ส่งขึ้นเซิร์ฟเวอร์
 import { QUESTIONS, type QuestionKey } from '../content';
-import { planBudget, type Plan } from '../planStore';
+import { nightly, planBudget, planSaving, type Plan } from '../planStore';
+import { parentOfExtra, placeLabel, withExtrasText } from '../planText';
 import { areaText } from '../components/AreaPicker';
 import styles from './plan.module.css';
 
 const num = (n: number) => n.toLocaleString('th-TH');
 
 export interface ReceiptLine {
-  key: string; // QuestionKey หรือ id ของรายการค่าใช้จ่ายที่ไม่ผูกกับคำถาม (cremation/other)
+  key: string; // QuestionKey · 'place' · หรือ id ของรายการค่าใช้จ่ายที่ไม่ผูกกับคำถาม (cremation/other/cook/brahmin…)
   label: string;
   value: string | null; // ตัวเลือกที่เลือก
   cost: number | null; // ยอดของเรื่องนี้ (คูณวันแล้ว)
@@ -24,6 +25,10 @@ export function receiptLines(plan: Plan): ReceiptLine[] {
   const b = planBudget(plan);
   const byId = new Map(b.lines.map((l) => [l.id, l]));
   const out: ReceiptLine[] = [];
+  // สถานที่ (วัด/บ้าน) จากหน้าแรกหรือขั้นสถานที่ — ไม่มีค่าใช้จ่ายของตัวเอง
+  const place = placeLabel(plan.place);
+  if (place) out.push({ key: 'place', label: 'สถานที่', value: place, cost: null, note: '', isDefault: false });
+  const unit = (id: string) => (nightly(id) ? 'คืน' : 'วัน');
   for (const q of QUESTIONS) {
     const opt = q.options.find((o) => o.id === plan.answers[q.key]);
     if (!opt) continue;
@@ -31,15 +36,22 @@ export function receiptLines(plan: Plan): ReceiptLine[] {
     out.push({
       key: q.key,
       label: q.short,
-      value: opt.label,
+      value: withExtrasText(plan.answers, q.key, opt.label),
       cost: l && l.total > 0 ? l.total : null,
-      note: l && l.perDay && l.amount > 0 && b.days > 1 ? `${num(l.amount)} × ${b.days} วัน` : '',
+      note: l && l.perDay && l.amount > 0 && b.days > 1 ? `${num(l.amount)} × ${b.days} ${unit(q.key)}` : '',
       isDefault: !!l?.isDefault,
     });
   }
   for (const l of b.lines) {
     if (QUESTIONS.some((q) => q.key === l.id) || l.total <= 0) continue;
-    out.push({ key: l.id, label: l.label, value: null, cost: l.total, note: '', isDefault: l.isDefault });
+    out.push({
+      key: l.id,
+      label: l.label,
+      value: null,
+      cost: l.total,
+      note: l.perDay && b.days > 1 ? `${num(l.amount)} × ${b.days} ${unit(l.id)}` : '',
+      isDefault: l.isDefault,
+    });
   }
   return out;
 }
@@ -132,6 +144,13 @@ export async function receiptImage(plan: Plan): Promise<Blob> {
     y += 8;
     rule(false, INK);
     y += 48;
+    const sv = planSaving(plan);
+    if (sv.saved > 0) {
+      text(`ประหยัดได้ ~${num(sv.saved)} บาท`, PAD, 28, { color: '#065f46', weight: 700 });
+      y += 32;
+      text(`เทียบงานแบบที่นิยม 5 คืน เลี้ยงเหล้า (~${num(sv.typical)} บาท)`, PAD, 20, { color: MUTED });
+      y += 44;
+    }
     if (b.net != null) {
       text('เงินช่วยงานที่คาดว่าจะได้รับ', PAD, 24, { color: MUTED });
       text(`${num(plan.support ?? 0)} บาท`, W - PAD, 24, { align: 'right' });
@@ -169,9 +188,10 @@ export default function Receipt({
   /** ขั้นที่กำลังทำ (เน้นแถวนั้น) */
   current?: string;
   /** กดแถวเพื่อกลับไปแก้ขั้นนั้น (เฉพาะหน้าวางแผน) — รายการค่าใช้จ่ายอื่นพาไปขั้นงบประมาณ */
-  onJump?: (key: QuestionKey | 'budget') => void;
+  onJump?: (key: QuestionKey | 'place' | 'budget') => void;
 }) {
   const b = planBudget(plan);
+  const sv = planSaving(plan);
   const lines = receiptLines(plan);
   const anyDefault = lines.some((l) => l.isDefault && l.cost != null);
 
@@ -186,7 +206,7 @@ export default function Receipt({
       <p className="text-center text-xs text-gray-500">ประมาณการค่าใช้จ่าย</p>
 
       <div className="mt-3">
-        <p className={`text-sm font-semibold ${plan.deceasedName ? 'text-gray-900' : 'text-gray-400'}`}>
+        <p className={`text-sm font-semibold ${plan.deceasedName ? 'text-gray-900' : 'text-gray-500'}`}>
           {plan.deceasedName || 'แผนงานของครอบครัว'}
         </p>
         {plan.area && <p className="text-xs text-gray-500">{areaText(plan.area)}</p>}
@@ -194,7 +214,7 @@ export default function Receipt({
       </div>
 
       {lines.length === 0 ? (
-        <p className="mt-4 rounded-lg border border-dashed border-gray-200 px-3 py-5 text-center text-xs leading-relaxed text-gray-400">
+        <p className="mt-4 rounded-lg border border-dashed border-gray-200 px-3 py-5 text-center text-xs leading-relaxed text-gray-500">
           เลือกทีละเรื่อง
           <br />
           รายการจะค่อย ๆ เติมลงตรงนี้
@@ -202,17 +222,20 @@ export default function Receipt({
       ) : (
         <ul className="mt-3 divide-y divide-gray-100 border-y border-gray-100">
           {lines.map((r) => {
-            const isQuestion = QUESTIONS.some((q) => q.key === r.key);
+            // กดแถว = กลับไปแก้ขั้นนั้น · ค่าตัวเลือกย่อย (แม่ครัว/พราหมณ์) ไปขั้นของหมวดแม่ · ค่าใช้จ่ายอื่นไปขั้นงบประมาณ
+            const target = (
+              r.key === 'place' || QUESTIONS.some((q) => q.key === r.key) ? r.key : (parentOfExtra(r.key) ?? 'budget')
+            ) as QuestionKey | 'place' | 'budget';
             const body = (
               <>
                 <span className="min-w-0">
                   <span className="block text-xs text-gray-500">{r.label}</span>
                   {r.value && <span className="block text-[13px] leading-snug text-gray-900">{r.value}</span>}
-                  {r.note && <span className="block text-[11px] text-gray-400">{r.note}</span>}
+                  {r.note && <span className="block text-xs text-gray-500">{r.note}</span>}
                 </span>
                 <span className="shrink-0 text-right text-[13px] tabular-nums text-gray-900">
                   {r.cost != null ? num(r.cost) : ''}
-                  {r.cost != null && r.isDefault && <span className="ml-0.5 text-gray-400" title="ค่าเริ่มต้น แก้ได้ในขั้นงบประมาณ">*</span>}
+                  {r.cost != null && r.isDefault && <span className="ml-0.5 text-gray-500" title="ค่าเริ่มต้น แก้ได้ในขั้นงบประมาณ">*</span>}
                 </span>
               </>
             );
@@ -223,10 +246,10 @@ export default function Receipt({
                 {onJump ? (
                   <button
                     type="button"
-                    onClick={() => onJump(isQuestion ? (r.key as QuestionKey) : 'budget')}
+                    onClick={() => onJump(target)}
                     aria-label={`แก้เรื่อง${r.label}`}
                     aria-current={active ? 'step' : undefined}
-                    className={`${cls} transition-colors hover:bg-yellow-50 ${active ? 'bg-yellow-100' : ''}`}
+                    className={`${cls} transition-colors hover:bg-gray-50 ${active ? 'bg-gray-100' : ''}`}
                   >
                     {body}
                   </button>
@@ -242,10 +265,16 @@ export default function Receipt({
       <div className={styles.total}>
         <span className="text-[13px] font-medium text-gray-900">รวมประมาณการ</span>
         <span className="tabular-nums">
-          <strong className={`text-lg font-semibold ${b.filled ? 'text-gray-900' : 'text-gray-300'}`}>{b.filled ? num(b.total) : '—'}</strong>
+          <strong className={`text-lg font-semibold ${b.filled ? 'text-gray-900' : 'text-gray-400'}`}>{b.filled ? num(b.total) : '—'}</strong>
           <span className="ml-1 text-xs text-gray-500">บาท</span>
         </span>
       </div>
+      {sv.saved > 0 && (
+        <p className="mt-2 rounded-md bg-emerald-50 px-2 py-1.5 text-[13px] text-emerald-800">
+          ประหยัดได้ <strong className="tabular-nums">~{num(sv.saved)} บาท</strong>
+          <span className="block text-xs">เทียบงานแบบที่นิยม 5 คืน เลี้ยงเหล้า</span>
+        </p>
+      )}
       {b.net != null && (
         <div className="mt-2 space-y-1 text-[13px]">
           <p className="flex justify-between gap-3 text-gray-500">
@@ -259,10 +288,10 @@ export default function Receipt({
       )}
 
       <div className={styles.dash} />
-      <p className="text-center text-[11px] leading-relaxed text-gray-500">
+      <p className="text-center text-xs leading-relaxed text-gray-500">
         {anyDefault && (
           <>
-            <span className="text-gray-400">*</span> ค่าเริ่มต้นโดยประมาณ แก้ได้ในขั้นงบประมาณ
+            <span className="text-gray-500">*</span> ค่าเริ่มต้นโดยประมาณ แก้ได้ในขั้นงบประมาณ
             <br />
           </>
         )}

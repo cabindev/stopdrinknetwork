@@ -4,31 +4,54 @@
 // เลย์เอาต์ (ออกแบบใหม่ 28 ต.ค. 2026 — ผู้ใช้ขอ "ดูเป็นทางการ ไม่เอา icon"): แบบฟอร์มขาว-ดำ ไม่มีไอคอนทั้งหน้า ·
 //   จอใหญ่ = 3 คอลัมน์ รายการขั้นตอนมีเลขกำกับ (กดข้ามขั้นได้) | ฟอร์ม | ใบสรุปติดข้าง (กดแถวกลับไปแก้ขั้นนั้น) ·
 //   จอเล็กกว่า lg = แถบความคืบหน้าบนฟอร์ม · มือถือ = แถบยอดรวมติดล่าง กด "ใบสรุป" เปิดแผ่นล่าง
-// สี (ผู้ใช้ขอ 11 พ.ย. 2026 — "ไม่ต้องดำหมด ให้ดูมืออาชีพ"): สีเน้นเหลือง-ดำ (ผู้ใช้เลือกแทนเขียว teal) (ขั้นปัจจุบัน/ตัวเลือกที่เลือก/ปุ่มหลัก/ความคืบหน้า)
-//   ที่เหลือคงขาว-เทา · ยังไม่ใส่ไอคอน (คงแนวทางการเดิม)
+// หน้าตา = แบบเดียวกับหน้าแรก/กระดาน (ผู้ใช้เลือก 22 พ.ย. 2026 — เดิมเหลือง-ดำ 11 พ.ย.): ขาว-ดำ · ตัวเลือกที่เลือก = กรอบดำ + วงทึบมีถูก ·
+//   ปุ่มแคปซูล · "ภาระเบา"/ประหยัดได้ = เขียว emerald · ขั้นตอน = วงกลมเปล่า/ทึบมีถูก · ตัวหนังสือเล็กสุด 12px
 // ขั้นปัจจุบันอยู่ใน URL (?step=) — ไปทำป้ายแล้วกลับมา (หรือกด back) เข้าขั้นเดิม ไม่เริ่มขั้นแรกใหม่
+// หลักเดียวกับหน้าแรก (กระดาน — ผู้ใช้ขอ 22 พ.ย. 2026): ขั้น "สถานที่" (วัด/บ้าน → plan.place) · ตัวเลือกย่อย พราหมณ์/แม่ครัว/คนล้างจาน ·
+//   ราคา + "แพงกว่า/ถูกกว่าที่เลือกอยู่" ทุกตัวเลือก · "ประหยัดได้" เทียบงานแบบที่นิยม (planSaving) — ข้อมูล/ตัวคำนวณชุดเดียวกับกระดาน
 import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { Check } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { DEFAULT_COST_NOTE, QUESTIONS, type Question } from '../content';
-import { baht, planBudget, usePlan, type Plan } from '../planStore';
+import { DEFAULT_COST_NOTE, QUESTIONS, type ExtraKey, type Fact, type Option } from '../content';
+import { baht, planBudget, planSaving, usePlan, type Plan } from '../planStore';
+import { PLACE, extrasOf, priceOf } from '../planText';
 import AreaPicker from '../components/AreaPicker';
 import AgreementList from '../components/AgreementList';
 import Receipt from './Receipt';
 import { trackOncePerTab } from '../track';
 
-const STEPS = ['start', ...QUESTIONS.map((q) => q.key), 'budget'] as const;
+const STEPS = ['start', 'place', ...QUESTIONS.map((q) => q.key), 'budget'] as const;
 type Step = (typeof STEPS)[number];
 const STEP_LABEL: Record<Step, string> = {
   start: 'ข้อมูลเบื้องต้น',
+  place: 'สถานที่',
   ...Object.fromEntries(QUESTIONS.map((q) => [q.key, q.short])),
   budget: 'งบประมาณ',
 } as Record<Step, string>;
 
 const isDone = (plan: Plan, s: Step) =>
-  s === 'start' ? !!(plan.deceasedName || plan.area) : s === 'budget' ? planBudget(plan).filled : !!plan.answers[s];
+  s === 'start'
+    ? !!(plan.deceasedName || plan.area)
+    : s === 'place'
+      ? !!plan.place
+      : s === 'budget'
+        ? planBudget(plan).filled
+        : !!plan.answers[s];
 
-const pad2 = (n: number) => String(n).padStart(2, '0');
+/** วงกลมสถานะขั้น — แบบเดียวกับแถบหมวดหน้าแรก: ยังไม่ทำ = วงเปล่า · ทำแล้ว = วงทึบมีถูก (บนพื้นดำกลับสี) */
+function StepDot({ done, on }: { done: boolean; on: boolean }) {
+  return (
+    <span
+      aria-hidden="true"
+      className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${
+        done ? (on ? 'border-white bg-white text-gray-900' : 'border-gray-900 bg-gray-900 text-white') : on ? 'border-white/60' : 'border-gray-300'
+      }`}
+    >
+      {done && <Check className="w-3.5 h-3.5" />}
+    </span>
+  );
+}
 
 // ── รายการขั้นตอน (จอใหญ่) ───────────────────────────────────────────────────────────
 function StepList({ plan, step, onGo }: { plan: Plan; step: Step; onGo: (s: Step) => void }) {
@@ -46,24 +69,12 @@ function StepList({ plan, step, onGo }: { plan: Plan; step: Step; onGo: (s: Step
                 onClick={() => onGo(s)}
                 aria-current={current ? 'step' : undefined}
                 aria-label={`ขั้นที่ ${i + 1} ${STEP_LABEL[s]}${done ? ' (ทำแล้ว)' : ''}`}
-                className={`flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left transition-colors ${
-                  current ? 'bg-yellow-50 text-gray-900' : 'hover:bg-gray-50'
+                className={`flex w-full items-center gap-3 rounded-full px-3 py-2 text-left text-sm transition-colors ${
+                  current ? 'bg-gray-900 font-medium text-white' : done ? 'text-gray-900 hover:bg-gray-100' : 'text-gray-600 hover:bg-gray-100'
                 }`}
               >
-                {/* เลขขั้นในวงกลม: ทำแล้ว = teal ทึบ · ขั้นนี้ = ขอบ teal · ยังไม่ทำ = ขอบเทา */}
-                <span
-                  className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold tabular-nums ${
-                    done ? 'bg-gray-900 text-yellow-300' : current ? 'border-2 border-gray-900 bg-yellow-400 text-gray-900' : 'border border-gray-300 text-gray-400'
-                  }`}
-                >
-                  {pad2(i + 1)}
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className={`block text-sm ${current ? 'font-semibold' : done ? 'text-gray-900' : 'text-gray-500'}`}>
-                    {STEP_LABEL[s]}
-                  </span>
-                  {done && <span className="block text-[11px] text-gray-500">เลือกแล้ว</span>}
-                </span>
+                <StepDot done={done} on={current} />
+                {STEP_LABEL[s]}
               </button>
             </li>
           );
@@ -76,11 +87,16 @@ function StepList({ plan, step, onGo }: { plan: Plan; step: Step; onGo: (s: Step
   );
 }
 
-// ── แถบความคืบหน้า (จอเล็กกว่า lg) ───────────────────────────────────────────────────
+// ── แถบขั้นตอน (จอเล็กกว่า lg) — ชิปเลื่อนข้างแบบแถบหมวดหน้าแรก ─────────────────────────────
 function StepBar({ plan, step, onGo }: { plan: Plan; step: Step; onGo: (s: Step) => void }) {
+  const listRef = useRef<HTMLOListElement>(null);
+  // เลื่อนชิปขั้นปัจจุบันให้อยู่ในจอ
+  useEffect(() => {
+    listRef.current?.querySelector<HTMLElement>('[aria-current="step"]')?.scrollIntoView({ block: 'nearest', inline: 'center' });
+  }, [step]);
   return (
-    <div className="mb-6 lg:hidden">
-      <ol className="grid gap-1" style={{ gridTemplateColumns: `repeat(${STEPS.length}, minmax(0, 1fr))` }}>
+    <nav aria-label="ขั้นตอนการวางแผน" className="-mx-5 mb-6 overflow-x-auto px-5 sm:-mx-8 sm:px-8 lg:hidden">
+      <ol ref={listRef} className="flex w-max gap-1.5 rounded-full border border-gray-200 bg-white p-1">
         {STEPS.map((s, i) => {
           const current = s === step;
           const done = isDone(plan, s);
@@ -89,23 +105,20 @@ function StepBar({ plan, step, onGo }: { plan: Plan; step: Step; onGo: (s: Step)
               <button
                 type="button"
                 onClick={() => onGo(s)}
-                aria-label={`ขั้นที่ ${i + 1} ${STEP_LABEL[s]}${done ? ' (ทำแล้ว)' : ''}`}
                 aria-current={current ? 'step' : undefined}
-                title={STEP_LABEL[s]}
-                className="group block w-full py-1.5"
+                aria-label={`ขั้นที่ ${i + 1} ${STEP_LABEL[s]}${done ? ' (ทำแล้ว)' : ''}`}
+                className={`inline-flex h-9 items-center gap-1.5 whitespace-nowrap rounded-full px-3 text-sm ${
+                  current ? 'bg-gray-900 text-white' : 'text-gray-700 hover:bg-gray-100'
+                }`}
               >
-                <span
-                  className={`block h-1 rounded-full transition-colors ${
-                    current ? 'bg-yellow-400' : done ? 'bg-gray-900 group-hover:bg-gray-700' : 'bg-gray-200 group-hover:bg-gray-300'
-                  }`}
-                />
+                <StepDot done={done} on={current} />
+                {STEP_LABEL[s]}
               </button>
             </li>
           );
         })}
       </ol>
-      <p className="mt-1 text-right text-[11px] text-gray-500">บันทึกในเครื่องนี้อัตโนมัติ</p>
-    </div>
+    </nav>
   );
 }
 
@@ -114,13 +127,10 @@ function StepHeading({ step, title, lead }: { step: Step; title: string; lead: R
   const i = STEPS.indexOf(step);
   return (
     <div className="border-b border-gray-100 pb-5">
-      <p className="inline-flex items-center gap-2 text-xs font-medium">
-        <span className="rounded-full bg-yellow-400 px-2.5 py-0.5 text-gray-900">
-          ขั้นที่ {i + 1} จาก {STEPS.length}
-        </span>
-        <span className="text-gray-500">{STEP_LABEL[step]}</span>
+      <p className="text-xs text-gray-500">
+        ขั้นที่ {i + 1} จาก {STEPS.length} · {STEP_LABEL[step]}
       </p>
-      <h2 tabIndex={-1} className="mt-1.5 text-xl sm:text-2xl font-semibold leading-snug text-gray-900 outline-none">
+      <h2 tabIndex={-1} className="mt-1 text-xl sm:text-2xl font-semibold leading-snug text-gray-900 outline-none">
         {title}
       </h2>
       <div className="mt-2 text-[15px] leading-relaxed text-gray-600">{lead}</div>
@@ -128,20 +138,30 @@ function StepHeading({ step, title, lead }: { step: Step; title: string; lead: R
   );
 }
 
+/** ข้อที่เลือกตอบได้: คำถามใน QUESTIONS หรือขั้นสถานที่ (PLACE จากกระดาน) */
+interface ChoiceQ {
+  key: string;
+  title: string;
+  why: string;
+  options: Option[];
+  facts: Fact[];
+  tip?: string;
+}
+
 // ── ข้อมูลประกอบการตัดสินใจ ─────────────────────────────────────────────────────────────
 // พับไว้เป็นค่าตั้งต้น — ตัวเลือกกับปุ่มถัดไปต้องเห็นได้โดยไม่ต้องเลื่อน (ผู้ใช้ขอ 3 ต.ค. 2026)
-function Facts({ q }: { q: Question }) {
+function Facts({ q }: { q: ChoiceQ }) {
   if (q.facts.length === 0 && !q.tip) return null;
   return (
     <div className="mt-5 space-y-3">
       {q.tip && (
-        <div className="rounded-lg bg-yellow-50 px-4 py-3">
+        <div className="rounded-2xl bg-gray-50 px-4 py-3">
           <p className="text-xs font-semibold text-gray-900">ข้อแนะนำ</p>
           <p className="mt-0.5 text-sm leading-relaxed text-gray-700">{q.tip}</p>
         </div>
       )}
       {q.facts.length > 0 && (
-        <details className="group rounded-lg border border-gray-200">
+        <details className="group rounded-2xl border border-gray-200">
           <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-medium text-gray-900 hover:bg-gray-50 [&::-webkit-details-marker]:hidden">
             <span>
               ข้อมูลประกอบการตัดสินใจ <span className="font-normal text-gray-500">{q.facts.length} ข้อ</span>
@@ -152,7 +172,7 @@ function Facts({ q }: { q: Question }) {
           <ol className="space-y-4 border-t border-gray-100 px-4 py-4">
             {q.facts.map((f, i) => (
               <li key={f.text} className="flex gap-3">
-                <span className="w-4 shrink-0 text-xs tabular-nums text-gray-400">{i + 1}.</span>
+                <span className="w-4 shrink-0 text-xs tabular-nums text-gray-500">{i + 1}.</span>
                 <span className="min-w-0">
                   <span className="block text-sm leading-relaxed text-gray-800">{f.text}</span>
                   <span className="mt-1 block text-xs text-gray-500">ที่มา: {f.source}</span>
@@ -169,22 +189,26 @@ function Facts({ q }: { q: Question }) {
 // ── คำถามแบบเลือกตอบ ───────────────────────────────────────────────────────────────
 function QuestionStep({
   q,
-  plan,
+  chosen,
+  deltaOf,
   onPick,
   afterOptions,
 }: {
-  q: Question;
-  plan: Plan;
+  q: ChoiceQ;
+  chosen: string | null | undefined;
+  /** ยอดรวมจะเปลี่ยนเท่าไรถ้าเลือกตัวนี้แทนตัวที่เลือกอยู่ (null = ไม่มีให้เทียบ) */
+  deltaOf: (id: string) => number | null;
   onPick: (id: string) => void;
   afterOptions?: ReactNode; // แสดงติดใต้ตัวเลือก (เช่น ปุ่มทำป้ายเมื่อเลือก "ไม่เลี้ยงเหล้า")
 }) {
-  const chosen = plan.answers[q.key];
   return (
     <div>
-      <StepHeading step={q.key} title={q.title} lead={q.why} />
+      <StepHeading step={q.key as Step} title={q.title} lead={q.why} />
       <div role="radiogroup" aria-label={q.title} className="mt-5 grid gap-2.5">
         {q.options.map((o) => {
           const active = chosen === o.id;
+          const price = priceOf(q.key, o.id);
+          const delta = active ? null : deltaOf(o.id);
           return (
             <button
               key={o.id}
@@ -192,29 +216,35 @@ function QuestionStep({
               role="radio"
               aria-checked={active}
               onClick={() => onPick(o.id)}
-              className={`flex w-full items-start gap-4 rounded-lg border px-4 py-3.5 text-left transition-[border-color,background-color,box-shadow] ${
-                active
-                  ? 'border-yellow-500 bg-yellow-50 shadow-[0_0_0_1px_#eab308]'
-                  : 'border-gray-200 bg-white hover:border-yellow-400 hover:bg-yellow-50/40'
+              className={`flex w-full items-start gap-4 rounded-2xl border bg-white px-4 py-3.5 text-left transition-colors hover:bg-gray-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-gray-900 ${
+                active ? 'border-gray-900 ring-1 ring-gray-900' : 'border-gray-200'
               }`}
             >
-              {/* ปุ่มเลือกแบบวงกลม (ตัวควบคุมฟอร์ม ไม่ใช่ไอคอน) */}
-              <span
-                className={`mt-0.5 flex w-[18px] h-[18px] shrink-0 items-center justify-center rounded-full border-[1.5px] transition-colors ${
-                  active ? 'border-gray-900' : 'border-gray-300'
-                }`}
-                aria-hidden="true"
-              >
-                {active && <span className="h-2 w-2 rounded-full bg-gray-900" />}
-              </span>
               <span className="flex-1 min-w-0">
                 <span className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
                   <span className="text-[15px] font-medium text-gray-900">{o.label}</span>
-                  {o.lighter && (
-                    <span className="rounded-full bg-gray-900 px-2 py-px text-[11px] font-medium text-yellow-300">ช่วยลดภาระ</span>
-                  )}
+                  {o.lighter && <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs text-emerald-800">ภาระเบา</span>}
                 </span>
                 <span className="mt-0.5 block text-[13px] leading-relaxed text-gray-500">{o.detail}</span>
+                {/* ราคา + ส่วนต่างจากตัวที่เลือกอยู่ — แบบเดียวกับหน้าแรก */}
+                {(price || (delta != null && delta !== 0)) && (
+                  <span className="mt-1 flex flex-wrap gap-x-2.5 text-xs tabular-nums">
+                    {price && <span className="text-gray-500">~{price}</span>}
+                    {delta != null && delta !== 0 && (
+                      <span className={`font-medium ${delta < 0 ? 'text-emerald-700' : 'text-gray-900'}`}>
+                        {delta < 0 ? `ถูกกว่าที่เลือกอยู่ ${baht(-delta)}` : `แพงกว่าที่เลือกอยู่ ${baht(delta)}`}
+                      </span>
+                    )}
+                  </span>
+                )}
+              </span>
+              <span
+                className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border ${
+                  active ? 'border-gray-900 bg-gray-900 text-white' : 'border-gray-300 text-transparent'
+                }`}
+                aria-hidden="true"
+              >
+                <Check className="w-3.5 h-3.5" />
               </span>
             </button>
           );
@@ -222,6 +252,47 @@ function QuestionStep({
       </div>
       {afterOptions}
       <Facts q={q} />
+    </div>
+  );
+}
+
+// ── ตัวเลือกย่อย มี/ไม่มี (พราหมณ์ใต้พิธี · แม่ครัว/คนล้างจานใต้อาหาร) ─────────────────────────
+function ExtrasBlock({ parent, plan, onPick }: { parent: string; plan: Plan; onPick: (key: ExtraKey, id: string) => void }) {
+  const list = extrasOf(parent);
+  if (list.length === 0) return null;
+  return (
+    <div className="mt-5 space-y-3">
+      {list.map((e) => (
+        <fieldset key={e.key} className="rounded-2xl bg-gray-50 p-3">
+          <legend className="sr-only">{e.title}</legend>
+          <p className="text-sm font-medium text-gray-900">
+            {e.title} <span className="font-normal text-gray-500">· ~{priceOf(e.key, 'yes')}</span>
+          </p>
+          <div role="radiogroup" aria-label={e.title} className="mt-2 grid grid-cols-2 gap-2">
+            {[
+              { id: 'no', label: 'ไม่มี' },
+              { id: 'yes', label: e.yes },
+            ].map((o) => {
+              const active = plan.answers[e.key] === o.id;
+              return (
+                <button
+                  key={o.id}
+                  type="button"
+                  role="radio"
+                  aria-checked={active}
+                  onClick={() => onPick(e.key, o.id)}
+                  className={`inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl border bg-white px-3 text-sm ${
+                    active ? 'border-gray-900 font-medium text-gray-900 ring-1 ring-gray-900' : 'border-gray-200 text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  {active && <Check className="w-3.5 h-3.5" />}
+                  {o.label}
+                </button>
+              );
+            })}
+          </div>
+        </fieldset>
+      ))}
     </div>
   );
 }
@@ -239,7 +310,7 @@ function MoneyInput({
   onChange: (n: number | undefined) => void;
 }) {
   return (
-    <div className="flex h-10 items-center rounded-md border border-gray-300 bg-white transition-colors focus-within:border-gray-900 focus-within:ring-2 focus-within:ring-yellow-200">
+    <div className="flex h-10 items-center rounded-xl border border-gray-300 bg-white transition-colors focus-within:border-gray-900 focus-within:ring-2 focus-within:ring-gray-200">
       <input
         id={id}
         type="text"
@@ -277,10 +348,12 @@ function BudgetStep({ plan, update }: { plan: Plan; update: ReturnType<typeof us
           <>
             ใส่ตัวเลขเริ่มต้นให้แล้วตามที่เลือก แก้ได้ทุกช่องตามราคาที่ได้จากวัดหรือร้านในพื้นที่
             <span className="mt-2 block text-xs text-gray-500">
-              <span className="text-gray-400">*</span> {DEFAULT_COST_NOTE}
+              <span className="text-gray-500">*</span> {DEFAULT_COST_NOTE}
             </span>
             <span className="mt-1 block text-xs text-gray-500">
-              จัดงาน {b.days === 1 ? 'วันเดียว' : `${b.days} วัน`} — รายการที่คิด &ldquo;ต่อวัน&rdquo; ระบบคูณจำนวนวันให้
+              {plan.answers.days
+                ? <>จัดงาน {b.days === 1 ? 'วันเดียว' : `${b.days} คืน`} — รายการที่คิด &ldquo;ต่อวัน/ต่อคืน&rdquo; ระบบคูณให้แล้ว</>
+                : <>ยังไม่ได้เลือกจำนวนวัน — รายการที่คิดต่อวันจะคิดเป็น 1 วันไปก่อน</>}
             </span>
           </>
         }
@@ -304,7 +377,7 @@ function BudgetStep({ plan, update }: { plan: Plan; update: ReturnType<typeof us
                     {l.hint}
                     {l.perDay && l.amount > 0 && b.days > 1 && <> · รวม {baht(l.total)}</>}
                   </span>
-                  {l.isDefault && <span className="mt-0.5 block text-[11px] text-gray-500">* ค่าเริ่มต้น</span>}
+                  {l.isDefault && <span className="mt-0.5 block text-xs text-gray-500">* ค่าเริ่มต้น</span>}
                 </label>
               </td>
               <td className="w-40 py-3">
@@ -313,7 +386,7 @@ function BudgetStep({ plan, update }: { plan: Plan; update: ReturnType<typeof us
                   <button
                     type="button"
                     onClick={() => resetCost(l.id)}
-                    className="mt-1 block w-full text-right text-[11px] text-gray-500 underline underline-offset-2 hover:text-gray-900"
+                    className="mt-1 block w-full text-right text-xs text-gray-500 underline underline-offset-2 hover:text-gray-900"
                   >
                     ใช้ค่าเริ่มต้น {l.fallback.toLocaleString('th-TH')}
                   </button>
@@ -324,12 +397,12 @@ function BudgetStep({ plan, update }: { plan: Plan; update: ReturnType<typeof us
         </tbody>
       </table>
 
-      <div className="mt-2 rounded-lg bg-yellow-50 px-4 py-4 space-y-3">
+      <div className="mt-2 rounded-2xl bg-gray-50 px-4 py-4 space-y-3">
         <div className="flex items-baseline justify-between gap-3">
           <span className="text-sm font-medium text-gray-900">รวมค่าใช้จ่ายโดยประมาณ</span>
           <span className="text-xl font-semibold tabular-nums text-gray-900">{baht(b.total)}</span>
         </div>
-        <div className="grid grid-cols-[minmax(0,1fr),10rem] items-center gap-3 border-t border-yellow-200 pt-3">
+        <div className="grid grid-cols-[minmax(0,1fr),10rem] items-center gap-3 border-t border-gray-200 pt-3">
           <label htmlFor="cost-support">
             <span className="block text-sm font-medium text-gray-900">เงินช่วยงานที่คาดว่าจะได้รับ</span>
             <span className="block text-xs text-gray-500">ไม่ใส่ก็ได้</span>
@@ -337,24 +410,36 @@ function BudgetStep({ plan, update }: { plan: Plan; update: ReturnType<typeof us
           <MoneyInput id="cost-support" value={plan.support ?? undefined} onChange={(n) => update({ support: n ?? null })} />
         </div>
         {b.net != null && (
-          <div className="flex items-baseline justify-between gap-3 border-t border-yellow-200 pt-3">
+          <div className="flex items-baseline justify-between gap-3 border-t border-gray-200 pt-3">
             <span className="text-sm text-gray-700">{b.net > 0 ? 'ครอบครัวต้องออกเพิ่ม' : 'เหลือหลังหักค่าใช้จ่าย'}</span>
             <span className="text-base font-semibold tabular-nums text-gray-900">{baht(Math.abs(b.net))}</span>
           </div>
         )}
       </div>
 
+      {/* ประหยัดได้เมื่อเทียบงานแบบที่นิยม — ตัวคำนวณเดียวกับหน้าแรก */}
+      {(() => {
+        const sv = planSaving(plan);
+        return sv.saved > 0 ? (
+          <section aria-label="ประหยัดได้" className="mt-4 rounded-2xl bg-emerald-50 px-4 py-4">
+            <p className="text-xs text-emerald-800">เทียบงานแบบที่นิยม 5 คืน เลี้ยงเหล้า (~{baht(sv.typical)})</p>
+            <p className="mt-0.5 text-lg font-semibold tabular-nums text-emerald-800">ประหยัดได้ ~{baht(sv.saved)}</p>
+            {sv.alcohol > 0 && <p className="mt-0.5 text-xs text-emerald-800">ไม่เลี้ยงเหล้า ไม่ต้องจ่ายค่าเหล้าราว {baht(sv.alcohol)}</p>}
+          </section>
+        ) : null;
+      })()}
+
       {(b.savedIfOneDay > 0 || b.alcohol > 0) && (
-        <section aria-label="ส่วนที่ปรับได้" className="mt-4 rounded-lg border border-yellow-300 px-4 py-4 space-y-1.5">
+        <section aria-label="ส่วนที่ปรับได้" className="mt-4 rounded-2xl border border-gray-200 px-4 py-4 space-y-1.5">
           <p className="text-xs font-semibold text-gray-900">ประหยัดได้อีก — คำนวณจากตัวเลขในแผนนี้</p>
           {b.savedIfOneDay > 0 && (
             <p className="text-sm text-gray-800">
-              ถ้าจัดวันเดียว รายการที่คิดต่อวันจะลดลง <strong className="tabular-nums text-gray-900 bg-yellow-200 px-1 rounded">{baht(b.savedIfOneDay)}</strong>
+              ถ้าจัดวันเดียว รายการที่คิดต่อวันจะลดลง <strong className="tabular-nums text-emerald-800">{baht(b.savedIfOneDay)}</strong>
             </p>
           )}
           {b.alcohol > 0 && (
             <p className="text-sm text-gray-800">
-              ถ้าไม่เลี้ยงเหล้าเบียร์ จะลดลง <strong className="tabular-nums text-gray-900 bg-yellow-200 px-1 rounded">{baht(b.alcohol)}</strong>
+              ถ้าไม่เลี้ยงเหล้าเบียร์ จะลดลง <strong className="tabular-nums text-emerald-800">{baht(b.alcohol)}</strong>
             </p>
           )}
         </section>
@@ -364,9 +449,9 @@ function BudgetStep({ plan, update }: { plan: Plan; update: ReturnType<typeof us
 }
 
 const BTN_PRIMARY =
-  'inline-flex h-11 items-center rounded-md bg-yellow-400 px-6 text-sm font-semibold text-gray-900 transition-colors hover:bg-yellow-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-900';
+  'inline-flex h-11 items-center rounded-full bg-gray-900 px-6 text-sm font-medium text-white transition-colors hover:bg-gray-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-900';
 const BTN_SECONDARY =
-  'inline-flex h-11 items-center rounded-md border border-gray-300 bg-white px-5 text-sm font-medium text-gray-800 transition-colors hover:bg-gray-50';
+  'inline-flex h-11 items-center rounded-full border border-gray-300 bg-white px-5 text-sm font-medium text-gray-900 transition-colors hover:bg-gray-50';
 
 // ── ตัวหลัก ────────────────────────────────────────────────────────────────────────
 export default function PlanWizard() {
@@ -428,11 +513,17 @@ export default function PlanWizard() {
     setStep(s);
   };
   const go = (d: number) => goTo(STEPS[Math.min(STEPS.length - 1, Math.max(0, index + d))]);
-  const q = QUESTIONS.find((x) => x.key === step);
+  const q: ChoiceQ | undefined = step === 'place' ? PLACE : QUESTIONS.find((x) => x.key === step);
   const isLast = step === 'budget';
   const b = planBudget(plan);
-  const answered = QUESTIONS.filter((x) => plan.answers[x.key]).length;
-  const nextLabel = q && !plan.answers[q.key] ? 'ข้ามข้อนี้' : 'ถัดไป';
+  const answered = QUESTIONS.filter((x) => plan.answers[x.key]).length + (plan.place ? 1 : 0);
+  const chosenOf = (k: string) => (k === 'place' ? plan.place : plan.answers[k as keyof Plan['answers']]);
+  const nextLabel = q && !chosenOf(q.key) ? 'ข้ามข้อนี้' : 'ถัดไป';
+  /** ไปข้อถัดไปเอง (เห็นตัวเลือกที่กดแวบหนึ่ง) */
+  const autoAdvance = () => {
+    if (autoNext.current) clearTimeout(autoNext.current);
+    autoNext.current = setTimeout(() => go(1), 380);
+  };
 
   const nav = (
     <div className="flex items-center gap-2.5">
@@ -455,23 +546,12 @@ export default function PlanWizard() {
 
   return (
     <>
-    {step === 'start' ? (
-      // หัวหน้าจัดกลาง (ผู้ใช้ขอ 3 ต.ค. 2026 — กระชับ) · เส้นคั่นใต้หัวเรื่องแบบเอกสารทางการ
-      <header className="mx-auto mt-2 mb-8 max-w-2xl text-center">
-        <p className="text-sm text-gray-500">ส่งด้วยใจ — แบบวางแผนงานศพสำหรับครอบครัว</p>
-        <h1 className="mt-2 text-2xl sm:text-3xl font-semibold leading-tight text-gray-900">ทุกการเตรียมพร้อม คือความใส่ใจ</h1>
-        <div className="mx-auto mt-4 h-1 w-16 rounded-full bg-yellow-400" aria-hidden="true" />
-        <p className="mt-4 text-[15px] leading-relaxed text-gray-600">
-          ตัดสินใจทีละเรื่อง {STEPS.length} ขั้นตอน ข้ามได้ทุกข้อ ตัวเลขในใบสรุปแก้ได้ภายหลัง
-        </p>
-      </header>
-    ) : (
-      <h1 className="sr-only">วางแผนงานศพ</h1>
-    )}
+    {/* หัวหน้าใหญ่ตัดออก ให้ฟอร์มขึ้นในจอแรก (เหมือนหน้าแรก — 22 พ.ย. 2026) */}
+    <h1 className="sr-only">วางแผนงานศพ — ส่งด้วยใจ</h1>
     {/* ไม่ใส่ overflow-hidden ที่กรอบนี้ — จะทำให้ sticky ข้างใน (ใบสรุป/ปุ่มถัดไป) ติดกับกรอบแทนหน้าจอ · มุมโค้งใส่ที่แผงเทาแทน */}
     <section
       aria-label="วางแผนงานศพ"
-      className="mt-2 grid rounded-xl border border-gray-200 bg-white lg:grid-cols-[200px,minmax(0,1fr),300px]"
+      className="mt-2 grid rounded-2xl border border-gray-200 bg-white lg:grid-cols-[210px,minmax(0,1fr),300px]"
     >
       {/* รายการขั้นตอน (จอใหญ่) */}
       <div className="hidden border-r border-gray-100 p-4 lg:block">
@@ -490,7 +570,7 @@ export default function PlanWizard() {
             />
 
             <label htmlFor="deceased" className="mt-6 block text-sm font-medium text-gray-900">
-              ชื่อผู้วายชนม์ <span className="text-xs font-normal text-gray-400">(ไม่บังคับ)</span>
+              ชื่อผู้วายชนม์ <span className="text-xs font-normal text-gray-500">(ไม่บังคับ)</span>
             </label>
             <input
               id="deceased"
@@ -498,11 +578,11 @@ export default function PlanWizard() {
               value={plan.deceasedName}
               onChange={(e) => update({ deceasedName: e.target.value.slice(0, 120) })}
               placeholder="เช่น คุณแม่สมศรี ใจดี"
-              className="mt-2 h-11 w-full rounded-md border border-gray-300 px-3 text-base sm:text-sm outline-none transition-colors focus:border-gray-900 focus:ring-2 focus:ring-yellow-200"
+              className="mt-2 h-11 w-full rounded-xl border border-gray-300 px-3 text-base sm:text-sm outline-none transition-colors focus:border-gray-900 focus:ring-2 focus:ring-gray-200"
             />
 
             <p className="mt-6 text-sm font-medium text-gray-900">
-              ตำบลที่จะจัดงาน <span className="text-xs font-normal text-gray-400">(ไม่บังคับ)</span>
+              ตำบลที่จะจัดงาน <span className="text-xs font-normal text-gray-500">(ไม่บังคับ)</span>
             </p>
             <div className="mt-2">
               <AreaPicker plain value={plan.area} onChange={(area) => update({ area })} />
@@ -515,11 +595,16 @@ export default function PlanWizard() {
           <>
             <QuestionStep
               q={q}
-              plan={plan}
+              chosen={chosenOf(q.key)}
+              deltaOf={(id) => {
+                const cur = chosenOf(q.key);
+                if (q.key === 'place' || !cur) return null;
+                return planBudget({ ...plan, answers: { ...plan.answers, [q.key]: id } }).total - b.total;
+              }}
               afterOptions={
                 q.key === 'alcohol' && plan.answers.alcohol === 'none' ? (
                   // ติดใต้ตัวเลือกเลย (ผู้ใช้ขอ — เลือกข้อนี้แล้วไปทำป้ายได้ทันที) · ทำเสร็จหน้าป้ายมีปุ่มกลับมาขั้นนี้
-                  <div className="mt-3 flex flex-wrap items-center gap-3 rounded-lg border border-yellow-300 bg-yellow-50 px-4 py-3.5">
+                  <div className="mt-3 flex flex-wrap items-center gap-3 rounded-2xl bg-gray-50 px-4 py-3.5">
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-semibold text-gray-900">ทำป้ายหน้างาน &ldquo;ไม่เลี้ยงเหล้า&rdquo;</p>
                       <p className="mt-0.5 text-[13px] text-gray-600">
@@ -530,15 +615,31 @@ export default function PlanWizard() {
                       เลือกป้าย
                     </Link>
                   </div>
+                ) : extrasOf(q.key).length ? (
+                  <ExtrasBlock
+                    parent={q.key}
+                    plan={plan}
+                    onPick={(key, id) => {
+                      update((p) => ({ answers: { ...p.answers, [key]: id } }));
+                      // ตอบตัวเลือกหลัก + ตัวเลือกย่อยครบแล้วค่อยไปต่อ
+                      const rest = extrasOf(q.key).filter((e) => e.key !== key);
+                      if (chosenOf(q.key) && rest.every((e) => plan.answers[e.key])) autoAdvance();
+                    }}
+                  />
                 ) : undefined
               }
               onPick={(id) => {
+                if (q.key === 'place') {
+                  update({ place: id });
+                  autoAdvance();
+                  return;
+                }
                 update((p) => ({ answers: { ...p.answers, [q.key]: id } }));
-                // เลือกแล้วไปข้อถัดไปเอง (เห็นตัวเลือกที่กดก่อนแวบหนึ่ง) — ยกเว้นขั้นเหล้า
-                // ที่มีข้อตกลงในพื้นที่และลิงก์ทำป้ายให้อ่านต่อด้านล่าง
+                // เลือกแล้วไปข้อถัดไปเอง — ยกเว้นขั้นเหล้า (มีข้อตกลงในพื้นที่/ทำป้ายให้อ่านต่อ)
+                // และข้อที่ยังตอบตัวเลือกย่อยไม่ครบ (พราหมณ์ / แม่ครัว / คนล้างจาน)
                 if (q.key === 'alcohol') return;
-                if (autoNext.current) clearTimeout(autoNext.current);
-                autoNext.current = setTimeout(() => go(1), 380);
+                if (extrasOf(q.key).some((e) => !plan.answers[e.key])) return;
+                autoAdvance();
               }}
             />
             {q.key === 'alcohol' && (
@@ -568,7 +669,7 @@ export default function PlanWizard() {
       </div>
 
       {/* ใบสรุป (จอใหญ่) */}
-      <aside className="hidden rounded-r-xl border-l border-gray-100 bg-gray-50 p-5 lg:block" aria-label="ใบสรุปของครอบครัว">
+      <aside className="hidden rounded-r-2xl border-l border-gray-100 bg-gray-50 p-5 lg:block" aria-label="ใบสรุปของครอบครัว">
         <div className="lg:sticky lg:top-24">
           <div className="mb-3 flex items-baseline justify-between text-xs text-gray-500">
             <span className="font-medium text-gray-900">ใบสรุปของครอบครัว</span>
@@ -586,10 +687,10 @@ export default function PlanWizard() {
         <button
           type="button"
           onClick={() => setSheet(true)}
-          className="mb-2.5 flex w-full items-center justify-between gap-3 rounded-md border border-gray-200 px-3 py-2 text-left"
+          className="mb-2.5 flex w-full items-center justify-between gap-3 rounded-xl border border-gray-200 px-3 py-2 text-left"
         >
           <span className="text-[13px] text-gray-800">
-            <span className="font-medium">ใบสรุป</span> · เลือกแล้ว {answered}/{QUESTIONS.length} เรื่อง
+            <span className="font-medium">ใบสรุป</span> · เลือกแล้ว {answered}/{QUESTIONS.length + 1} เรื่อง
           </span>
           <span className="text-sm tabular-nums text-gray-900 underline underline-offset-2">{b.filled ? baht(b.total) : 'เปิดดู'}</span>
         </button>
@@ -597,7 +698,7 @@ export default function PlanWizard() {
       </div>
 
       {/* แท็บเล็ต (sm–lg): ใบสรุปใต้ฟอร์ม */}
-      <div className="hidden rounded-b-xl border-t border-gray-100 bg-gray-50 p-5 sm:block lg:hidden">
+      <div className="hidden rounded-b-2xl border-t border-gray-100 bg-gray-50 p-5 sm:block lg:hidden">
         <p className="mb-3 text-xs font-medium text-gray-900">ใบสรุปของครอบครัว</p>
         <Receipt plan={plan} current={step} onJump={(k) => goTo(k)} />
       </div>
@@ -605,7 +706,7 @@ export default function PlanWizard() {
       {sheet && (
         <div className="fixed inset-0 z-50 sm:hidden" role="dialog" aria-modal="true" aria-label="ใบสรุปของครอบครัว">
           <button type="button" aria-label="ปิดใบสรุป" className="absolute inset-0 bg-black/40" onClick={() => setSheet(false)} />
-          <div className="absolute inset-x-0 bottom-0 max-h-[85vh] overflow-y-auto rounded-t-xl bg-white px-4 pb-6 pt-3">
+          <div className="absolute inset-x-0 bottom-0 max-h-[85vh] overflow-y-auto rounded-t-2xl bg-white px-4 pb-6 pt-3">
             <div className="mb-3 flex items-center justify-between">
               <span className="text-sm font-medium text-gray-900">ใบสรุปของครอบครัว</span>
               <button

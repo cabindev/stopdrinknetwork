@@ -1,142 +1,77 @@
-// app/page.tsx — หน้าแรก (สาธารณะ ทุกคนเปิดได้ — กดโลโก้ Network ใน Navbar มาที่นี่ · login แล้วซ่อนลิงก์เข้าสู่ระบบ)
-// แผนที่จุด halftone ประเทศไทย (แนวเดียวกับ parliament) + จุดส้ม = พื้นที่ที่เครือข่ายมีงานจริง ดึงสดจาก DB
-// ข้อมูลที่ออกหน้านี้: จำนวนรวม + จุดที่ปัดเข้าตาราง ~18 กม. เท่านั้น (ไม่มีชื่องาน/คน/พิกัดจริง)
+// app/page.tsx — หน้าแรก = กระดานจัดงาน "ส่งด้วยใจ" (ผู้ใช้ตัดสินใจ 21 พ.ย. 2026) · สาธารณะ ไม่ต้อง login · ฟอนต์ IBM (หัวใบสรุปในรูปยังเป็นเสาชิงช้า)
+// หน้าแรกเดิม (แผนที่จุด halftone ของเครือข่าย) ย้ายไป /network · แผนเก็บในเครื่องผู้ใช้เท่านั้น (farewell/planStore.ts)
+import type { Metadata } from 'next';
 import Link from 'next/link';
-import { ArrowRight, BookOpen, Map as MapIcon } from 'lucide-react';
-import { getServerSession } from 'next-auth/next';
-import authOptions from '@/app/lib/configs/auth/authOptions';
-import prisma from '@/app/lib/db';
-import { FOCUS_WHERE } from '@/app/lib/focus';
-import { HALFTONE_VIEWBOX, RECENT_DAYS, toSpots } from '@/app/lib/halftoneMap';
+import { ArrowRight, ClipboardList, Landmark, Megaphone } from 'lucide-react';
+import { SITE_NAME } from './farewell/content';
+import BoardBuilder from './farewell/board/BoardBuilder';
+import TrackView from './farewell/components/TrackView';
+import { sao } from './farewell/saoFont';
 
-export const dynamic = 'force-dynamic';
+export const metadata: Metadata = {
+  title: `${SITE_NAME} — วางแผนงานศพด้วยตัวเอง`,
+  description: 'เลือกทีละเรื่อง ตั้งศพที่วัดหรือบ้าน จัดกี่คืน อาหาร ดอกไม้ ไม่เลี้ยงเหล้า แล้วเห็นภาพรวมงานและงบบนกระดานเดียว ส่งให้ญาติได้',
+};
 
-/** จุดที่มีวงกระเพื่อม (งานใหม่) ไม่เกินเท่านี้ — มากกว่านี้แผนที่ดูวุ่น */
-const MAX_PULSES = 6;
+const MORE = [
+  {
+    href: '/farewell/plan',
+    icon: ClipboardList,
+    title: 'วางแผนละเอียด',
+    text: 'แก้ราคาเองได้ทุกช่อง ได้ใบสรุปไว้พิมพ์',
+  },
+  {
+    href: '/farewell/local',
+    icon: Landmark,
+    title: 'ข้อตกลงในพื้นที่',
+    text: 'ตำบลของคุณมีธรรมนูญงานศพปลอดเหล้าหรือยัง',
+  },
+  {
+    href: '/farewell/signs',
+    icon: Megaphone,
+    title: 'ป้ายหน้างาน',
+    text: 'ป้ายไม่เลี้ยงเหล้า ใส่ชื่อแล้วพิมพ์ได้ทันที',
+  },
+];
 
-async function getNetworkMap() {
-  const [rows, tambons] = await Promise.all([
-    prisma.activity.findMany({ where: FOCUS_WHERE, select: { latitude: true, longitude: true, createdAt: true, province: true } }),
-    prisma.activity.groupBy({ by: ['province', 'district'], where: FOCUS_WHERE }),
-  ]);
-  const spots = toSpots(rows);
-  const pulses = spots
-    .filter((s) => s.recent)
-    .sort((a, b) => b.count - a.count)
-    .slice(0, MAX_PULSES);
-  return {
-    spots,
-    pulses,
-    activities: rows.length,
-    provinces: new Set(rows.map((r) => r.province)).size,
-    tambons: tambons.length,
-  };
-}
-
-const spotRadius = (count: number) => Math.min(13, 6.5 + Math.sqrt(count - 1) * 2);
-
-export default async function HomePage() {
-  const [{ spots, pulses, activities, provinces, tambons }, session] = await Promise.all([getNetworkMap(), getServerSession(authOptions)]);
-  const stats = [
-    { value: activities, label: 'งาน' },
-    { value: provinces, label: 'จังหวัด' },
-    { value: tambons, label: 'ตำบล' },
-  ];
-
+// ?booth=1 = จอที่บูธ (ล้างแผนเองเมื่อไม่มีคนแตะ 60 วิ + หน้าจอชวนลอง + QR) · ?from=qr = มาจาก QR ที่บูธ (แถบต้อนรับ)
+export default async function HomePage({ searchParams }: { searchParams: Promise<{ booth?: string; from?: string }> }) {
+  const sp = await searchParams;
+  const booth = sp.booth === '1';
   return (
-    <main className="min-h-screen bg-white flex flex-col pt-16">
-      <section className="w-full max-w-6xl mx-auto px-4 pt-8 pb-12 sm:pt-12 grid items-center gap-6 md:grid-cols-[1fr_minmax(0,1.05fr)] md:gap-10">
-        {/* ข้อความ — ขนาดเล็ก/กลาง/ใหญ่ สลับกันแบบโปสเตอร์ */}
-        <div className="order-2 md:order-1 text-center md:text-left">
-          {/* ขนาดเล็ก/ใหญ่/แถบดำ แบบโปสเตอร์ (เหมือนหน้า 3D ส่งด้วยใจ) */}
-          <h1 className="font-extrabold text-gray-900 leading-[1.05] tracking-tight">
-            <span className="block text-3xl sm:text-5xl">Intervention</span>
-            <span className="block text-5xl sm:text-7xl text-orange-600">Areas</span>
-            <span className="mt-3 inline-block rounded-lg bg-black px-3 pt-1.5 pb-2 text-lg sm:text-2xl font-bold tracking-normal text-white">
-              Stop Drink Network
-            </span>
-          </h1>
+    <main className={`${sao.variable} min-h-screen bg-white px-4 sm:px-6 ${booth ? 'py-6' : 'pt-20 pb-32 lg:pb-16'}`}>
+      {/* จอที่บูธ = เต็มจอ ไม่มีเมนูด้านบน (คนที่บูธไม่ควรกดออกไปหน้าอื่น) */}
+      {booth && <style>{'.sdn-nav{display:none}'}</style>}
+      {/* pb-32 บนมือถือ = เผื่อแถบยอดรวมติดล่างจอของกระดาน */}
+      {/* ฟอนต์ IBM ทั้งหน้า (ผู้ใช้เลือก 22 พ.ย. 2026 — ตัวเลข/ตัวเล็กอ่านง่ายกว่า) · --font-sao โหลดไว้ให้หัวใบสรุปที่บันทึกเป็นรูปเท่านั้น */}
+      <TrackView type="VISIT" />
+      <BoardBuilder title="เมื่อมีคนที่เรารักจากไป" booth={booth} intro={sp.from === 'qr'} />
 
-          <dl className="mt-7 flex justify-center md:justify-start divide-x divide-gray-200">
-            {stats.map(({ value, label }) => (
-              <div key={label} className="px-5 first:pl-0 last:pr-0">
-                <dt className="sr-only">{label}</dt>
-                <dd className="text-3xl sm:text-4xl font-extrabold tabular-nums text-gray-900">{value.toLocaleString('th-TH')}</dd>
-                <dd className="text-sm text-gray-500">{label}</dd>
-              </div>
+      {!booth && (
+        <section className="mx-auto mt-10 max-w-3xl">
+          <h2 className="text-base font-semibold text-gray-900">เครื่องมืออื่นใน{SITE_NAME}</h2>
+          <div className="mt-3 grid gap-3 sm:grid-cols-3">
+            {MORE.map((t) => (
+              <Link
+                key={t.href}
+                href={t.href}
+                className="flex h-full flex-col rounded-2xl border border-gray-200 bg-white p-4 hover:bg-gray-50"
+              >
+                <span className="flex items-center gap-2 font-medium text-gray-900">
+                  <t.icon className="w-4 h-4" /> {t.title}
+                </span>
+                <span className="mt-1 text-sm leading-relaxed text-gray-600">{t.text}</span>
+              </Link>
             ))}
-          </dl>
-
-          <div className="mt-8 flex flex-col sm:flex-row items-center justify-center md:justify-start gap-3">
-            <Link
-              href="/map"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-gray-900 text-white text-sm font-medium hover:bg-gray-700 transition-colors"
-            >
-              <MapIcon className="w-4 h-4" /> ดูแผนที่งานทั่วประเทศ
-            </Link>
-            <Link
-              href="/stories"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-full border border-gray-300 text-gray-900 text-sm font-medium hover:bg-gray-50 transition-colors"
-            >
-              <BookOpen className="w-4 h-4" /> อ่านกรณีศึกษา
-            </Link>
           </div>
-          {!session && <p className="mt-6 text-sm text-gray-500">
-            เจ้าหน้าที่เครือข่าย{' '}
-            <Link href="/auth/signin" className="font-medium text-gray-900 hover:text-gray-600">
-              เข้าสู่ระบบ
-            </Link>{' '}
-            หรือ{' '}
-            <Link href="/auth/signup" className="font-medium text-gray-900 hover:text-gray-600">
-              สมัครสมาชิก
-            </Link>
-          </p>}
-        </div>
-
-        {/* แผนที่ — ฐาน (SVG นิ่ง cache ได้) + ชั้นจุดงาน viewBox เดียวกัน วางทับพอดี */}
-        <Link
-          href="/map"
-          aria-label={`แผนที่งานของเครือข่าย ${activities} งานใน ${provinces} จังหวัด — เปิดแผนที่เต็ม`}
-          className="group order-1 md:order-2 relative mx-auto block w-full max-w-[300px] sm:max-w-[420px] md:max-w-[520px]"
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element -- SVG ตกแต่งไฟล์เดียว ไม่ต้องผ่าน next/image */}
-          <img src="/maps/thailand-halftone.svg" alt="" className="block w-full h-auto select-none" />
-          <svg viewBox={HALFTONE_VIEWBOX} className="absolute inset-0 w-full h-full" aria-hidden="true">
-            <style>{`
-              .sdn-ring{fill:none;stroke:#ea580c;stroke-width:2.4;transform-box:fill-box;transform-origin:center;opacity:0;animation:sdn-ring 3.6s cubic-bezier(.2,.6,.3,1) infinite}
-              @keyframes sdn-ring{0%{transform:scale(.8);opacity:.85}100%{transform:scale(4);opacity:0}}
-              @media (prefers-reduced-motion:reduce){.sdn-ring{animation:none}}
-            `}</style>
-            {spots.map((s) => (
-              <circle key={`${s.x},${s.y}`} cx={s.x} cy={s.y} r={spotRadius(s.count)} fill="#ea580c" stroke="#fff" strokeWidth={1.5} />
-            ))}
-            {pulses.map((s, i) => (
-              <circle
-                key={`p${s.x},${s.y}`}
-                className="sdn-ring"
-                cx={s.x}
-                cy={s.y}
-                r={spotRadius(s.count)}
-                style={{ animationDelay: `${(i * 0.6).toFixed(1)}s` }}
-              />
-            ))}
-          </svg>
-          <span className="absolute bottom-2 right-0 inline-flex items-center gap-1 rounded-full bg-white/95 border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-700 group-hover:text-gray-600">
-            เปิดแผนที่เต็ม <ArrowRight className="w-3.5 h-3.5" />
-          </span>
-        </Link>
-      </section>
-
-      <p className="w-full max-w-6xl mx-auto px-4 -mt-6 pb-8 text-center md:text-right text-xs text-gray-400">
-        <span className="inline-block w-2 h-2 rounded-full bg-orange-600 align-middle mr-1.5" aria-hidden="true" />
-ทำ        พื้นที่ที่มีงาน (ตำแหน่งโดยประมาณ){pulses.length > 0 && <> · วงกระเพื่อม = มีงานใหม่ใน {RECENT_DAYS} วัน</>}
-      </p>
-
-      <footer className="mt-auto border-t border-gray-200 py-6">
-        <p className="text-center text-xs text-gray-400">
-          &copy; {new Date().getFullYear()} Stop Drink Network — เครือข่ายงดเหล้า
-        </p>
-      </footer>
+          <Link
+            href="/farewell"
+            className="mt-3 inline-flex min-h-10 items-center gap-1 text-sm font-medium text-gray-900 underline-offset-4 hover:underline"
+          >
+            ดูเครื่องมือและข้อมูลทั้งหมด <ArrowRight className="w-4 h-4" />
+          </Link>
+        </section>
+      )}
     </main>
   );
 }

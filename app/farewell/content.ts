@@ -23,7 +23,10 @@ export interface Option {
   lighter?: boolean;
 }
 
-export type QuestionKey = 'days' | 'coffin' | 'food' | 'takeaway' | 'monks' | 'flowers' | 'alcohol';
+export type QuestionKey = 'days' | 'coffin' | 'food' | 'takeaway' | 'monks' | 'flowers' | 'alcohol' | ExtraKey;
+/** ตัวเลือกย่อย มี/ไม่มี (ผู้ใช้ขอ 22 พ.ย. 2026): brahmin = พราหมณ์ทำพิธี (หมวดพระและพิธี) · cook/dishwash = จ้างแม่ครัว/คนล้างจาน (หมวดอาหาร)
+ *  ไม่มีขั้นของตัวเองใน QUESTIONS แต่เก็บใน answers ('yes'|'no') + COST_LINES */
+export type ExtraKey = 'brahmin' | 'cook' | 'dishwash';
 
 export interface Question {
   key: QuestionKey;
@@ -80,7 +83,7 @@ export const QUESTIONS: Question[] = [
     title: 'อาหารเลี้ยงแขก',
     why: 'อาหารเป็นค่าใช้จ่ายที่เกิดซ้ำทุกวันของงาน และใช้แรงคนมากที่สุด',
     options: [
-      { id: 'buffet', label: 'บุฟเฟ่ต์ / ข้าวราดแกง', detail: '“หิวค่อยตัก ไม่หิวไม่ต้องตัก” ไม่ต้องยกเสิร์ฟ', lighter: true },
+      { id: 'buffet', label: 'บุฟเฟ่ต์', detail: '“หิวค่อยตัก ไม่หิวไม่ต้องตัก” ไม่ต้องยกเสิร์ฟ', lighter: true },
       { id: 'potluck', label: 'ญาติและเพื่อนบ้านช่วยกันทำ', detail: 'แบ่งกันรับผิดชอบเป็นวันหรือเป็นมื้อ', lighter: true },
       { id: 'served', label: 'ยกเสิร์ฟถึงโต๊ะ', detail: 'ต้องใช้คนเสิร์ฟ และมักมีอาหารเหลือ' },
     ],
@@ -98,6 +101,8 @@ export const QUESTIONS: Question[] = [
     why: 'ของห่อกลับดูเป็นเรื่องเล็ก แต่คูณด้วยจำนวนแขกทุกวันแล้วกลายเป็นเงินก้อนใหญ่',
     options: [
       { id: 'none', label: 'ไม่มีห่อกลับ', detail: 'ขอบคุณแขกด้วยคำพูดและน้ำใจ', lighter: true },
+      // ลดห่อ: บางพื้นที่ยังเลิกห่อไม่ได้ ให้ห่อแต่น้อยลง (ผู้ใช้ขอ 22 พ.ย. 2026)
+      { id: 'less', label: 'ลดห่อ', detail: 'ยังห่อตามธรรมเนียมของพื้นที่ แต่ห่อน้อยลงหรือชิ้นเล็กลง', lighter: true },
       { id: 'host', label: 'เจ้าภาพจัดสรรเองเท่าที่มี', detail: 'มีเฉพาะที่เหลือหรือที่ตั้งใจให้ ไม่ต้องครบทุกคน', lighter: true },
       { id: 'all', label: 'ห่อกลับให้แขกทุกคน', detail: 'ต้องเตรียมตามจำนวนแขกทุกวัน' },
     ],
@@ -114,7 +119,8 @@ export const QUESTIONS: Question[] = [
     title: 'พระและพิธี',
     why: 'ซองถวายพระและค่าพิธีคิดตามจำนวนคืนและจำนวนรูป หลายวัดพร้อมช่วยให้ครอบครัวจัดงานได้ประหยัด ถ้าได้คุยกันก่อน',
     options: [
-      { id: 'ask', label: 'ปรึกษาวัดเรื่องพระสวดไม่รับซอง', detail: 'ถามวัดตรง ๆ ว่ามีแนวทางช่วยครอบครัวหรือไม่', lighter: true },
+      // "ปรึกษาพระ" (เดิม "ปรึกษาวัด" — ผู้ใช้แก้ 21 พ.ย. 2026)
+      { id: 'ask', label: 'ปรึกษาพระเรื่องสวดไม่รับซอง', detail: 'ถามพระตรง ๆ ว่ามีแนวทางช่วยครอบครัวหรือไม่', lighter: true },
       { id: 'ability', label: 'ถวายตามกำลัง', detail: 'กำหนดยอดที่ครอบครัวไหว แล้วแจ้งวัดล่วงหน้า', lighter: true },
       { id: 'custom', label: 'ตามธรรมเนียมเดิมของพื้นที่', detail: 'ถวายตามที่คนในชุมชนทำกันมา' },
     ],
@@ -136,7 +142,8 @@ export const QUESTIONS: Question[] = [
     key: 'alcohol',
     short: 'เหล้าเบียร์',
     title: 'เหล้าเบียร์ในงาน',
-    why: 'เป็นค่าใช้จ่ายเดียวที่ตัดได้ทันทีโดยไม่เสียน้ำใจ และตัดความเสี่ยงอื่นออกไปพร้อมกัน',
+    // เดิม "เป็นค่าใช้จ่ายเดียวที่ตัดได้ทันที…" มีคนแย้งว่าแข็งไป ครอบครัวกำลังสูญเสีย (ผู้ใช้แก้ 22 พ.ย. 2026)
+    why: 'งานศพงานเศร้า ไม่มีเหล้า มีแต่น้ำใจ',
     options: [
       { id: 'none', label: 'ไม่เลี้ยงเหล้าเบียร์', detail: 'ใช้ป้ายหน้างานบอกแขกแทนการอธิบายเอง', lighter: true },
       { id: 'undecided', label: 'ยังไม่แน่ใจ', detail: 'ดูข้อมูลและข้อตกลงในพื้นที่ก่อน' },
@@ -164,7 +171,10 @@ export const COST_LINES: CostLine[] = [
   { id: 'coffin', label: 'หีบและเครื่องประกอบ', hint: 'ราคารวมจากร้าน' },
   { id: 'food', label: 'อาหารเลี้ยงแขก', hint: 'ต่อวัน', perDay: true },
   { id: 'takeaway', label: 'ของรับแขก / ห่อกลับ', hint: 'ต่อวัน', perDay: true, when: (a) => a.takeaway !== 'none' },
+  { id: 'cook', label: 'ค่าจ้างแม่ครัว', hint: 'ต่อวัน', perDay: true, when: (a) => a.cook === 'yes' },
+  { id: 'dishwash', label: 'ค่าจ้างคนล้างจาน', hint: 'ต่อวัน', perDay: true, when: (a) => a.dishwash === 'yes' },
   { id: 'monks', label: 'ถวายพระและค่าพิธี', hint: 'ต่อคืน', perDay: true },
+  { id: 'brahmin', label: 'ค่าพราหมณ์ทำพิธี', hint: 'ต่อคืน', perDay: true, when: (a) => a.brahmin === 'yes' },
   { id: 'flowers', label: 'ดอกไม้และจัดสถานที่', hint: 'รวมทั้งงาน' },
   { id: 'cremation', label: 'ค่าฌาปนกิจ / เมรุ', hint: 'สอบถามวัด' },
   { id: 'alcohol', label: 'เหล้าเบียร์', hint: 'ต่อวัน', perDay: true, when: (a) => a.alcohol === 'undecided' || a.alcohol === 'serve' },
@@ -180,13 +190,28 @@ export const COST_LINES: CostLine[] = [
 export const DEFAULT_COST: Record<string, Record<string, number> | number> = {
   coffin: { simple: 9000, standard: 25000, ornate: 60000 },
   food: { buffet: 6000, potluck: 3500, served: 15000 }, // ต่อวัน
-  takeaway: { host: 2000, all: 6000 }, // ต่อวัน
+  takeaway: { less: 3000, host: 2000, all: 6000 }, // ต่อวัน
   monks: { ask: 1500, ability: 3000, custom: 6000 }, // ต่อคืน
+  cook: { yes: 1000 }, // ต่อวัน — ผู้ใช้แจ้ง 22 พ.ย. 2026: ค่าจ้างแม่ครัวตอนนี้เริ่มต้น 1,000 บาท
+  dishwash: { yes: 400 }, // ต่อวัน — ประมาณเอง
+  brahmin: { yes: 1500 }, // ต่อคืน — ยังไม่มีข้อมูลจากกรณีศึกษา ตั้งไว้พอให้เห็นในงบ แก้ได้ในหน้าวางแผน
   flowers: { simple: 4000, standard: 12000, full: 30000 },
   alcohol: { undecided: 6000, serve: 10000 }, // ต่อวัน
   cremation: 6000, // ขึ้นเมื่อเลือกจำนวนวันแล้ว
   other: 8000, // รถ ป้าย เครื่องเสียง ฯลฯ — ขึ้นเมื่อเลือกจำนวนวันแล้ว
 };
+/** "งานแบบที่นิยม" ใช้เทียบว่าแผนของครอบครัวประหยัดได้เท่าไร (หน้าแรก — เตรียมเวทีอุบล 27 พ.ย. 2026)
+ *  5 คืน ยกเสิร์ฟ ห่อทุกคน ถวายตามธรรมเนียม ดอกไม้ตามนิยม เลี้ยงเหล้า = 236,000 บาท (จุดอ้างอิง "งาน 3–5 วันในอีสาน/เหนือราว 2–3 แสน") */
+export const TYPICAL_ANSWERS: Partial<Record<QuestionKey, string>> = {
+  days: '5',
+  coffin: 'standard',
+  food: 'served',
+  takeaway: 'all',
+  monks: 'custom',
+  flowers: 'standard',
+  alcohol: 'serve',
+};
+
 export const DEFAULT_COST_NOTE =
   'ตัวเลขเริ่มต้นประมาณจากกรณีศึกษา (งานวันเดียวเรียบง่ายราว 35,000 บาท · งาน 3–5 วันในอีสาน/เหนือราว 2–3 แสนบาท) ราคาจริงแต่ละพื้นที่ต่างกัน แก้ได้ทุกช่อง';
 
@@ -197,16 +222,23 @@ export const SIGN_MESSAGES = [
 ] as const;
 
 /** สิ่งที่ต้องทำ — สร้างตามคำตอบ */
-export function buildChecklist(a: Partial<Record<QuestionKey, string>>): { id: string; text: string }[] {
+export function buildChecklist(a: Partial<Record<QuestionKey, string>>, place?: string | null): { id: string; text: string }[] {
   const list = [
     { id: 'death-cert', text: 'แจ้งการตายและขอใบมรณบัตรที่สำนักทะเบียน (อำเภอ/เทศบาล) ตรวจสอบเอกสารที่ต้องใช้กับสำนักทะเบียนในพื้นที่' },
     { id: 'temple', text: 'ติดต่อวัด นัดวันสวดและวันฌาปนกิจ' },
     { id: 'family', text: 'คุยกับญาติให้เห็นตรงกันเรื่องจำนวนวันและงบประมาณ (ส่งแผนนี้ให้ดูได้)' },
   ];
-  if (a.monks === 'ask') list.push({ id: 'monks-ask', text: 'ถามวัดเรื่องแนวทางพระสวดไม่รับซอง' });
+  // จัดที่บ้าน: งานที่วัดไม่ต้องทำเอง (ผู้ใช้ขอขั้นสถานที่ในหน้าวางแผน 22 พ.ย. 2026)
+  if (place === 'home') {
+    list.push({ id: 'home-tent', text: 'จองเต็นท์ เก้าอี้ ไฟ และเครื่องเสียง ตามจำนวนแขกโดยประมาณ' });
+    list.push({ id: 'home-move', text: 'นัดรถและคนช่วยเคลื่อนศพจากบ้านไปวัดในวันฌาปนกิจ' });
+  }
+  if (a.monks === 'ask') list.push({ id: 'monks-ask', text: 'ปรึกษาพระเรื่องแนวทางสวดไม่รับซอง' });
   if (a.monks === 'ability') list.push({ id: 'monks-ability', text: 'แจ้งวัดล่วงหน้าเรื่องยอดถวายที่ครอบครัวไหว' });
+  if (a.brahmin === 'yes') list.push({ id: 'brahmin', text: 'ติดต่อพราหมณ์/ผู้นำพิธี ตกลงค่าพิธีให้ชัดก่อนวันงาน' });
+  if (a.cook === 'yes' || a.dishwash === 'yes') list.push({ id: 'kitchen-hire', text: 'ตกลงค่าจ้างแม่ครัว/คนล้างจานต่อวันให้ชัดก่อนเริ่มงาน' });
   if (a.coffin) list.push({ id: 'coffin-quote', text: 'ขอราคาหีบอย่างน้อย 2 ร้าน ถามว่าราคารวมอะไรบ้าง' });
-  if (a.food === 'buffet') list.push({ id: 'food-buffet', text: 'สั่งอาหารแบบบุฟเฟ่ต์/ข้าวราดแกง ตามจำนวนแขกโดยประมาณ' });
+  if (a.food === 'buffet') list.push({ id: 'food-buffet', text: 'สั่งอาหารแบบบุฟเฟ่ต์ ตามจำนวนแขกโดยประมาณ' });
   if (a.food === 'potluck') list.push({ id: 'food-potluck', text: 'แบ่งญาติ/เพื่อนบ้านรับผิดชอบอาหารเป็นวันหรือเป็นมื้อ' });
   if (a.alcohol === 'none') list.push({ id: 'sign', text: 'พิมพ์ป้ายหน้างาน “ไม่เลี้ยงเหล้า” ติดให้แขกเห็น' });
   list.push({ id: 'helpers', text: 'มอบหมายคนดูแลแต่ละเรื่อง เจ้าภาพจะได้มีเวลาอยู่กับคนในครอบครัว' });

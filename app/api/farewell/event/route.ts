@@ -9,7 +9,12 @@ import { QUESTIONS } from '@/app/farewell/content';
 
 const NO_STORE = { 'Cache-Control': 'no-store' };
 const TYPES = new Set<string>(Object.values(FarewellEventType));
-const OPTION_IDS = new Map(QUESTIONS.map((q) => [q.key as string, new Set(q.options.map((o) => o.id))]));
+const OPTION_IDS = new Map<string, Set<string>>([
+  ...QUESTIONS.map((q) => [q.key as string, new Set(q.options.map((o) => o.id))] as [string, Set<string>]),
+  // จากกระดานจัดงานหน้าแรก: สถานที่ + ตัวเลือกย่อย มี/ไม่มี (พราหมณ์ แม่ครัว คนล้างจาน)
+  ['place', new Set(['temple', 'home'])],
+  ...(['brahmin', 'cook', 'dishwash'] as const).map((k) => [k, new Set(['yes', 'no'])] as [string, Set<string>]),
+]);
 
 // จำกัด 60 เหตุการณ์ / 10 นาที ต่อ IP (หน่วยความจำของ process — ไม่ต้องแม่นข้ามเครื่อง แค่กันยิงรัว)
 const WINDOW = 10 * 60 * 1000;

@@ -3,7 +3,7 @@
 // ไม่ส่งขึ้นเซิร์ฟเวอร์ (ผู้ใช้ตัดสินใจ ต.ค. 2026: ข้อมูลส่วนตัวของครอบครัวที่เพิ่งสูญเสีย)
 // ใช้ useSyncExternalStore: ฝั่ง server ได้ null แล้วค่อยอ่านค่าจริงตอน hydrate จึงไม่มี hydration mismatch
 import { useCallback, useMemo, useSyncExternalStore } from 'react';
-import { COST_LINES, DEFAULT_COST, type QuestionKey } from './content';
+import { COST_LINES, DEFAULT_COST, TYPICAL_ANSWERS, type QuestionKey } from './content';
 
 const KEY = 'sdn-farewell-plan-v1';
 const EVENT = 'sdn-farewell-plan';
@@ -19,6 +19,8 @@ export interface Plan {
   deceasedName: string;
   area: PlanArea | null;
   answers: Partial<Record<QuestionKey, string>>;
+  /** สถานที่ตั้งศพจากกระดานจัดงาน (temple/home) — ยังไม่มีขั้นในหน้าวางแผน · เดิมเก็บแค่ใน state รีโหลดแล้วหาย */
+  place?: string | null;
   /** ราคาที่ครอบครัวแก้เอง (บาท) — มีค่า = ใช้ค่านี้แทนค่าเริ่มต้น (0 ก็คือตั้งใจให้เป็น 0) · รายการต่อวันเก็บเป็นยอดต่อวัน */
   costs: Record<string, number>;
   /** เงินช่วยงานที่คาดว่าจะได้รับ (ไม่บังคับ) */
@@ -139,5 +141,26 @@ export function planBudget(plan: Plan) {
     filled: lines.some((l) => l.amount > 0),
   };
 }
+
+/** ต้องเลือกเรื่องเงินก้อนหลักครบก่อนค่อยเทียบ "ประหยัดได้" — เลือกเรื่องเดียวแล้วเทียบทั้งงานจะได้ตัวเลขเกินจริง */
+export const SAVING_KEYS: QuestionKey[] = ['days', 'coffin', 'food', 'monks', 'alcohol'];
+
+/** ประหยัดได้เท่าไรเมื่อเทียบ "งานแบบที่นิยม" (TYPICAL_ANSWERS) — ใช้ร่วมหน้าแรก (กระดาน) + หน้าวางแผน + ใบสรุป */
+export function planSaving(plan: Plan) {
+  const b = planBudget(plan);
+  const typical = planBudget({ ...EMPTY_PLAN, answers: TYPICAL_ANSWERS }).total;
+  const ready = SAVING_KEYS.every((k) => plan.answers[k]);
+  const serve = (DEFAULT_COST.alcohol as Record<string, number>).serve;
+  return {
+    ready,
+    typical,
+    saved: ready ? Math.max(0, typical - b.total) : 0,
+    /** ค่าเหล้าที่ไม่ต้องจ่าย (เลือกไม่เลี้ยง + รู้จำนวนวันแล้ว) */
+    alcohol: plan.answers.alcohol === 'none' && plan.answers.days ? serve * b.days : 0,
+  };
+}
+
+/** รายการที่คิดเป็น "คืน" (ไม่ใช่ "วัน") */
+export const nightly = (id: string) => id === 'monks' || id === 'brahmin';
 
 export const baht = (n: number) => `${Math.round(n).toLocaleString('th-TH')} บาท`;

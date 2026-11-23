@@ -10,7 +10,7 @@ import { getTambonCoords } from '@/app/lib/tambonCoords';
 import { isStaffRole, POLICY_LEVELS } from '@/app/lib/activityMeta';
 import { FOCUS_SUB, FOCUS_WHERE } from '@/app/lib/focus';
 import { FUNERAL_SUB } from '@/app/lib/farewellAgreements';
-import { PUBLIC_PIN_SELECT, pinsOpen, toPublicPin } from '@/app/lib/funeralPins';
+import { PUBLIC_PIN_SELECT, toPublicPin } from '@/app/lib/funeralPins';
 
 export const metadata = { title: 'แผนที่รวม — Stop Drink Network' };
 
@@ -129,7 +129,6 @@ export default async function MapPage() {
       <MapView
         activities={activities}
         pins={pinRows.map(toPublicPin)}
-        pinsOpen={pinsOpen()}
         publicView={isPublic}
         categories={categories.map((c) => c.name)}
         // หมวดที่มีโลโก้ → หมุดบนแผนที่เป็นวงกลมโลโก้แทนจุดสี

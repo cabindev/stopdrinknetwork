@@ -1,15 +1,24 @@
-// app/api/pins/route.ts — ปักหมุดงานศพปลอดเหล้าจากแขกในงาน (สาธารณะ ไม่ต้อง login) · GET = หมุดที่แสดง (ไม่มีข้อมูลติดต่อ) · POST = เพิ่มหมุด เฉพาะช่วงเปิด (pinsOpen)
-import { createHash } from 'crypto';
+// app/api/pins/route.ts — หมุดงานศพปลอดเหล้าของครอบครัว
+// GET  = สาธารณะ: หมุดที่ไม่ถูกซ่อน (ไม่มีผู้ปัก/เบอร์/ชื่อผู้วายชนม์ที่ไม่อนุญาตให้แสดง) · ?since=<id> สำหรับดึงหมุดใหม่บนจอแผนที่
+// POST = ต้อง login (ทุก role รวม pending — ไม่ต้องเป็นแอดมิน) · ขึ้นแผนที่ทันที แอดมินซ่อน/ลบทีหลังที่ /dashboard/pins
+//        multipart: `data` = JSON ของฟอร์ม + ไฟล์ `photos` (≤5) / `bills` (≤10) — หรือส่ง JSON ล้วนถ้าไม่มีไฟล์
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth/next';
+import authOptions from '@/app/lib/configs/auth/authOptions';
 import prisma from '@/app/lib/db';
 import { findRegion } from '@/app/lib/regionLookup';
 import { getTambonCoords } from '@/app/lib/tambonCoords';
 import { provinceHealthZones } from '@/app/utils/healthZones';
-import { PIN_KINDS, PIN_PRACTICES, PIN_SOURCE, PUBLIC_PIN_SELECT, pinsOpen, toPublicPin } from '@/app/lib/funeralPins';
+import { removePinDir, savePinFile, validatePinFiles } from '@/app/lib/funeralPinFiles';
+import { filesFrom } from '@/app/lib/activityFiles';
+import { PIN_PLACES, PIN_RELATIONS, PIN_SOURCE, PUBLIC_PIN_SELECT, cleanAnswers, toPublicPin } from '@/app/lib/funeralPins';
+
 const headers = { 'Cache-Control': 'no-store' };
-const limits = new Map<string, number[]>();
-// กันสแปม: ต่อ IP ไม่เกิน RATE_MAX ครั้งใน 10 นาที — ตั้งหลวมไว้ เพราะแขกในงานใช้ Wi-Fi ห้าง/เน็ตมือถือ (CGNAT) ร่วม IP เดียวกันได้หลายสิบคน
-const RATE_MAX = 30;
+
+/** กันกดส่งรัว: ต่อบัญชีไม่เกิน RATE_MAX หมุดใน 1 ชั่วโมง */
+const RATE_MAX = 10;
+const recentByUser = new Map<number, number[]>();
+
 export async function GET(req: NextRequest) {
   const since = Number(req.nextUrl.searchParams.get('since') || 0);
   const rows = await prisma.funeralPin.findMany({
@@ -17,73 +26,116 @@ export async function GET(req: NextRequest) {
     select: PUBLIC_PIN_SELECT,
     orderBy: { createdAt: 'asc' },
   });
-  return NextResponse.json({ pins: rows.map(toPublicPin), open: pinsOpen() }, { headers });
+  return NextResponse.json({ pins: rows.map(toPublicPin) }, { headers });
 }
+
+class InputError extends Error {}
+const str = (v: unknown, max: number) => (typeof v === 'string' ? v.trim().slice(0, max) || null : null);
+
 export async function POST(req: NextRequest) {
-  if (!pinsOpen()) return NextResponse.json({ error: 'เปิดให้ปักหมุดเฉพาะวันที่ 27 พ.ย. 2569' }, { status: 403, headers });
+  const session = await getServerSession(authOptions);
+  const userId = Number(session?.user?.id ?? 0);
+  if (!userId) return NextResponse.json({ error: 'กรุณาเข้าสู่ระบบก่อนปักหมุด' }, { status: 401, headers });
+
+  const now = Date.now();
+  const recent = (recentByUser.get(userId) ?? []).filter((t) => now - t < 3_600_000);
+  if (recent.length >= RATE_MAX) return NextResponse.json({ error: 'ปักหมุดถี่เกินไป ลองใหม่ภายหลัง' }, { status: 429, headers });
+
   try {
-    const b = await req.json();
-    if (typeof b.website === 'string' && b.website.trim()) return NextResponse.json({ ok: true }, { headers });
-    const forwarded =
-      req.headers.get('cf-connecting-ip') ||
-      req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
-      req.headers.get('x-real-ip') ||
-      'unknown';
-    const ipHash = createHash('sha256')
-      .update(`${forwarded}:${process.env.NEXTAUTH_SECRET || ''}`)
-      .digest('hex');
-    const now = Date.now();
-    const recent = (limits.get(ipHash) || []).filter((t) => now - t < 600000);
-    if (recent.length >= RATE_MAX) return NextResponse.json({ error: 'ส่งถี่เกินไป ลองใหม่อีกสักครู่' }, { status: 429, headers });
-    recent.push(now);
-    limits.set(ipHash, recent);
-    const kind = String(b.kind || '');
-    const district = String(b.district || '').trim(),
-      amphoe = String(b.amphoe || '').trim(),
-      province = String(b.province || '').trim();
-    const displayName = typeof b.displayName === 'string' ? b.displayName.trim() || null : null;
-    const story = typeof b.story === 'string' ? b.story.trim() || null : null;
-    const currentYear = new Date().getUTCFullYear() + 543;
-    if (!Object.hasOwn(PIN_KINDS, kind) || !findRegion(district, amphoe, province)) throw new Error('กรุณาเลือกตำบล อำเภอ และจังหวัดให้ถูกต้อง');
-    if (displayName && displayName.length > 120) throw new Error('ชื่อที่แสดงยาวเกิน 120 ตัวอักษร');
-    if (story && story.length > 1000) throw new Error('เรื่องเล่ายาวเกิน 1,000 ตัวอักษร');
-    const yearBE = b.yearBE === '' || b.yearBE == null ? null : Number(b.yearBE);
-    if (yearBE !== null && (!Number.isInteger(yearBE) || yearBE < 2500 || yearBE > currentYear)) throw new Error('ปี พ.ศ. ไม่ถูกต้อง');
-    const practices = Array.isArray(b.practices)
-      ? [...new Set<string>(b.practices.filter((x: unknown): x is string => typeof x === 'string'))]
-      : [];
-    if (!practices.length || practices.length > 10 || practices.some((x) => !Object.hasOwn(PIN_PRACTICES, x)))
-      throw new Error('เลือกสิ่งที่ทำอย่างน้อย 1 ข้อ');
-    const savedAmount = b.savedAmount === '' || b.savedAmount == null ? null : Number(b.savedAmount);
-    if (savedAmount !== null && (!Number.isInteger(savedAmount) || savedAmount < 0 || savedAmount > 10000000))
-      throw new Error('จำนวนเงินไม่ถูกต้อง');
+    let b: Record<string, unknown> | null = null;
+    let photos: File[] = [];
+    let bills: File[] = [];
+    if ((req.headers.get('content-type') ?? '').includes('multipart/form-data')) {
+      const fd = await req.formData();
+      try {
+        b = JSON.parse(String(fd.get('data') ?? ''));
+      } catch {
+        b = null;
+      }
+      photos = filesFrom(fd, 'photos');
+      bills = filesFrom(fd, 'bills');
+    } else {
+      b = (await req.json().catch(() => null)) as Record<string, unknown> | null;
+    }
+    if (!b || typeof b !== 'object') throw new InputError('ข้อมูลไม่ถูกต้อง');
+    const fileError = validatePinFiles(photos, bills);
+    if (fileError) throw new InputError(fileError);
+
+    const district = str(b.district, 100) ?? '';
+    const amphoe = str(b.amphoe, 100) ?? '';
+    const province = str(b.province, 100) ?? '';
+    if (!findRegion(district, amphoe, province)) throw new InputError('กรุณาเลือกตำบลที่จัดงาน');
+
+    const relation = typeof b.relation === 'string' && Object.hasOwn(PIN_RELATIONS, b.relation) ? b.relation : null;
+    if (!relation) throw new InputError('กรุณาเลือกว่าจัดงานให้ใคร');
+    const place = typeof b.place === 'string' && Object.hasOwn(PIN_PLACES, b.place) ? b.place : null;
+    if (!place) throw new InputError('กรุณาเลือกว่าจัดที่วัดหรือที่บ้าน');
+
+    const answers = cleanAnswers(b.answers);
+    if (!answers.days) throw new InputError('กรุณาเลือกจำนวนวันที่จัดงาน');
+    if (!answers.alcohol) throw new InputError('กรุณาตอบเรื่องเหล้าเบียร์ในงาน');
+
+    // วันที่จัดงาน (ไม่บังคับ) — ห้ามเป็นวันในอนาคต และไม่เก่ากว่า พ.ศ. 2540
+    let funeralDate: Date | null = null;
+    if (typeof b.funeralDate === 'string' && b.funeralDate) {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(b.funeralDate)) throw new InputError('วันที่จัดงานไม่ถูกต้อง');
+      funeralDate = new Date(`${b.funeralDate}T00:00:00Z`);
+      if (Number.isNaN(funeralDate.getTime()) || funeralDate.getTime() > now + 86_400_000 || funeralDate.getUTCFullYear() < 1997)
+        throw new InputError('วันที่จัดงานไม่ถูกต้อง');
+    }
+
+    const totalCost = b.totalCost === '' || b.totalCost == null ? null : Number(b.totalCost);
+    if (totalCost !== null && (!Number.isInteger(totalCost) || totalCost < 0 || totalCost > 10_000_000))
+      throw new InputError('ค่าใช้จ่ายไม่ถูกต้อง');
+
+    const story = str(b.story, 4000);
+    if (story && story.length > 1000) throw new InputError('เรื่องเล่ายาวเกิน 1,000 ตัวอักษร');
+
     const coords = getTambonCoords(district, amphoe, province);
-    if (!coords) throw new Error('ไม่พบพิกัดตำบล กรุณาเลือกพื้นที่ใหม่');
-    const consent = b.consent === true;
+    if (!coords) throw new InputError('ไม่พบพิกัดตำบล กรุณาเลือกพื้นที่ใหม่');
+
+    recent.push(now);
+    recentByUser.set(userId, recent);
+
     const row = await prisma.funeralPin.create({
       data: {
-        kind,
-        displayName,
+        userId,
+        kind: 'FAMILY',
+        relation,
+        deceasedFirstName: str(b.deceasedFirstName, 100),
+        deceasedLastName: str(b.deceasedLastName, 100),
+        showDeceasedName: b.showDeceasedName === true,
+        funeralDate,
+        place,
+        answers,
+        totalCost,
         district,
         amphoe,
         province,
         region: provinceHealthZones[province] ?? null,
+        // จุดกลางตำบล + กระจาย ~±900 ม. — หมุดในตำบลเดียวกันไม่ซ้อน และไม่ใช่ตำแหน่งบ้าน
         latitude: coords.lat + (Math.random() - 0.5) * 0.016,
         longitude: coords.lng + (Math.random() - 0.5) * 0.016,
-        yearBE,
-        practices,
-        savedAmount,
+        yearBE: funeralDate ? funeralDate.getUTCFullYear() + 543 : null,
         story,
-        contactName: consent && typeof b.contactName === 'string' ? b.contactName.trim().slice(0, 120) || null : null,
-        contactPhone: consent && typeof b.contactPhone === 'string' ? b.contactPhone.trim().slice(0, 40) || null : null,
-        consent,
         source: PIN_SOURCE,
-        ipHash,
       },
-      select: PUBLIC_PIN_SELECT,
+      select: { id: true },
     });
-    return NextResponse.json({ ok: true, pin: toPublicPin(row) }, { headers });
+    // ไฟล์แนบ — บันทึกไม่สำเร็จ = ยกเลิกทั้งหมุด (ไม่ทิ้งหมุดครึ่ง ๆ กลาง ๆ ไว้บนแผนที่)
+    try {
+      for (const f of photos) await savePinFile(row.id, f, 'PHOTO');
+      for (const f of bills) await savePinFile(row.id, f, 'BILL');
+    } catch (err) {
+      await prisma.funeralPin.delete({ where: { id: row.id } }).catch(() => {});
+      await removePinDir(row.id);
+      throw new InputError((err as Error).message || 'บันทึกไฟล์แนบไม่สำเร็จ');
+    }
+    const pin = await prisma.funeralPin.findUniqueOrThrow({ where: { id: row.id }, select: PUBLIC_PIN_SELECT });
+    return NextResponse.json({ ok: true, pin: toPublicPin(pin) }, { headers });
   } catch (e) {
-    return NextResponse.json({ error: e instanceof Error ? e.message : 'ข้อมูลไม่ถูกต้อง' }, { status: 400, headers });
+    if (e instanceof InputError) return NextResponse.json({ error: e.message }, { status: 400, headers });
+    console.error('[api/pins] create failed', e);
+    return NextResponse.json({ error: 'บันทึกไม่สำเร็จ ลองอีกครั้ง' }, { status: 500, headers });
   }
 }

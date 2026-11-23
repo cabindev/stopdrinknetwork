@@ -2,21 +2,22 @@
 import { useState } from 'react';
 type Pin = {
   id: number;
-  kind: string;
-  displayName: string | null;
-  district: string;
-  amphoe: string;
-  province: string;
-  yearBE: number | null;
-  practices: string[];
-  savedAmount: number | null;
-  story: string | null;
-  contactName: string | null;
-  contactPhone: string | null;
-  createdAt: string;
   hidden: boolean;
+  who: string;
+  whoSub: string | null;
+  relation: string | null;
+  deceased: string | null;
+  showName: boolean;
+  area: string;
+  when: string | null;
+  summary: string;
+  cost: number | null;
+  story: string | null;
+  photos: number[];
+  bills: number[];
+  createdAt: string;
 };
-export default function PinsTable({ pins: initial, labels }: { pins: Pin[]; labels: Record<string, string> }) {
+export default function PinsTable({ pins: initial }: { pins: Pin[] }) {
   const [pins, setPins] = useState(initial);
   const [deleting, setDeleting] = useState<number | null>(null);
   const [error, setError] = useState('');
@@ -49,11 +50,11 @@ export default function PinsTable({ pins: initial, labels }: { pins: Pin[]; labe
   return (
     <div className="overflow-x-auto rounded-2xl border border-gray-200">
       {error && <p className="p-3 text-sm text-red-700">{error}</p>}
-      <table className="w-full min-w-[900px] text-left text-xs">
+      <table className="w-full sm:min-w-[960px] text-left text-xs">
         <thead className="bg-gray-50 text-gray-600">
           <tr>
-            {['ID', 'ใครจัด/ชื่อ', 'พื้นที่', 'ปี', 'สิ่งที่ทำ', 'ประหยัด', 'เรื่องเล่า', 'ผู้ติดต่อ/เบอร์', 'เวลา', 'สถานะ', 'จัดการ'].map((x, i) => (
-              <th key={x} className={`px-3 py-3 font-medium ${i > 4 && i < 10 ? 'hidden sm:table-cell' : ''}`}>
+            {['ID', 'งาน', 'พื้นที่ / วันที่', 'จัดแบบไหน', 'ค่าใช้จ่าย', 'เรื่องเล่า / ไฟล์', 'ผู้ปัก', 'เวลาปัก', 'จัดการ'].map((x, i) => (
+              <th key={x} className={`px-3 py-3 font-medium ${[3, 4, 5, 6, 7].includes(i) ? 'hidden sm:table-cell' : ''}`}>
                 {x}
               </th>
             ))}
@@ -62,36 +63,57 @@ export default function PinsTable({ pins: initial, labels }: { pins: Pin[]; labe
         <tbody className="divide-y divide-gray-100">
           {pins.map((p) => (
             <tr key={p.id} className="align-top">
-              <td className="px-3 py-3">{p.id}</td>
               <td className="px-3 py-3">
-                {labels[p.kind] || p.kind}
-                {p.displayName && <p className="mt-1 font-medium">{p.displayName}</p>}
+                {p.id}
+                {p.hidden && <span className="mt-1 block rounded-full bg-gray-100 px-2 text-center text-gray-600">ซ่อน</span>}
               </td>
               <td className="px-3 py-3">
-                ต.{p.district} อ.{p.amphoe} จ.{p.province}
+                <p className="font-medium text-gray-900">{p.deceased || '—'}</p>
+                <p className="mt-0.5 text-gray-500">
+                  {p.relation ? `จัดให้${p.relation}` : ''}
+                  {p.deceased ? (p.showName ? ' · แสดงชื่อ' : ' · ไม่แสดงชื่อ') : ''}
+                </p>
               </td>
-              <td className="hidden px-3 py-3 sm:table-cell">{p.yearBE || '—'}</td>
-              <td className="hidden max-w-48 px-3 py-3 sm:table-cell">{p.practices.map((x) => labels[x] || x).join(' · ')}</td>
-              <td className="hidden px-3 py-3 sm:table-cell">{p.savedAmount?.toLocaleString() || '—'}</td>
-              <td className="hidden max-w-40 px-3 py-3 sm:table-cell">{p.story || '—'}</td>
+              <td className="px-3 py-3">
+                {p.area}
+                {p.when && <p className="mt-0.5 text-gray-500">{p.when}</p>}
+              </td>
+              <td className="hidden max-w-56 px-3 py-3 sm:table-cell">{p.summary || '—'}</td>
+              <td className="hidden whitespace-nowrap px-3 py-3 tabular-nums sm:table-cell">{p.cost != null ? p.cost.toLocaleString('th-TH') : '—'}</td>
+              <td className="hidden max-w-48 px-3 py-3 sm:table-cell">
+                {p.story || '—'}
+                {(p.photos.length > 0 || p.bills.length > 0) && (
+                  <p className="mt-1.5 flex flex-wrap gap-x-2 gap-y-1">
+                    {p.photos.map((id, i) => (
+                      <a key={id} href={`/api/pin-files/${id}`} target="_blank" rel="noopener" className="text-gray-900 underline underline-offset-2">
+                        รูป {i + 1}
+                      </a>
+                    ))}
+                    {p.bills.map((id, i) => (
+                      <a key={id} href={`/api/pin-files/${id}`} target="_blank" rel="noopener" className="text-gray-900 underline underline-offset-2">
+                        บิล {i + 1}
+                      </a>
+                    ))}
+                  </p>
+                )}
+              </td>
               <td className="hidden px-3 py-3 sm:table-cell">
-                {p.contactName || '—'}
-                <br />
-                {p.contactPhone}
+                {p.who}
+                {p.whoSub && <p className="mt-0.5 text-gray-500">{p.whoSub}</p>}
               </td>
               <td className="hidden whitespace-nowrap px-3 py-3 sm:table-cell">
-                {new Date(p.createdAt).toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' })}
+                {new Date(p.createdAt).toLocaleString('th-TH', { timeZone: 'Asia/Bangkok', dateStyle: 'medium', timeStyle: 'short' })}
               </td>
-              <td className="hidden px-3 py-3 sm:table-cell">{p.hidden ? 'ซ่อน' : 'แสดง'}</td>
               <td className="px-3 py-3">
                 <div className="flex gap-2">
                   <button
+                    type="button"
                     onClick={() => patch(p.id, { hidden: !p.hidden })}
                     className="min-h-9 rounded-full border border-gray-300 px-3 hover:bg-gray-50"
                   >
                     {p.hidden ? 'แสดง' : 'ซ่อน'}
                   </button>
-                  <button onClick={() => remove(p.id)} className="min-h-9 rounded-full border border-gray-300 px-3 hover:bg-gray-50">
+                  <button type="button" onClick={() => remove(p.id)} className="min-h-9 rounded-full border border-gray-300 px-3 hover:bg-gray-50">
                     {deleting === p.id ? 'ยืนยันลบ' : 'ลบ'}
                   </button>
                 </div>

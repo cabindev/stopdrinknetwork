@@ -18,6 +18,12 @@ interface FormData {
 }
 
 export default function SignUpForm() {
+  // หลังสมัคร/ล็อกอินด้วย Google กลับไปหน้าที่มา (เช่น /pin) — รับเฉพาะ path ในเว็บเรา
+  const [callbackUrl] = useState(() => {
+    if (typeof window === 'undefined') return '/map'
+    const cb = new URLSearchParams(window.location.search).get('callbackUrl')
+    return cb && cb.startsWith('/') && !cb.startsWith('//') ? cb : '/map'
+  })
   const [formData, setFormData] = useState<FormData>({
     firstName: "",
     lastName: "",
@@ -82,7 +88,9 @@ export default function SignUpForm() {
       })
 
       if (response.ok) {
-        router.push('/auth/signin')
+        // มาจากหน้าที่ต้อง login (เช่น /pin) → เข้าสู่ระบบแล้วกลับไปหน้านั้น (รับเฉพาะ path ในเว็บเรา)
+        const cb = new URLSearchParams(window.location.search).get('callbackUrl')
+        router.push(cb && cb.startsWith('/') && !cb.startsWith('//') ? `/auth/signin?callbackUrl=${encodeURIComponent(cb)}` : '/auth/signin')
       } else {
         const error = await response.json()
         setError(error.error || 'เกิดข้อผิดพลาด')
@@ -109,7 +117,7 @@ export default function SignUpForm() {
       }
     >
       <div className="space-y-7">
-        <GoogleSignInButton />
+        <GoogleSignInButton callbackUrl={callbackUrl} />
 
         <OrDivider />
 

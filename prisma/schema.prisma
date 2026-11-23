@@ -26,9 +26,10 @@ model User {
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
 
-  activities Activity[]
-  auditLogs  AuditLog[]
-  teamWorks  ActivityMember[] // งานที่ร่วมเป็นทีม (ไม่ใช่เจ้าของ)
+  activities  Activity[]
+  auditLogs   AuditLog[]
+  teamWorks   ActivityMember[] // งานที่ร่วมเป็นทีม (ไม่ใช่เจ้าของ)
+  funeralPins FuneralPin[]
 }
 
 enum Role {
@@ -370,31 +371,60 @@ model FarewellEvent {
   @@index([type, createdAt])
 }
 
-// หมุด "ปักหมุดงานศพปลอดเหล้า" จากแขกในงาน (เวทีอุบล 27 พ.ย. 2026) — ไม่ต้อง login ขึ้นแผนที่ทันที เจ้าหน้าที่แก้/ซ่อนทีหลัง
-// สาธารณะเห็นแค่ ใครจัด/ชื่อที่เลือกแสดง/ตำบล/ปี/สิ่งที่ทำ/ยอดประหยัด/เรื่องเล่า — contact* เห็นเฉพาะแอดมิน · ipHash ใช้กันสแปมเท่านั้น
+// หมุด "งานศพปลอดเหล้าของครอบครัว" — ประชาชนที่ login แล้ว (Google/สมัครปกติ รวมบัญชี pending) ปักงานจริงที่จัดแล้ว ขึ้นแผนที่ทันที
+// แยกจากงานของเจ้าหน้าที่ (Activity) แต่แสดงบน /map ร่วมกัน (หมุดรูปบ้าน) · แอดมินซ่อน/ลบที่ /dashboard/pins
+// สาธารณะเห็น: ความสัมพันธ์ ชื่อผู้วายชนม์ (เฉพาะ showDeceasedName) ตำบล วันที่ สถานที่ คำตอบแผน ค่าใช้จ่าย เรื่องเล่า — ไม่เห็นผู้ปัก/ipHash
 model FuneralPin {
-  id           Int      @id @default(autoincrement())
-  kind         String   @db.VarChar(20) // FAMILY | VILLAGE | TEMPLE | SUBDISTRICT | OTHER
-  displayName  String?  @db.VarChar(120) // เช่น "ครอบครัวศรีสุข" (ไม่ใส่ = ไม่ระบุชื่อ)
-  district     String   @db.VarChar(100) // ตำบล (ต้องมีใน regions.ts)
-  amphoe       String   @db.VarChar(100)
-  province     String   @db.VarChar(100)
-  region       String?  @db.VarChar(40) // HealthZone slug — server คำนวณจากจังหวัด
-  latitude     Float // จุดกลางตำบล + กระจายเล็กน้อย (ไม่ใช่ตำแหน่งบ้าน)
-  longitude    Float
-  yearBE       Int?
-  practices    Json? // string[] รหัสสิ่งที่ทำ เช่น ["no_alcohol","fewer_days"]
-  savedAmount  Int? // ประหยัดได้ประมาณ (บาท)
-  story        String?  @db.Text
-  contactName  String?  @db.VarChar(120)
-  contactPhone String?  @db.VarChar(40)
-  consent      Boolean  @default(false)
-  hidden       Boolean  @default(false) // เจ้าหน้าที่ซ่อนจากแผนที่
-  source       String?  @db.VarChar(40) // เช่น "ubon-2026-11-27"
-  ipHash       String?  @db.VarChar(64)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id                Int              @id @default(autoincrement())
+  userId            Int? // ผู้ปัก (null = หมุดรุ่นแรกที่ไม่ต้อง login)
+  user              User?            @relation(fields: [userId], references: [id], onDelete: SetNull)
+  kind              String           @default("FAMILY") @db.VarChar(20) // FAMILY | VILLAGE | TEMPLE | SUBDISTRICT | OTHER
+  displayName       String?          @db.VarChar(120)
+  relation          String?          @db.VarChar(30) // จัดงานให้ใคร: father | mother | grandparent | spouse | child | relative | other
+  deceasedFirstName String?          @db.VarChar(100)
+  deceasedLastName  String?          @db.VarChar(100)
+  showDeceasedName  Boolean          @default(false) // ครอบครัวเลือกให้แสดงชื่อบนแผนที่
+  funeralDate       DateTime?        @db.Date
+  place             String?          @db.VarChar(20) // temple | home (PLACE ใน farewell/planText.ts)
+  answers           Json? // คำตอบแบบเดียวกับกระดาน { days, coffin, monks, food, takeaway, flowers, alcohol }
+  totalCost         Int? // ค่าใช้จ่ายจริงโดยประมาณ (บาท)
+  district          String           @db.VarChar(100) // ตำบล (ต้องมีใน regions.ts)
+  amphoe            String           @db.VarChar(100)
+  province          String           @db.VarChar(100)
+  region            String?          @db.VarChar(40) // HealthZone slug — server คำนวณจากจังหวัด
+  latitude          Float // จุดกลางตำบล + กระจายเล็กน้อย (ไม่ใช่ตำแหน่งบ้าน)
+  longitude         Float
+  yearBE            Int?
+  practices         Json? // string[] (หมุดรุ่นแรก)
+  savedAmount       Int?
+  story             String?          @db.Text
+  contactName       String?          @db.VarChar(120)
+  contactPhone      String?          @db.VarChar(40)
+  consent           Boolean          @default(false)
+  hidden            Boolean          @default(false) // เจ้าหน้าที่ซ่อนจากแผนที่
+  source            String?          @db.VarChar(40)
+  ipHash            String?          @db.VarChar(64)
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  files             FuneralPinFile[]
 
   @@index([hidden, createdAt])
   @@index([province])
+  @@index([userId])
+}
+
+// ไฟล์แนบของหมุดครอบครัว — PHOTO (≤5, สาธารณะเมื่อหมุดไม่ถูกซ่อน) · BILL บิล/ใบเสร็จ (≤10, เห็นเฉพาะแอดมิน + ผู้ปัก)
+// เก็บที่ uploads/funeral-pins/<pinId>/ เสิร์ฟผ่าน /api/pin-files/[id] เท่านั้น (ห้ามเก็บใน public/)
+model FuneralPinFile {
+  id        Int        @id @default(autoincrement())
+  pinId     Int
+  pin       FuneralPin @relation(fields: [pinId], references: [id], onDelete: Cascade)
+  kind      String     @db.VarChar(10) // PHOTO | BILL
+  filePath  String     @db.VarChar(255)
+  fileName  String     @db.VarChar(255)
+  mimeType  String     @db.VarChar(100)
+  size      Int
+  createdAt DateTime   @default(now())
+
+  @@index([pinId, kind])
 }

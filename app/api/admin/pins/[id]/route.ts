@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/app/lib/db';
 import { getAdminUser } from '@/app/lib/adminAuth';
+import { removePinDir } from '@/app/lib/funeralPinFiles';
 type Context = { params: Promise<{ id: string }> };
 export async function PATCH(req: NextRequest, { params }: Context) {
   if (!(await getAdminUser())) return NextResponse.json({ error: 'ไม่มีสิทธิ์' }, { status: 403 });
@@ -30,6 +31,7 @@ export async function DELETE(_req: NextRequest, { params }: Context) {
   if (!Number.isInteger(n)) return NextResponse.json({ error: 'ไม่พบหมุด' }, { status: 400 });
   try {
     await prisma.funeralPin.delete({ where: { id: n } });
+    await removePinDir(n); // ไฟล์รูป/บิลบนดิสก์ (แถวไฟล์ลบตาม cascade)
     return NextResponse.json({ ok: true });
   } catch {
     return NextResponse.json({ error: 'ไม่พบหมุด' }, { status: 404 });

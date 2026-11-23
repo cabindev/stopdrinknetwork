@@ -1,0 +1,27 @@
+-- ============================================================================
+-- Stop Drink Network — หมุดงานศพปลอดเหล้าของครอบครัว: ต้อง login + ฟอร์มแบบกระดาน (FuneralPin v2) · 23 พ.ย. 2026
+-- เพิ่มผู้ปัก (userId) ความสัมพันธ์ ชื่อผู้วายชนม์ + สิทธิ์แสดงชื่อ วันที่จัด สถานที่ คำตอบแผน ค่าใช้จ่ายจริง
+-- รันหลัง 2026-11-23_funeral-pins.sql · **รันก่อน deploy** · Export สำรองก่อนเสมอ
+-- ตรวจก่อนรัน: SHOW COLUMNS FROM `FuneralPin` LIKE 'userId';  → ต้องว่าง (มีแล้ว = รันไปแล้ว ห้ามรันซ้ำ)
+-- ============================================================================
+
+-- AlterTable
+ALTER TABLE `FuneralPin` ADD COLUMN `answers` JSON NULL,
+    ADD COLUMN `deceasedFirstName` VARCHAR(100) NULL,
+    ADD COLUMN `deceasedLastName` VARCHAR(100) NULL,
+    ADD COLUMN `funeralDate` DATE NULL,
+    ADD COLUMN `place` VARCHAR(20) NULL,
+    ADD COLUMN `relation` VARCHAR(30) NULL,
+    ADD COLUMN `showDeceasedName` BOOLEAN NOT NULL DEFAULT false,
+    ADD COLUMN `totalCost` INTEGER NULL,
+    ADD COLUMN `userId` INTEGER NULL,
+    MODIFY `kind` VARCHAR(20) NOT NULL DEFAULT 'FAMILY';
+
+-- CreateIndex
+CREATE INDEX `FuneralPin_userId_idx` ON `FuneralPin`(`userId`);
+
+-- AddForeignKey
+ALTER TABLE `FuneralPin` ADD CONSTRAINT `FuneralPin_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `User`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+
+-- ตรวจหลังรัน: SHOW COLUMNS FROM `FuneralPin`;  → 30 คอลัมน์

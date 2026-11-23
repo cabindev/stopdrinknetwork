@@ -20,6 +20,7 @@
 | `2026-10-02_story-series.sql` | ชุดกรณีศึกษา: ตาราง StorySeries + Activity.seriesId/seriesOrder (**รันก่อน deploy**) | ✅ รันแล้ว 2 ต.ค. 2026 (ตรวจแล้ว: StorySeries 5 คอลัมน์ + Activity.seriesId/seriesOrder + foreign key) |
 | `2026-10-02_farewell-events.sql` | ตาราง FarewellEvent — สถิติการใช้ "ส่งด้วยใจ" แบบไม่ระบุตัวตน (**รันก่อน deploy**) | ✅ รันแล้ว 2 ต.ค. 2026 (ตรวจแล้ว: 7 คอลัมน์) |
 | `2026-10-13_transfer-funeral-northeast-lower.sql` | **ข้อมูลเท่านั้น** — โอนงานศพปลอดเหล้าภาคอีสานล่างจาก sdn.warehouse → suwanlaya.80@gmail.com (+ audit log, ไม่ขึ้นกับโค้ด รันเมื่อไหร่ก็ได้ ซ้ำได้) | ✅ รันแล้ว 13 ต.ค. 2026 (ตรวจแล้ว: โอน 14 งาน 8 จังหวัด → Suwanlaya tohsing, audit 14 แถว) |
+| `2026-11-23_funeral-pins.sql` | ตาราง FuneralPin — แขกในงานปักหมุดงานศพปลอดเหล้า ไม่ต้อง login (**รันก่อน deploy**) | ✅ รันแล้ว 23 พ.ย. 2026 ผ่าน SSH (สำรองก่อนที่ /root/db-backups/ · ตรวจแล้ว 21 คอลัมน์) |
 
 ไฟล์นี้ทดสอบแล้วกับสำเนาฐานข้อมูล ณ 27 ก.ย. 2026 (ก่อนปรับ) — ผลตรงกับ `schema.prisma` ทุกคอลัมน์
 ถ้าฐานข้อมูล production เก่ากว่านั้น (เช่น ยังไม่มีตาราง WorkSubCategory หรือคอลัมน์ policyLevels) ห้ามรัน —

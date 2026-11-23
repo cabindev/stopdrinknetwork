@@ -275,9 +275,10 @@ export async function renderBoardImage(opts: {
   const bodyY = PAD + headerH;
   const bodyH = Math.max(BOARD_H, listH);
   const costY = bodyY + bodyH + 48;
-  const lineRows = Math.ceil(lines.length / 2);
-  const savingH = saving ? 132 : 0;
-  const costH = 56 + 114 + 46 + savingH + (lines.length ? 34 + lineRows * 74 : 0) + 30;
+  // การ์ดค่าใช้จ่าย: ยอดรวม → เทียบงานแบบที่นิยม (แท่ง 2 แท่ง) → รายการเรียงจากมากไปน้อย คอลัมน์เดียว
+  const LINE_H = 54;
+  const savingH = saving ? 40 + (saving.alcohol ? 262 : 222) : 0;
+  const costH = 56 + 114 + 40 + savingH + (lines.length ? 52 + 34 + lines.length * LINE_H : 0) + 44;
   const footY = costY + costH + 44;
   const H = footY + 96;
 
@@ -405,48 +406,81 @@ export async function renderBoardImage(opts: {
   ctx.fillStyle = 'rgba(255,255,255,0.6)';
   ctx.fillText('ราคาประมาณจากกรณีศึกษา ราคาจริงแต่ละพื้นที่ต่างกัน', cx0, cy);
   if (saving) {
-    // แถบ "ประหยัดได้" สีเขียวในการ์ดเข้ม — ตัวเลขที่คนจะเล่าต่อ
-    cy += 26;
-    ctx.fillStyle = '#065f46';
+    // เทียบให้เห็นด้วยแท่ง: งานแบบที่นิยม vs งานนี้ — ส่วนต่างคือ "ประหยัดได้" ตัวเลขที่คนจะเล่าต่อ
+    cy += 40;
+    const boxH = saving.alcohol ? 262 : 222;
+    ctx.fillStyle = 'rgba(255,255,255,0.07)';
     ctx.beginPath();
-    ctx.roundRect(cx0, cy, cw, 106, 20);
+    ctx.roundRect(cx0, cy, cw, boxH, 24);
     ctx.fill();
-    ctx.font = `700 40px ${family}`;
-    ctx.fillStyle = '#ffffff';
-    ctx.fillText(`ประหยัดได้ ~${Math.round(saving.saved).toLocaleString('th-TH')} บาท`, cx0 + 28, cy + 50);
-    ctx.font = `400 21px ${family}`;
-    ctx.fillStyle = 'rgba(255,255,255,0.78)';
-    const sub = `เทียบงานแบบที่นิยม 5 คืน เลี้ยงเหล้า (~${Math.round(saving.typical).toLocaleString('th-TH')} บาท)${
-      saving.alcohol ? ` · ค่าเหล้าที่ไม่ต้องจ่าย ~${Math.round(saving.alcohol).toLocaleString('th-TH')}` : ''
-    }`;
-    ctx.fillText(wrap(ctx, sub, cw - 56, 1)[0], cx0 + 28, cy + 86);
-    cy += 106;
+    const bx = cx0 + 32;
+    const bw = cw - 64;
+    ctx.font = `700 42px ${family}`;
+    ctx.fillStyle = '#6ee7b7';
+    ctx.fillText(`ประหยัดได้ ~${Math.round(saving.saved).toLocaleString('th-TH')} บาท`, bx, cy + 62);
+    const thisTotal = Math.max(0, saving.typical - saving.saved);
+    const bars: [string, number, string][] = [
+      ['งานแบบที่นิยม 5 คืน เลี้ยงเหล้า', saving.typical, 'rgba(255,255,255,0.28)'],
+      ['งานของบ้านเรา', thisTotal, '#ffffff'],
+    ];
+    bars.forEach(([label, v, color], i) => {
+      const by = cy + 118 + i * 58;
+      ctx.font = `400 21px ${family}`;
+      ctx.fillStyle = 'rgba(255,255,255,0.72)';
+      ctx.fillText(label, bx, by);
+      ctx.textAlign = 'right';
+      ctx.font = `700 21px ${family}`;
+      ctx.fillStyle = 'rgba(255,255,255,0.9)';
+      ctx.fillText(`${Math.round(v).toLocaleString('th-TH')} บาท`, bx + bw, by);
+      ctx.textAlign = 'left';
+      ctx.fillStyle = 'rgba(255,255,255,0.08)';
+      ctx.beginPath();
+      ctx.roundRect(bx, by + 12, bw, 14, 7);
+      ctx.fill();
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.roundRect(bx, by + 12, Math.max(14, (bw * v) / saving.typical), 14, 7);
+      ctx.fill();
+    });
+    if (saving.alcohol) {
+      ctx.font = `400 20px ${family}`;
+      ctx.fillStyle = 'rgba(255,255,255,0.6)';
+      ctx.fillText(`ไม่เลี้ยงเหล้า ไม่ต้องจ่ายค่าเหล้าราว ${Math.round(saving.alcohol).toLocaleString('th-TH')} บาท`, bx, cy + boxH - 30);
+    }
+    cy += boxH;
   }
   if (lines.length) {
+    cy += 52;
+    ctx.font = `500 21px ${family}`;
+    ctx.fillStyle = 'rgba(255,255,255,0.6)';
+    ctx.fillText('แยกรายการ', cx0, cy);
     cy += 34;
-    const colW = (cw - 48) / 2;
-    lines.forEach((l, i) => {
-      const x = cx0 + (i % 2) * (colW + 48);
-      const ry = cy + Math.floor(i / 2) * 74;
-      // จำนวนคี่: รายการสุดท้ายยาวเต็มแถว ไม่ปล่อยช่องขวาว่าง
-      const full = i === lines.length - 1 && lines.length % 2 === 1;
-      const rw = full ? cw : colW;
-      ctx.fillStyle = 'rgba(255,255,255,0.14)';
-      ctx.fillRect(x, ry, rw, 1.5);
-      ctx.font = `400 24px ${family}`;
-      ctx.fillStyle = 'rgba(255,255,255,0.86)';
-      ctx.fillText(wrap(ctx, l.label, colW - 130, 1)[0], x, ry + 34);
-      if (l.detail) {
-        ctx.font = `400 19px ${family}`;
-        ctx.fillStyle = 'rgba(255,255,255,0.5)';
-        ctx.fillText(l.detail, x, ry + 60);
-      }
-      ctx.font = `700 26px ${family}`;
-      ctx.fillStyle = '#ffffff';
-      ctx.textAlign = 'right';
-      ctx.fillText(l.total.toLocaleString('th-TH'), x + rw, ry + 34);
-      ctx.textAlign = 'left';
-    });
+    // เรียงจากมากไปน้อย คอลัมน์เดียว: ชื่อ (+ ราคาต่อวันตัวเล็กต่อท้าย) ····· ยอด
+    [...lines]
+      .sort((a, b) => Number(a.label.startsWith('อื่น')) - Number(b.label.startsWith('อื่น')) || b.total - a.total)
+      .forEach((l, i) => {
+        const ry = cy + i * LINE_H;
+        if (i > 0) {
+          ctx.fillStyle = 'rgba(255,255,255,0.1)';
+          ctx.fillRect(cx0, ry, cw, 1.5);
+        }
+        const base = ry + 36;
+        ctx.font = `400 24px ${family}`;
+        ctx.fillStyle = 'rgba(255,255,255,0.88)';
+        const label = wrap(ctx, l.label, cw - 330, 1)[0];
+        ctx.fillText(label, cx0, base);
+        if (l.detail) {
+          const lw = ctx.measureText(label).width;
+          ctx.font = `400 19px ${family}`;
+          ctx.fillStyle = 'rgba(255,255,255,0.5)';
+          ctx.fillText(l.detail, cx0 + lw + 14, base);
+        }
+        ctx.font = `700 26px ${family}`;
+        ctx.fillStyle = '#ffffff';
+        ctx.textAlign = 'right';
+        ctx.fillText(l.total.toLocaleString('th-TH'), cx0 + cw, base);
+        ctx.textAlign = 'left';
+      });
   }
 
   // ── ท้าย ──

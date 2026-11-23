@@ -142,3 +142,9 @@ html[data-nav-tone="dark"] .sdn-nav .dropdown-menu > div, html[data-nav-tone="da
    ขนาดไอคอนใช้ 3 ระดับ: w-3.5 (ชิป/ข้อความเล็ก) · w-4 (ปุ่ม/เมนู) · w-5 (หัวการ์ด) — ใหญ่กว่านี้เฉพาะภาพประกอบ */
 svg.lucide[stroke-width="2"] { stroke-width: 1.75; }
 svg.lucide[stroke-width="2"]:is(.w-5, .w-6, .w-7, .w-8, .w-10, .w-12) { stroke-width: 1.5; }
+
+.sdn-family-pin { position:relative; display:flex; width:26px; height:26px; align-items:center; justify-content:center; border:2px solid #fff; border-radius:9999px; background:#ea580c; box-shadow:0 1px 4px #0005; }
+.sdn-family-pin.sdn-family-new { animation: sdn-family-drop .5s cubic-bezier(.2,.8,.3,1.25) both; }
+.sdn-family-pulse { position:absolute; inset:-6px; border:2px solid #ea580c; border-radius:9999px; animation:sdn-family-ring 1.8s ease-out infinite; pointer-events:none; }
+@keyframes sdn-family-ring { 0% { transform:scale(.55);opacity:.9 } 100% { transform:scale(1.35);opacity:0 } }
+@keyframes sdn-family-drop { from { transform:translateY(-24px); } to { transform:translateY(0); } }

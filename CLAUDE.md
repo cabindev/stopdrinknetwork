@@ -129,6 +129,9 @@ app/
 │                                 #   · "ประหยัดได้" เทียบ `TYPICAL_ANSWERS` (content.ts, 5 คืน เลี้ยงเหล้า = 236,000) โชว์เมื่อเลือก วัน/หีบ/พิธี/อาหาร/เหล้า ครบ — ทั้งในใบรายการ แถบล่างมือถือ และใบสรุป
 │                                 #   · สถิติ track(): PLAN_START (เลือกเองครั้งแรก) / PLAN_COMPLETE (ครบ 8 เรื่อง ไม่นับ "ดูตัวอย่าง") / SHARE → /dashboard/farewell · API รับ place + ตัวเลือกย่อยแล้ว
 │                                 #   · บันทึกรูปบนมือถือที่แชร์ไฟล์ไม่ได้/เบราว์เซอร์ในแอป LINE-FB = เปิดรูปเต็มจอให้กดค้างบันทึก
+├── pin/                          # ★ "ปักหมุดงานศพปลอดเหล้า" (เวทีอุบล 27 พ.ย. 2026): แขกสแกน QR (public/farewell/qr-pin.svg) กรอกจากมือถือ ไม่ต้อง login → หมุดขึ้น /map ทันที (ไม่ต้องอนุมัติ)
+│                                 #   ตาราง FuneralPin · lib/funeralPins.ts (`pinsOpen()` = เปิดเฉพาะ 27 พ.ย. เวลาไทย, dev เปิดตลอด, `PINS_FORCE_OPEN=1` บังคับเปิด) · API /api/pins (GET สาธารณะไม่มีเบอร์ / POST กันสแปม 30 ครั้ง/10 นาที/IP + honeypot)
+│                                 #   /map: ชั้นหมุดบ้านสีส้ม + การ์ด QR มุมขวาล่าง (เฉพาะวันเปิด) + ดึงหมุดใหม่ทุก 15 วิ เด้งลง+toast · `?pin=<id>` บินไปหมุด · หลังงานแอดมินซ่อน/ลบที่ /dashboard/pins
 ├── network/page.tsx              # หน้าแรกเดิม — แผนที่จุด halftone ไทย (public/maps/thailand-halftone.svg) + จุดส้ม = งานจริง
 │                                 #   ปัดเข้าตาราง ~18 กม. (lib/halftoneMap.ts) + ตัวเลข งาน/จังหวัด/ตำบล · force-dynamic · ยังไม่มีลิงก์เข้า
 ├── layout.tsx                    # SessionProvider + Navbar + Toaster (react-hot-toast มีที่นี่ที่เดียว)

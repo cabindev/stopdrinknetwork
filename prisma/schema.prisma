@@ -136,34 +136,34 @@ model Activity {
   title       String
   description String @db.Text
 
-  categoryId Int
-  category   WorkCategory @relation(fields: [categoryId], references: [id])
+  categoryId    Int
+  category      WorkCategory     @relation(fields: [categoryId], references: [id])
   // ประเด็นย่อย (ไม่บังคับ) — ต้องเป็นของ categoryId เดียวกัน (server ตรวจ)
   subCategoryId Int?
   subCategory   WorkSubCategory? @relation(fields: [subCategoryId], references: [id])
-  userId     Int
-  user       User         @relation(fields: [userId], references: [id])
+  userId        Int
+  user          User             @relation(fields: [userId], references: [id])
 
   // พื้นที่ — auto-fill จาก TambonSearch (ข้อมูลอ้างอิง app/data/regions.ts)
-  areaName  String? // ชื่อชุมชน/หมู่บ้าน/โรงเรียน
-  district  String // ตำบล
-  amphoe    String // อำเภอ
-  province  String // จังหวัด
-  areaScope AreaScope @default(SUBDISTRICT) // งานครอบคลุมแค่ไหน (หมุดของอำเภอ/จังหวัด = จุดกลางอำเภอ/จังหวัด)
-  region    String // โซนพื้นที่ (HealthZone slug เช่น "north-upper" — server คำนวณจากจังหวัด, ดู app/utils/healthZones.ts)
-  zipcode   String?
-  latitude  Float?
-  longitude Float?
+  areaName       String? // ชื่อชุมชน/หมู่บ้าน/โรงเรียน
+  district       String // ตำบล
+  amphoe         String // อำเภอ
+  province       String // จังหวัด
+  areaScope      AreaScope      @default(SUBDISTRICT) // งานครอบคลุมแค่ไหน (หมุดของอำเภอ/จังหวัด = จุดกลางอำเภอ/จังหวัด)
+  region         String // โซนพื้นที่ (HealthZone slug เช่น "north-upper" — server คำนวณจากจังหวัด, ดู app/utils/healthZones.ts)
+  zipcode        String?
+  latitude       Float?
+  longitude      Float?
   // ที่มาของพิกัด — TAMBON = จุดกลางตำบล (โดยประมาณ), อื่น ๆ = ผู้ใช้ปักหมุดตำแหน่งจริง
   locationSource LocationSource @default(TAMBON)
 
   // ผลลัพธ์/ภาคี (ไม่บังคับ)
-  participantCount Int? // จำนวนผู้เข้าร่วม/ผู้ได้รับประโยชน์
-  partners         Json? // string[] จากรายการ PARTNER_OPTIONS (lib/activityMeta.ts)
+  participantCount   Int? // จำนวนผู้เข้าร่วม/ผู้ได้รับประโยชน์
+  partners           Json? // string[] จากรายการ PARTNER_OPTIONS (lib/activityMeta.ts)
   // นโยบาย/ข้อตกลงรายระดับ → ตาราง ActivityPolicy (เดิมเป็น JSON policyLevels/policyDetails — ย้าย ก.ย. 2026)
-  policies         ActivityPolicy[]
+  policies           ActivityPolicy[]
   // มีแบบสำรวจ (ติ๊กได้โดยไม่แนบไฟล์) — ไฟล์แบบสำรวจ = ActivityAttachment.isSurvey
-  hasSurvey        Boolean          @default(false)
+  hasSurvey          Boolean          @default(false)
   // ความครอบคลุมของพื้นที่ (ไม่บังคับ) — ต่างจาก participantCount ที่นับคนเข้าร่วมกิจกรรม
   coverageVillages   Int?
   coverageHouseholds Int?
@@ -177,21 +177,21 @@ model Activity {
   coordinatorConsent Boolean @default(false) // ยินยอมให้บันทึกช่องทางติดต่อ — บังคับเมื่อกรอกเบอร์/LINE
 
   // เผยแพร่เป็นกรณีศึกษาสาธารณะ (/stories/[id], ไม่ต้อง login) — แอดมินกดเผยแพร่ได้เลย (ผู้ใช้ตัดสินใจ ก.ย. 2026)
-  isPublished   Boolean   @default(false)
+  isPublished   Boolean      @default(false)
   publishedAt   DateTime?
   publishedById Int? // แอดมินที่กดเผยแพร่ (ไม่ทำ relation — ดูชื่อจาก audit log)
-  storyLead     String?   @db.Text // บริบท/ปัญหา (ว่าง = ใช้ description)
-  storyProcess  String?   @db.Text // กระบวนการทีละขั้น
-  storyLessons  String?   @db.Text // ปัจจัยสำเร็จ / ข้อควรระวัง
+  storyLead     String?      @db.Text // บริบท/ปัญหา (ว่าง = ใช้ description)
+  storyProcess  String?      @db.Text // กระบวนการทีละขั้น
+  storyLessons  String?      @db.Text // ปัจจัยสำเร็จ / ข้อควรระวัง
   // ชุดกรณีศึกษา (ไม่บังคับ) — หลายเรื่องที่อ่านต่อกันได้ เช่น "สงกรานต์ 6 พื้นที่ต้นแบบ 2569" · 1 เรื่องอยู่ได้ 1 ชุด
   seriesId      Int?
   series        StorySeries? @relation(fields: [seriesId], references: [id], onDelete: SetNull)
   seriesOrder   Int          @default(0) // ลำดับในชุด (น้อย = ก่อน)
 
-  status    ActivityStatus @default(ACTIVE)
-  startDate DateTime?
-  startDatePrecision DatePrecision @default(DAY)
-  endDate   DateTime? // null = ยังดำเนินการต่อเนื่อง
+  status             ActivityStatus @default(ACTIVE)
+  startDate          DateTime?
+  startDatePrecision DatePrecision  @default(DAY)
+  endDate            DateTime? // null = ยังดำเนินการต่อเนื่อง
 
   attachments ActivityAttachment[]
   // ลิงก์ภายนอก (โพสต์ FB, คลิป YouTube, ไฟล์ใน Drive, ข่าว) — แทนการอัปไฟล์ใหญ่/เนื้อหาที่อยู่ที่อื่นแล้ว
@@ -320,16 +320,16 @@ enum AttachmentKind {
 }
 
 model ActivityAttachment {
-  id         Int            @id @default(autoincrement())
-  activityId Int
-  activity   Activity       @relation(fields: [activityId], references: [id], onDelete: Cascade)
-  kind       AttachmentKind
-  filePath   String // path ภายใต้ uploads/ (serve ผ่าน /api/files)
-  fileName   String // ชื่อไฟล์เดิมที่ผู้ใช้อัปโหลด
-  mimeType   String
-  size       Int
-  caption    String? // คำบรรยายใต้รูป (IMAGE)
-  isCover    Boolean        @default(false) // รูปปกของงาน (IMAGE ได้แค่ 1 รูปต่องาน)
+  id          Int            @id @default(autoincrement())
+  activityId  Int
+  activity    Activity       @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  kind        AttachmentKind
+  filePath    String // path ภายใต้ uploads/ (serve ผ่าน /api/files)
+  fileName    String // ชื่อไฟล์เดิมที่ผู้ใช้อัปโหลด
+  mimeType    String
+  size        Int
+  caption     String? // คำบรรยายใต้รูป (IMAGE)
+  isCover     Boolean        @default(false) // รูปปกของงาน (IMAGE ได้แค่ 1 รูปต่องาน)
   // ไฟล์นโยบาย/ข้อตกลงระดับนี้ (PDF/Word/รูปถ่ายเอกสาร) — null = ไฟล์แนบทั่วไป
   // ไม่นับรวมเพดานรูป 5 รูป และไม่ขึ้นในแกลเลอรีรูปกิจกรรม
   policyLevel PolicyLevel?
@@ -337,7 +337,7 @@ model ActivityAttachment {
   isSurvey    Boolean        @default(false)
   // เปิดให้หน้าสาธารณะใช้ได้ (แอดมินติ๊กเองทีละไฟล์ — รูปคน/เด็กต้องได้รับอนุญาตก่อน) ผ่าน /api/public-files/[id]
   isPublic    Boolean        @default(false)
-  createdAt  DateTime       @default(now())
+  createdAt   DateTime       @default(now())
 
   @@index([activityId])
 }
@@ -368,4 +368,33 @@ model FarewellEvent {
   createdAt DateTime          @default(now())
 
   @@index([type, createdAt])
+}
+
+// หมุด "ปักหมุดงานศพปลอดเหล้า" จากแขกในงาน (เวทีอุบล 27 พ.ย. 2026) — ไม่ต้อง login ขึ้นแผนที่ทันที เจ้าหน้าที่แก้/ซ่อนทีหลัง
+// สาธารณะเห็นแค่ ใครจัด/ชื่อที่เลือกแสดง/ตำบล/ปี/สิ่งที่ทำ/ยอดประหยัด/เรื่องเล่า — contact* เห็นเฉพาะแอดมิน · ipHash ใช้กันสแปมเท่านั้น
+model FuneralPin {
+  id           Int      @id @default(autoincrement())
+  kind         String   @db.VarChar(20) // FAMILY | VILLAGE | TEMPLE | SUBDISTRICT | OTHER
+  displayName  String?  @db.VarChar(120) // เช่น "ครอบครัวศรีสุข" (ไม่ใส่ = ไม่ระบุชื่อ)
+  district     String   @db.VarChar(100) // ตำบล (ต้องมีใน regions.ts)
+  amphoe       String   @db.VarChar(100)
+  province     String   @db.VarChar(100)
+  region       String?  @db.VarChar(40) // HealthZone slug — server คำนวณจากจังหวัด
+  latitude     Float // จุดกลางตำบล + กระจายเล็กน้อย (ไม่ใช่ตำแหน่งบ้าน)
+  longitude    Float
+  yearBE       Int?
+  practices    Json? // string[] รหัสสิ่งที่ทำ เช่น ["no_alcohol","fewer_days"]
+  savedAmount  Int? // ประหยัดได้ประมาณ (บาท)
+  story        String?  @db.Text
+  contactName  String?  @db.VarChar(120)
+  contactPhone String?  @db.VarChar(40)
+  consent      Boolean  @default(false)
+  hidden       Boolean  @default(false) // เจ้าหน้าที่ซ่อนจากแผนที่
+  source       String?  @db.VarChar(40) // เช่น "ubon-2026-11-27"
+  ipHash       String?  @db.VarChar(64)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([hidden, createdAt])
+  @@index([province])
 }

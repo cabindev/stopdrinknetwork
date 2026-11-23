@@ -10,6 +10,7 @@ import { getTambonCoords } from '@/app/lib/tambonCoords';
 import { isStaffRole, POLICY_LEVELS } from '@/app/lib/activityMeta';
 import { FOCUS_SUB, FOCUS_WHERE } from '@/app/lib/focus';
 import { FUNERAL_SUB } from '@/app/lib/farewellAgreements';
+import { PUBLIC_PIN_SELECT, pinsOpen, toPublicPin } from '@/app/lib/funeralPins';
 
 export const metadata = { title: 'แผนที่รวม — Stop Drink Network' };
 
@@ -17,7 +18,7 @@ export default async function MapPage() {
   const session = await getServerSession(authOptions);
   const isPublic = !isStaffRole(session?.user?.role);
   const myId = Number(session?.user?.id ?? 0);
-  const [rows, categories, subLogoRows] = await Promise.all([
+  const [rows, categories, pinRows, subLogoRows] = await Promise.all([
     prisma.activity.findMany({
       where: FOCUS_WHERE, // เว็บนี้เน้นงานศพปลอดเหล้า — ประเด็นอื่นซ่อน (lib/focus.ts)
       include: {
@@ -35,6 +36,7 @@ export default async function MapPage() {
       select: { id: true, name: true, logo: true },
       orderBy: { name: 'asc' },
     }),
+    prisma.funeralPin.findMany({ where: { hidden: false }, select: PUBLIC_PIN_SELECT, orderBy: { createdAt: 'asc' } }),
     prisma.workSubCategory.findMany({
       where: { logo: { not: null } },
       select: { id: true, name: true, logo: true, category: { select: { name: true } } },
@@ -126,6 +128,8 @@ export default async function MapPage() {
     <main className="bg-white">
       <MapView
         activities={activities}
+        pins={pinRows.map(toPublicPin)}
+        pinsOpen={pinsOpen()}
         publicView={isPublic}
         categories={categories.map((c) => c.name)}
         // หมวดที่มีโลโก้ → หมุดบนแผนที่เป็นวงกลมโลโก้แทนจุดสี

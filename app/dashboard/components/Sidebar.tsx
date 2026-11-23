@@ -28,6 +28,7 @@ import {
   Contact,
   History,
   Trash2,
+  MapPinned,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -214,6 +215,15 @@ export default function Sidebar({ user }: SidebarProps) {
                   {!sidebarCollapsed && (
                     <span className="ml-2 font-medium text-sm">งานทั้งหมด</span>
                   )}
+                </Link>
+              </div>
+            )}
+
+            {isAdmin && (
+              <div className="px-2 mb-2">
+                <Link href="/dashboard/pins" className={cn("group flex items-center w-full p-2 rounded-lg text-sm transition-colors", pathname?.startsWith("/dashboard/pins") ? "bg-gray-50 text-gray-900" : "text-gray-700 hover:bg-gray-50/60", sidebarCollapsed && "justify-center")} title={sidebarCollapsed ? "หมุดจากแขกในงาน" : ""}>
+                  <div className={cn("flex items-center justify-center", sidebarCollapsed ? "h-8 w-8" : "h-4 w-4")}><MapPinned className={sidebarCollapsed ? "w-5 h-5" : "w-4 h-4"} /></div>
+                  {!sidebarCollapsed && <span className="ml-2 font-medium text-sm">หมุดจากแขกในงาน</span>}
                 </Link>
               </div>
             )}

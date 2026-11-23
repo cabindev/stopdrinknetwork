@@ -18,6 +18,10 @@ export default async function MapPage() {
   const session = await getServerSession(authOptions);
   const isPublic = !isStaffRole(session?.user?.role);
   const myId = Number(session?.user?.id ?? 0);
+  // หมุดครอบครัวของผู้ชมเอง (มีปุ่มแก้ไขในแผงข้าง) — ส่งแค่ id ไม่ส่ง userId ของหมุดอื่นออกไป
+  const myPinIds = myId
+    ? (await prisma.funeralPin.findMany({ where: { userId: myId, hidden: false }, select: { id: true } })).map((p) => p.id)
+    : [];
   const [rows, categories, pinRows, subLogoRows] = await Promise.all([
     prisma.activity.findMany({
       where: FOCUS_WHERE, // เว็บนี้เน้นงานศพปลอดเหล้า — ประเด็นอื่นซ่อน (lib/focus.ts)
@@ -129,6 +133,8 @@ export default async function MapPage() {
       <MapView
         activities={activities}
         pins={pinRows.map(toPublicPin)}
+        myPinIds={myPinIds}
+        canManagePins={['admin', 'superadmin'].includes(String(session?.user?.role ?? ''))}
         publicView={isPublic}
         categories={categories.map((c) => c.name)}
         // หมวดที่มีโลโก้ → หมุดบนแผนที่เป็นวงกลมโลโก้แทนจุดสี

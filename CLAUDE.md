@@ -135,6 +135,8 @@ app/
 │                                 #   ตาราง FuneralPin (userId → User) · lib/funeralPins.ts (PUBLIC_PIN_SELECT/toPublicPin — ห้ามส่ง row ดิบออก API) · API /api/pins (GET สาธารณะ / POST ต้อง session, 10 หมุด/ชม./บัญชี)
 │                                 #   ไฟล์แนบ (FuneralPinFile, lib/funeralPinFiles.ts): **รูป ≤5 = สาธารณะ** (popup แผนที่) · **บิล/ใบเสร็จ ≤10 (รูป/PDF) = แอดมิน+ผู้ปักเท่านั้น** · uploads/funeral-pins/<id>/ เสิร์ฟผ่าน /api/pin-files/[id]
 │                                 #   รูปทุกไฟล์เข้ารหัสใหม่ด้วย sharp (ลบ EXIF/พิกัด GPS ของบ้าน + ยืนยันว่าเป็นรูปจริง) · PDF ตรวจหัว %PDF · ไฟล์บันทึกไม่ได้ = ยกเลิกทั้งหมุด
+│                                 #   **ผู้ปักแก้/ลบเองได้**: /pin มีรายการ "หมุดของฉัน" → /pin/[id]/edit (PinForm โหมด initial: ไฟล์เดิมลบได้ + เพิ่มใหม่) · API PATCH/DELETE /api/pins/[id] (เจ้าของหรือแอดมิน, ตรวจ/อ่านร่วม lib/funeralPinInput.ts) · เปลี่ยนตำบล = ย้ายหมุด
+│                                 #   คลิกหมุดบ้าน = **แผงข้าง FamilyPinPanel** (ขวา/แผ่นล่างมือถือ แบบแผงจังหวัด): รูปทั้งหมด (ImageGallery) · คำตอบทุกข้อ · ค่าใช้จ่าย · เรื่องเล่าเต็ม · ปุ่มแก้ไขเฉพาะเจ้าของ (map/page.tsx ส่ง myPinIds) / แอดมิน
 │                                 #   /map: การ์ด QR มุมขวาล่าง (public/farewell/qr-pin.svg) + ดึงหมุดใหม่ทุก 15 วิ เด้งลง+toast · `?pin=<id>` บินไปหมุด · แอดมินซ่อน/ลบที่ /dashboard/pins (เห็นผู้ปัก+ชื่อเต็ม)
 ├── network/page.tsx              # หน้าแรกเดิม — แผนที่จุด halftone ไทย (public/maps/thailand-halftone.svg) + จุดส้ม = งานจริง
 │                                 #   ปัดเข้าตาราง ~18 กม. (lib/halftoneMap.ts) + ตัวเลข งาน/จังหวัด/ตำบล · force-dynamic · ยังไม่มีลิงก์เข้า

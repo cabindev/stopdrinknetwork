@@ -37,7 +37,8 @@ import type { HealthZone } from '@/app/utils/healthZones';
 import { navigationUrl } from '@/app/lib/geoLink';
 import { POLICY_LEVELS, POLICY_LABEL } from '@/app/lib/activityMeta';
 import { LEVEL_PIN_COLOR } from '@/app/lib/policyLevelColors';
-import { answerLabel, pinTitle, PIN_PLACES, PIN_PRACTICES } from '@/app/lib/funeralPins';
+import { pinTitle } from '@/app/lib/funeralPins';
+import FamilyPinPanel from './FamilyPinPanel';
 import type { PublicPin } from '@/app/lib/funeralPins';
 import { toast } from 'react-hot-toast';
 import NextImage from 'next/image';
@@ -88,6 +89,9 @@ interface MapSite {
 interface MapViewProps {
   activities: MapActivity[];
   pins?: PublicPin[];
+  /** หมุดครอบครัวที่ผู้ชมแก้ได้ (ของตัวเอง) — แอดมินแก้ได้ทุกหมุดผ่าน canManagePins */
+  myPinIds?: number[];
+  canManagePins?: boolean;
   categories: string[];
   categoryLogos: Record<string, string>; // ชื่อหมวด → URL โลโก้ (เฉพาะหมวดที่มี)
   subCategoryLogos: Record<string, string>; // "หมวด|ประเด็นย่อย" → URL โลโก้ (ใช้ก่อนโลโก้หมวด)
@@ -282,7 +286,7 @@ function publicPopupFooter(a: MapActivity) {
     : '<div style="font-size:11px;color:#9ca3af;margin-top:6px">ยังไม่มีกรณีศึกษาเผยแพร่</div>';
 }
 
-export default function MapView({ activities, categories, categoryLogos, subCategoryLogos, publicView = false, pins: initialPins = [] }: MapViewProps) {
+export default function MapView({ activities, categories, categoryLogos, subCategoryLogos, publicView = false, pins: initialPins = [], myPinIds = [], canManagePins = false }: MapViewProps) {
   // โลโก้ของงาน: ประเด็นย่อย → ประเด็นหลัก → ไม่มี (ใช้หมุดสี)
   const logoOf = (a: MapActivity) =>
     (a.subCategory && subCategoryLogos[`${a.category}|${a.subCategory}`]) || categoryLogos[a.category];
@@ -293,6 +297,7 @@ export default function MapView({ activities, categories, categoryLogos, subCate
   const maxPinIdRef = useRef(Math.max(0, ...initialPins.map((pin) => pin.id)));
   const pinQueryHandledRef = useRef(false);
   const [pinCardOpen, setPinCardOpen] = useState(true);
+  const [selectedPinId, setSelectedPinId] = useState<number | null>(null);
   const geoLayerRef = useRef<GeoJSONLayer | null>(null);
   const markersRef = useRef<(CircleMarker | Marker)[]>([]);
   const drawRunRef = useRef(0); // นับรอบวาดหมุด — รอบเก่าที่ยังรอโลโก้ระบายสีอยู่จะไม่วาดทับ
@@ -606,69 +611,32 @@ export default function MapView({ activities, categories, categoryLogos, subCate
         const fresh = Date.now() - Date.parse(p.createdAt) < 10 * 60 * 1000;
         const html = `<span class="sdn-family-pin${fresh ? ' sdn-family-new' : ''}">${fresh ? '<i class="sdn-family-pulse"></i>' : ''}<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="white" d="M3 11.2 12 4l9 7.2-1.4 1.7-1.6-1.3V20h-5v-5h-2v5H8v-8.4l-1.6 1.3z"/></svg></span>`;
         const marker = L.marker([p.latitude,p.longitude], { icon:L.divIcon({html,className:'',iconSize:[30,30],iconAnchor:[15,15],popupAnchor:[0,-14]}), riseOnHover:true }).addTo(pinLayerRef.current);
-        // หมุดครอบครัว (ฟอร์มแบบกระดาน) — สรุปงานจริง: สถานที่ วัน เหล้า + ตัวเลือกที่ภาระเบา · หมุดรุ่นแรกใช้ practices
-        const a = p.answers;
-        const when = p.funeralDate
-          ? new Date(`${p.funeralDate}T00:00:00Z`).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' })
-          : p.yearBE ? `ปี ${p.yearBE}` : '';
-        const facts = [
-          p.place ? PIN_PLACES[p.place as keyof typeof PIN_PLACES] : null,
-          answerLabel('days', a.days),
-          answerLabel('coffin', a.coffin) && `หีบ${answerLabel('coffin', a.coffin)}`,
-          answerLabel('food', a.food),
-          answerLabel('monks', a.monks),
-          answerLabel('takeaway', a.takeaway),
-        ].filter(Boolean) as string[];
-        const practices = p.practices.map((x) => PIN_PRACTICES[x as keyof typeof PIN_PRACTICES] ?? x);
-        const noAlcohol = a.alcohol === 'none' || p.practices.includes('no_alcohol');
-        const posted = new Date(p.createdAt).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Asia/Bangkok' });
-        const row = (t: string, style = 'font-size:12px;color:#4b5563;margin-top:2px') => `<div style="${style}">${t}</div>`;
-        const money = p.totalCost ?? p.savedAmount;
-        marker.bindPopup(
-          `<div style="min-width:210px">` +
-            `<div style="font-size:14px;font-weight:600;color:#111827">${esc(pinTitle(p))}</div>` +
-            row(`ต.${esc(p.district)} อ.${esc(p.amphoe)} จ.${esc(p.province)}${when ? ` · ${esc(when)}` : ''}`) +
-            (noAlcohol ? row('ไม่เลี้ยงเหล้า', 'display:inline-block;font-size:12px;font-weight:600;color:#065f46;background:#ecfdf5;border-radius:9999px;padding:1px 8px;margin-top:6px') : '') +
-            ([...facts, ...practices.filter((x) => x !== 'ไม่เลี้ยงเหล้า')].length
-              ? row(esc([...facts, ...practices.filter((x) => x !== 'ไม่เลี้ยงเหล้า')].join(' · ')), 'font-size:12px;color:#111827;margin-top:6px;line-height:1.5')
-              : '') +
-            (money != null
-              ? row(`${p.totalCost != null ? 'ใช้จ่ายทั้งงาน' : 'ประหยัดได้'} ~${money.toLocaleString('th-TH')} บาท`, 'font-size:12px;color:#111827;font-weight:600;margin-top:4px')
-              : '') +
-            (p.story ? row(`“${esc(p.story.slice(0, 200))}${p.story.length > 200 ? '…' : ''}”`, 'font-size:12px;color:#374151;margin-top:6px;line-height:1.5') : '') +
-            // รูปงาน (สูงสุด 5) — แตะเพื่อเปิดรูปเต็ม · id เป็นตัวเลขจาก DB ไม่ต้อง escape
-            (p.photos.length
-              ? `<div style="display:flex;gap:4px;margin-top:8px">${p.photos
-                  .map(
-                    (id) =>
-                      `<a href="/api/pin-files/${Number(id)}" target="_blank" rel="noopener" style="display:block;width:48px;height:48px;border-radius:8px;overflow:hidden;background:#f3f4f6"><img src="/api/pin-files/${Number(id)}" alt="รูปงาน" loading="lazy" style="width:100%;height:100%;object-fit:cover"></a>`,
-                  )
-                  .join('')}</div>`
-              : '') +
-            row(`ครอบครัวปักหมุดเอง · ${esc(posted)}`, 'font-size:12px;color:#6b7280;margin-top:8px') +
-            `</div>`,
-          { maxWidth: 290 },
-        );
+        // คลิก = เปิดแผงข้าง (FamilyPinPanel) แทน popup · ชื่อบน hover
+        marker.bindTooltip(esc(pinTitle(p)), { direction: 'top', offset: [0, -14] });
+        marker.on('click', () => {
+          setSelectedProvince('');
+          setSelectedPinId(p.id);
+        });
       }
     })();
     return ()=>{cancelled=true};
   }, [mapReady,pins]);
 
+  // ?pin=<id> (หลังปักหมุด/แก้ไข หรือจากลิงก์ "ดูบนแผนที่") = บินไปหมุดแล้วเปิดแผงข้าง · &saved=1 = ขึ้นข้อความขอบคุณ
   useEffect(() => {
-    if (!mapReady) return;
-    const query = new URLSearchParams(window.location.search).get('pin');
-    if (!query || pinQueryHandledRef.current) return;
-    const pin = pins.find(p=>String(p.id)===query); if (!pin) return;
-    const timer=setTimeout(()=>{
-      const map=mapRef.current; if(!map) return;
-      pinQueryHandledRef.current=true;
-      map.flyTo([pin.latitude,pin.longitude],11,{duration:1});
-      // Open the matching marker after the layer has been rendered.
-      setTimeout(()=>{ const matching=pinLayerRef.current?.getLayers().find((layer)=> { const candidate=layer as Marker; return typeof candidate.getLatLng==='function' && candidate.getLatLng().lat===pin.latitude && candidate.getLatLng().lng===pin.longitude; }) as Marker|undefined; matching?.openPopup(); },1100);
-      toast.success('ปักหมุดแล้ว ขอบคุณที่ร่วมแบ่งปัน');
-    },450);
-    return ()=>clearTimeout(timer);
-  },[mapReady,pins]);
+    if (!mapReady || pinQueryHandledRef.current) return;
+    const sp = new URLSearchParams(window.location.search);
+    const pin = pins.find((p) => String(p.id) === sp.get('pin'));
+    if (!pin) return;
+    pinQueryHandledRef.current = true;
+    const timer = setTimeout(() => {
+      mapRef.current?.flyTo([pin.latitude, pin.longitude], 11, { duration: 1 });
+      setSelectedProvince('');
+      setSelectedPinId(pin.id);
+      if (sp.get('saved') === '1') toast.success('บันทึกหมุดแล้ว ขอบคุณที่ร่วมแบ่งปัน');
+    }, 450);
+    return () => clearTimeout(timer);
+  }, [mapReady, pins]);
 
   useEffect(() => {
     maxPinIdRef.current=Math.max(maxPinIdRef.current,...pins.map(p=>p.id)); let stopped=false;
@@ -1334,6 +1302,13 @@ export default function MapView({ activities, categories, categoryLogos, subCate
       </div>
 
       {/* แผงรายละเอียดจังหวัด — ลอยขวา (จอเล็ก: ชิดล่าง) */}
+      {selectedPinId != null && !selectedProvince && (() => {
+        const pin = pins.find((p) => p.id === selectedPinId);
+        return pin ? (
+          <FamilyPinPanel pin={pin} canEdit={canManagePins || myPinIds.includes(pin.id)} onClose={() => setSelectedPinId(null)} />
+        ) : null;
+      })()}
+
       {selectedProvince && (
         <aside className="absolute z-[1000] bg-white rounded-2xl border border-gray-200 shadow-xl overflow-auto sm:top-16 sm:right-4 sm:bottom-4 sm:w-[340px] max-sm:inset-x-2 max-sm:bottom-2 max-sm:max-h-[45%]">
         <div className="sticky top-0 bg-white/95 backdrop-blur border-b border-gray-200 p-4 flex items-start justify-between gap-2">
@@ -1417,7 +1392,8 @@ export default function MapView({ activities, categories, categoryLogos, subCate
         </aside>
       )}
 
-      {/* ชวนครอบครัวปักหมุดงานศพปลอดเหล้า — จอใหญ่ = QR (ย่อเก็บได้) · มือถือ = ปุ่มไปฟอร์ม */}
+      {/* ชวนครอบครัวปักหมุดงานศพปลอดเหล้า — จอใหญ่ = QR (ย่อเก็บได้) · มือถือ = ปุ่มไปฟอร์ม · ซ่อนเมื่อแผงข้างเปิด (ไม่ให้ทับกัน) */}
+      {selectedPinId == null && !selectedProvince && (
         <div className="absolute bottom-16 right-3 z-[900] sm:right-14">
           {pinCardOpen ? (
             <div className="hidden items-center gap-4 rounded-2xl border border-gray-200 bg-white p-4 shadow-lg md:flex">
@@ -1441,6 +1417,7 @@ export default function MapView({ activities, categories, categoryLogos, subCate
             ปักหมุดของบ้านคุณ <span className="tabular-nums text-white/70">· {pins.length}</span>
           </a>
         </div>
+      )}
 
       {/* คำอธิบายสัญลักษณ์ (เดสก์ท็อป) — โหมดหมุดเท่านั้น, โหมดความหนาแน่นมีสเกลสีในแผงหมวดหมู่ */}
       {mapMode === 'markers' && !sidebarOpen && (

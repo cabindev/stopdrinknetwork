@@ -43,25 +43,48 @@ function Chip({ on, onClick, children }: { on: boolean; onClick: () => void; chi
   );
 }
 
-export default function PinForm() {
+/** ค่าเดิมของหมุด (โหมดแก้ไข) */
+export interface PinInitial {
+  id: number;
+  relation: string | null;
+  deceasedFirstName: string | null;
+  deceasedLastName: string | null;
+  showDeceasedName: boolean;
+  funeralDate: string | null;
+  area: PlanArea;
+  place: string | null;
+  answers: PinAnswers;
+  totalCost: number | null;
+  story: string | null;
+  files: { id: number; kind: 'PHOTO' | 'BILL'; fileName: string }[];
+}
+
+export default function PinForm({ initial }: { initial?: PinInitial }) {
   const router = useRouter();
   const { plan } = usePlan();
   // เคยจัดแผนบนกระดาน/หน้าวางแผนในเครื่องนี้ = เติมคำตอบให้ก่อน (แก้ได้ทุกข้อ)
+  // โหมดแก้ไข = ค่าจากหมุดเดิม · ปักใหม่ = เติมจากแผนบนกระดาน (ถ้ามี)
   const seed = plan ?? EMPTY_PLAN;
-  const [relation, setRelation] = useState('');
-  const [first, setFirst] = useState(seed.deceasedName.split(' ')[0] ?? '');
-  const [last, setLast] = useState(seed.deceasedName.split(' ').slice(1).join(' '));
-  const [showName, setShowName] = useState(false);
-  const [date, setDate] = useState('');
-  const [area, setArea] = useState<PlanArea | null>(seed.area);
-  const [place, setPlace] = useState(seed.place ?? '');
+  const [relation, setRelation] = useState(initial?.relation ?? '');
+  const [first, setFirst] = useState(initial ? (initial.deceasedFirstName ?? '') : (seed.deceasedName.split(' ')[0] ?? ''));
+  const [last, setLast] = useState(initial ? (initial.deceasedLastName ?? '') : seed.deceasedName.split(' ').slice(1).join(' '));
+  const [showName, setShowName] = useState(initial?.showDeceasedName ?? false);
+  const [date, setDate] = useState(initial?.funeralDate ?? '');
+  const [area, setArea] = useState<PlanArea | null>(initial ? initial.area : seed.area);
+  const [place, setPlace] = useState(initial ? (initial.place ?? '') : (seed.place ?? ''));
   const [answers, setAnswers] = useState<PinAnswers>(() => {
+    if (initial) return { ...initial.answers };
     const a: PinAnswers = {};
     for (const q of PIN_QUESTIONS) if (seed.answers[q.key]) a[q.key] = seed.answers[q.key];
     return a;
   });
-  const [cost, setCost] = useState('');
-  const [story, setStory] = useState('');
+  const [cost, setCost] = useState(initial?.totalCost != null ? String(initial.totalCost) : '');
+  const [story, setStory] = useState(initial?.story ?? '');
+  /** ไฟล์เดิมที่ยังเก็บไว้ (โหมดแก้ไข) — กดลบ = ส่ง id ไปใน removeFiles */
+  const [kept, setKept] = useState(initial?.files ?? []);
+  const keptPhotos = kept.filter((f) => f.kind === 'PHOTO');
+  const keptBills = kept.filter((f) => f.kind === 'BILL');
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
   const [photos, setPhotos] = useState<{ file: File; url: string }[]>([]);
@@ -81,7 +104,7 @@ export default function PinForm() {
     const picked = Array.from(e.target.files ?? []);
     e.target.value = '';
     if (!picked.length) return;
-    const room = kind === 'photo' ? PIN_FILE_LIMITS.photos - photos.length : PIN_FILE_LIMITS.bills - bills.length;
+    const room = kind === 'photo' ? PIN_FILE_LIMITS.photos - keptPhotos.length - photos.length : PIN_FILE_LIMITS.bills - keptBills.length - bills.length;
     const take = picked.slice(0, Math.max(0, room));
     if (picked.length > take.length) setError(kind === 'photo' ? `แนบรูปได้ไม่เกิน ${PIN_FILE_LIMITS.photos} รูป` : `แนบบิลได้ไม่เกิน ${PIN_FILE_LIMITS.bills} ไฟล์`);
     setPreparing(true);
@@ -127,12 +150,26 @@ export default function PinForm() {
       );
       for (const p of photos) fd.append('photos', p.file);
       for (const b of bills) fd.append('bills', b);
-      const res = await fetch('/api/pins', { method: 'POST', body: fd });
+      if (initial) fd.append('removeFiles', JSON.stringify(initial.files.filter((f) => !kept.some((k) => k.id === f.id)).map((f) => f.id)));
+      const res = await fetch(initial ? `/api/pins/${initial.id}` : '/api/pins', { method: initial ? 'PATCH' : 'POST', body: fd });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || 'บันทึกไม่สำเร็จ ลองอีกครั้ง');
-      router.push(`/map?pin=${data.pin.id}`);
+      router.push(`/map?pin=${data.pin.id}&saved=1`);
     } catch (err) {
       setError((err as Error).message);
+      setSending(false);
+    }
+  };
+
+  /** ลบหมุดของตัวเอง — กดสองครั้ง (ไม่ใช้ window.confirm) */
+  const deletePin = async () => {
+    if (!initial) return;
+    if (!confirmDelete) return setConfirmDelete(true);
+    setSending(true);
+    const res = await fetch(`/api/pins/${initial.id}`, { method: 'DELETE' });
+    if (res.ok) router.push('/pin');
+    else {
+      setError('ลบไม่สำเร็จ ลองอีกครั้ง');
       setSending(false);
     }
   };
@@ -265,6 +302,20 @@ export default function PinForm() {
           </span>
           <p className="mt-0.5 text-xs text-gray-500">แสดงบนแผนที่ให้ทุกคนเห็น — เลือกรูปที่คนในภาพยินดีให้เผยแพร่</p>
           <div className="mt-2 grid grid-cols-3 gap-2 sm:grid-cols-5">
+            {keptPhotos.map((f, i) => (
+              <div key={`kept-${f.id}`} className="relative aspect-square overflow-hidden rounded-xl border border-gray-200 bg-gray-50">
+                {/* eslint-disable-next-line @next/next/no-img-element -- รูปเดิมของหมุดผ่าน /api/pin-files */}
+                <img src={`/api/pin-files/${f.id}`} alt={`รูปเดิมที่ ${i + 1}`} className="h-full w-full object-cover" />
+                <button
+                  type="button"
+                  onClick={() => setKept((list) => list.filter((x) => x.id !== f.id))}
+                  aria-label={`ลบรูปเดิมที่ ${i + 1}`}
+                  className="absolute right-1 top-1 flex h-8 w-8 items-center justify-center rounded-full bg-gray-900/80 text-white"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            ))}
             {photos.map((p, i) => (
               <div key={p.url} className="relative aspect-square overflow-hidden rounded-xl border border-gray-200 bg-gray-50">
                 {/* eslint-disable-next-line @next/next/no-img-element -- blob URL ตัวอย่างในเครื่อง */}
@@ -282,7 +333,7 @@ export default function PinForm() {
                 </button>
               </div>
             ))}
-            {photos.length < PIN_FILE_LIMITS.photos && (
+            {keptPhotos.length + photos.length < PIN_FILE_LIMITS.photos && (
               <button
                 type="button"
                 onClick={() => photoInput.current?.click()}
@@ -302,8 +353,24 @@ export default function PinForm() {
             บิล / ใบเสร็จค่าใช้จ่าย <span className="font-normal text-gray-500">(ไม่บังคับ · รูปหรือ PDF)</span>
           </span>
           <p className="mt-0.5 text-xs text-gray-500">ไม่แสดงบนแผนที่ — ทีมงานใช้ยืนยันค่าใช้จ่ายจริงเท่านั้น</p>
-          {bills.length > 0 && (
+          {keptBills.length + bills.length > 0 && (
             <ul className="mt-2 divide-y divide-gray-100 rounded-xl border border-gray-200">
+              {keptBills.map((f) => (
+                <li key={`kept-${f.id}`} className="flex items-center gap-2 px-3 py-2 text-sm">
+                  <FileText className="w-4 h-4 shrink-0 text-gray-500" />
+                  <a href={`/api/pin-files/${f.id}`} target="_blank" rel="noopener" className="min-w-0 flex-1 truncate text-gray-900 underline-offset-2 hover:underline">
+                    {f.fileName}
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => setKept((list) => list.filter((x) => x.id !== f.id))}
+                    aria-label={`ลบ ${f.fileName}`}
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-gray-600 hover:bg-gray-100"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </li>
+              ))}
               {bills.map((b, i) => (
                 <li key={`${b.name}-${i}`} className="flex items-center gap-2 px-3 py-2 text-sm">
                   <FileText className="w-4 h-4 shrink-0 text-gray-500" />
@@ -321,7 +388,7 @@ export default function PinForm() {
               ))}
             </ul>
           )}
-          {bills.length < PIN_FILE_LIMITS.bills && (
+          {keptBills.length + bills.length < PIN_FILE_LIMITS.bills && (
             <button
               type="button"
               onClick={() => billInput.current?.click()}
@@ -342,8 +409,20 @@ export default function PinForm() {
         disabled={sending || preparing}
         className="h-12 w-full rounded-full bg-gray-900 text-base font-medium text-white hover:bg-gray-700 disabled:bg-gray-400"
       >
-        {sending ? 'กำลังปักหมุด…' : 'ปักหมุดบนแผนที่'}
+        {sending ? 'กำลังบันทึก…' : initial ? 'บันทึกการแก้ไข' : 'ปักหมุดบนแผนที่'}
       </button>
+      {initial && (
+        <button
+          type="button"
+          onClick={deletePin}
+          disabled={sending}
+          className={`h-11 w-full rounded-full border text-sm font-medium ${
+            confirmDelete ? 'border-red-700 bg-red-700 text-white' : 'border-gray-300 text-gray-900 hover:bg-gray-50'
+          }`}
+        >
+          {confirmDelete ? 'แตะอีกครั้งเพื่อยืนยันลบหมุดนี้' : 'ลบหมุดนี้'}
+        </button>
+      )}
       <p className="text-center text-xs text-gray-500">หมุดขึ้นแผนที่ทันที ทีมงานอาจปรับข้อความหรือซ่อนหมุดที่ไม่เหมาะสม</p>
     </form>
   );

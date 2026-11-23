@@ -3,7 +3,9 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { getServerSession } from 'next-auth/next';
-import { MapPinHouse } from 'lucide-react';
+import { MapPinHouse, Pencil } from 'lucide-react';
+import prisma from '@/app/lib/db';
+import { PIN_RELATIONS } from '@/app/lib/funeralPins';
 import authOptions from '@/app/lib/configs/auth/authOptions';
 import GoogleSignInButton from '@/app/components/auth/GoogleSignInButton';
 import PinForm from './PinForm';
@@ -15,6 +17,15 @@ export const metadata: Metadata = {
 
 export default async function PinPage() {
   const session = await getServerSession(authOptions);
+  const userId = Number(session?.user?.id ?? 0);
+  // หมุดของฉัน — กลับมาแก้ไข/ลบได้
+  const mine = userId
+    ? await prisma.funeralPin.findMany({
+        where: { userId },
+        select: { id: true, relation: true, deceasedFirstName: true, deceasedLastName: true, district: true, province: true, hidden: true },
+        orderBy: { createdAt: 'desc' },
+      })
+    : [];
   return (
     <main className="min-h-screen bg-white px-4 pb-16 pt-20">
       <div className="mx-auto max-w-lg">
@@ -23,8 +34,44 @@ export default async function PinPage() {
           บ้านเราเคยจัดงานศพแบบไม่เลี้ยงเหล้า เรียบง่าย ไม่เป็นหนี้ ปักหมุดให้ทุกคนเห็นว่าทำได้จริง
         </p>
 
+        {mine.length > 0 && (
+          <section className="mt-6 rounded-2xl border border-gray-200">
+            <h2 className="border-b border-gray-100 px-4 py-3 text-sm font-semibold text-gray-900">หมุดของฉัน ({mine.length})</h2>
+            <ul className="divide-y divide-gray-100">
+              {mine.map((p) => {
+                const name = [p.deceasedFirstName, p.deceasedLastName].filter(Boolean).join(' ');
+                return (
+                  <li key={p.id} className="flex items-center gap-3 px-4 py-2.5">
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium text-gray-900">
+                        {name || `งานของ${PIN_RELATIONS[p.relation as keyof typeof PIN_RELATIONS] ?? 'ครอบครัว'}`}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        ต.{p.district} จ.{p.province}
+                        {p.hidden && ' · ทีมงานซ่อนจากแผนที่'}
+                      </p>
+                    </div>
+                    <Link href={`/map?pin=${p.id}`} className="inline-flex min-h-9 items-center rounded-full px-3 text-xs text-gray-700 hover:bg-gray-50">
+                      ดูบนแผนที่
+                    </Link>
+                    <Link
+                      href={`/pin/${p.id}/edit`}
+                      className="inline-flex min-h-9 items-center gap-1 rounded-full border border-gray-300 px-3 text-xs text-gray-900 hover:bg-gray-50"
+                    >
+                      <Pencil className="w-3.5 h-3.5" /> แก้ไข
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        )}
+
         {session?.user ? (
-          <PinForm />
+          <>
+            {mine.length > 0 && <h2 className="mt-8 text-lg font-semibold text-gray-900">ปักหมุดงานใหม่</h2>}
+            <PinForm />
+          </>
         ) : (
           <section className="mt-6 rounded-2xl border border-gray-200 p-5">
             <p className="flex items-center gap-2 font-medium text-gray-900">

@@ -6,7 +6,7 @@
 //   หมู่บ้าน/จังหวัด/ประเทศ = จำนวนนโยบาย · นับจากพื้นที่หลักของงานเท่านั้น (ไม่รวม ActivityArea) · ไม่นับงานในถังขยะ
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { ExternalLink, Eye, Pencil, Search } from 'lucide-react';
+import { ExternalLink, Eye, Map as MapIcon, Pencil, Search } from 'lucide-react';
 import prisma, { ACTIVE_ACTIVITY } from '@/app/lib/db';
 import { getAdminUser } from '@/app/lib/adminAuth';
 import { POLICY_LEVELS, POLICY_TYPES } from '@/app/lib/activityMeta';
@@ -372,8 +372,19 @@ export default async function PoliciesByAreaPage({
 
       {/* สรุปรวมรายระดับ: พาย (ขนาด = จำนวนนโยบาย) — จิ้มชิ้นหรือคำอธิบาย = รายการทั้งหมดของระดับนั้น (?level=) */}
       <section id="by-level" className="rounded-2xl border border-gray-200 bg-white p-5 scroll-mt-20">
-        <h2 className="text-sm font-semibold text-gray-900">นโยบายแยกตามระดับ</h2>
-        <p className="text-xs text-gray-500">ขนาดชิ้น = จำนวนนโยบาย · จิ้มชิ้นหรือรายการเพื่อดูพื้นที่ทั้งหมดของระดับนั้น</p>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h2 className="text-sm font-semibold text-gray-900">นโยบายแยกตามระดับ</h2>
+            <p className="text-xs text-gray-500">ขนาดชิ้น = จำนวนนโยบาย · จิ้มชิ้นหรือรายการเพื่อดูพื้นที่ทั้งหมดของระดับนั้น</p>
+          </div>
+          {/* ภาพเดียวกันบนแผนที่สรุปจังหวัด (ผู้ใช้ขอ 24 พ.ย. 2026) — กรองภาคไว้ = เปิดตรงภาคนั้น */}
+          <Link
+            href={`/map?mode=summary${region ? `&zones=${region}${['north-upper', 'north-lower', 'northeast-upper', 'northeast-lower'].includes(region) ? '' : '&scope=all'}` : ''}`}
+            className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-gray-300 px-3 text-xs font-medium text-gray-900 hover:bg-gray-50"
+          >
+            <MapIcon className="w-3.5 h-3.5" /> ดูบนแผนที่สรุป
+          </Link>
+        </div>
         <div className="mt-4 grid items-center gap-6 md:grid-cols-[240px_minmax(0,1fr)] md:gap-10">
           <PolicyPie counts={policyCount} selected={level} href={levelHref} />
           {/* รายการแบบรายงาน: แถวละระดับ + แถบสัดส่วนสีประจำระดับ (เดิมกล่องพื้นสีทุกใบ ดูรก + ใบสุดท้ายค้าง) ·
@@ -395,7 +406,7 @@ export default async function PoliciesByAreaPage({
                     style={active ? { background: LEVEL_TINT[value] } : undefined}
                   >
                     <span className="flex min-w-0 items-center gap-2.5">
-                      <span className="h-3 w-3 shrink-0 rounded-full" style={{ background: LEVEL_FILL[value] }} />
+                      <span className="h-3 w-3 shrink-0 rounded-full ring-1 ring-gray-900" style={{ background: LEVEL_FILL[value] }} />
                       <span className="min-w-0">
                         <span className="block text-sm font-medium text-gray-900">ระดับ{label}</span>
                         <span className="block text-xs text-gray-500 tabular-nums">
@@ -407,7 +418,7 @@ export default async function PoliciesByAreaPage({
                       </span>
                     </span>
                     <span className="order-last col-span-2 h-2 overflow-hidden rounded-full bg-gray-100 sm:order-none sm:col-span-1">
-                      <span className="block h-full rounded-full" style={{ width: `${pct}%`, background: LEVEL_FILL[value] }} />
+                      <span className="block h-full rounded-full ring-1 ring-inset ring-gray-900" style={{ width: `${pct}%`, background: LEVEL_FILL[value] }} />
                     </span>
                     <span className="text-right text-base font-semibold tabular-nums" style={{ color: n ? LEVEL_INK[value] : undefined }}>
                       {totalPolicies ? `${pct}%` : '—'}

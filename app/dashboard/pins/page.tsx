@@ -2,6 +2,8 @@
 // แอดมินเห็นผู้ปักและชื่อผู้วายชนม์เต็ม (สาธารณะเห็นชื่อเฉพาะที่ครอบครัวอนุญาต)
 import prisma from '@/app/lib/db';
 import { PIN_PLACES, PIN_PRACTICES, PIN_RELATIONS, answerLabel, cleanAnswers } from '@/app/lib/funeralPins';
+import Link from 'next/link';
+import { Plus } from 'lucide-react';
 import PinsTable from './PinsTable';
 
 export const metadata = { title: 'หมุดงานศพของครอบครัว' };
@@ -49,8 +51,16 @@ export default async function PinsPage() {
   });
   return (
     <main className="p-4 sm:p-6">
-      <h1 className="text-xl font-semibold text-gray-900">หมุดงานศพของครอบครัว</h1>
-      <p className="mb-5 mt-1 text-sm text-gray-500">ประชาชนปักเองจากหน้า /pin · ขึ้นแผนที่ทันที — ซ่อนหมุดที่ไม่เหมาะสมได้ที่นี่ ({pins.length} หมุด)</p>
+      <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-semibold text-gray-900">หมุดงานศพของครอบครัว</h1>
+          <p className="mt-1 text-sm text-gray-500">ประชาชนปักเองจากหน้า /pin · ขึ้นแผนที่ทันที — แก้ไข ซ่อน หรือลบหมุดได้ที่นี่ ({pins.length} หมุด)</p>
+        </div>
+        {/* แอดมินปักแทนครอบครัวได้ (หมุดเป็นของบัญชีแอดมิน) — ผู้ใช้ขอ 24 พ.ย. 2026 */}
+        <Link href="/pin" className="inline-flex min-h-10 items-center gap-1.5 rounded-full bg-gray-900 px-4 text-sm font-medium text-white hover:bg-gray-700">
+          <Plus className="w-4 h-4" /> ปักหมุดใหม่
+        </Link>
+      </div>
       <PinsTable pins={pins} />
     </main>
   );

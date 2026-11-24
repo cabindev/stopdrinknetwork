@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import Link from 'next/link';
 type Pin = {
   id: number;
   hidden: boolean;
@@ -105,7 +106,16 @@ export default function PinsTable({ pins: initial }: { pins: Pin[] }) {
                 {new Date(p.createdAt).toLocaleString('th-TH', { timeZone: 'Asia/Bangkok', dateStyle: 'medium', timeStyle: 'short' })}
               </td>
               <td className="px-3 py-3">
-                <div className="flex gap-2">
+                <div className="flex gap-2 whitespace-nowrap">
+                  {/* แก้ไขใช้ฟอร์มเดียวกับครอบครัว (/pin/[id]/edit อนุญาตแอดมิน) */}
+                  <Link href={`/pin/${p.id}/edit`} className="inline-flex min-h-9 items-center rounded-full bg-gray-900 px-3 text-white hover:bg-gray-700">
+                    แก้ไข
+                  </Link>
+                  {!p.hidden && (
+                    <Link href={`/map?pin=${p.id}`} className="inline-flex min-h-9 items-center rounded-full border border-gray-300 px-3 hover:bg-gray-50">
+                      ดูบนแผนที่
+                    </Link>
+                  )}
                   <button
                     type="button"
                     onClick={() => patch(p.id, { hidden: !p.hidden })}

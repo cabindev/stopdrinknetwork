@@ -44,9 +44,14 @@ export default async function PolicyOverview() {
             รวม {total.toLocaleString('th-TH')} นโยบาย · ขนาดชิ้น = จำนวนนโยบาย · จิ้มชิ้นเพื่อดูพื้นที่ทั้งหมดของระดับนั้น
           </p>
         </div>
-        <Link href="/dashboard/policies" className="text-xs text-gray-500 underline underline-offset-2 hover:text-gray-900">
-          ดูรายจังหวัด
-        </Link>
+        <span className="flex items-center gap-3">
+          <Link href="/map?mode=summary" className="text-xs text-gray-500 underline underline-offset-2 hover:text-gray-900">
+            ดูบนแผนที่สรุป
+          </Link>
+          <Link href="/dashboard/policies" className="text-xs text-gray-500 underline underline-offset-2 hover:text-gray-900">
+            ดูรายจังหวัด
+          </Link>
+        </span>
       </div>
       {/* พายอย่างเดียว ข้อมูลเขียนในชิ้น (ผู้ใช้ขอ — ประหยัดเนื้อที่ ไม่มีกล่องคำอธิบาย) */}
       <div className="-mt-2">

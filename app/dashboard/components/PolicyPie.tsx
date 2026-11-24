@@ -1,7 +1,7 @@
 // app/dashboard/components/PolicyPie.tsx — พายนโยบายงานศพแยกระดับ (server component, SVG ล้วน ไม่ต้องใช้ JS)
 // ใช้ทั้งหน้า /dashboard/policies และหน้าแรกแดชบอร์ด · ขนาดชิ้น = จำนวนนโยบาย · แต่ละชิ้นเป็นลิงก์ (href ของผู้เรียก)
 import { POLICY_LEVELS } from '@/app/lib/activityMeta';
-import { LEVEL_FILL, LEVEL_TINT, LEVEL_INK } from '@/app/lib/policyLevelColors';
+import { LEVEL_FILL, LEVEL_TINT, LEVEL_INK, LEVEL_ON_FILL, LEVEL_STROKE } from '@/app/lib/policyLevelColors';
 
 export type Level = (typeof POLICY_LEVELS)[number]['value'];
 
@@ -55,7 +55,7 @@ export default function PolicyPie({
     const pct = Math.round((counts[value] / total) * 100);
     const lx = C + ox + Math.cos(mid) * R * 0.62;
     const ly = C + oy + Math.sin(mid) * R * 0.62;
-    const dark = false; // พาสเทลทุกชิ้น → ตัวอักษรเข้ม
+    const dark = LEVEL_ON_FILL[value as Level] === '#ffffff'; // ชิ้นเทา/ดำ → ตัวอักษรขาว
     // โหมดเต็ม: ชิ้นกว้างพอ (> ~45°) เขียนข้างใน · ชิ้นแคบเขียนนอกวง (เส้นชี้จากขอบวง)
     const inside = a1 - a0 > 0.8;
     const cos = Math.cos(mid);
@@ -91,7 +91,7 @@ export default function PolicyPie({
           const lines = [`${s.label} ${s.pct}%`, `${counts[s.value]} นโยบาย`, detail[s.value]].filter(Boolean) as string[];
           return (
             <a key={s.value} href={href(s.value)} aria-label={`ระดับ${s.label} ${counts[s.value]} นโยบาย`}>
-              <path d={s.d} fill={LEVEL_FILL[s.value]} stroke="#ffffff" strokeWidth={2} className="cursor-pointer transition-opacity hover:opacity-85">
+              <path d={s.d} fill={LEVEL_FILL[s.value]} stroke={LEVEL_STROKE} strokeWidth={1.5} className="cursor-pointer transition-opacity hover:opacity-85">
                 <title>{`ระดับ${s.label}: ${lines.slice(1).join(' · ')} (${s.pct}%) — จิ้มเพื่อดูพื้นที่ทั้งหมด`}</title>
               </path>
               {s.inside ? (
@@ -133,8 +133,8 @@ export default function PolicyPie({
           <path
             d={s.d}
             fill={LEVEL_FILL[s.value]}
-            stroke="#ffffff"
-            strokeWidth={2}
+            stroke={LEVEL_STROKE}
+            strokeWidth={1.5}
             className="cursor-pointer transition-opacity hover:opacity-85"
             opacity={selected && selected !== s.value ? 0.45 : 1}
           >

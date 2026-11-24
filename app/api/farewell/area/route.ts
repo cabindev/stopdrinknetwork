@@ -6,7 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/app/lib/db';
 import { FUNERAL_SUB } from '@/app/lib/farewellAgreements';
-import { searchRegions } from '@/app/lib/regionLookup';
+import { searchRegionsLoose } from '@/app/lib/regionLookup';
 
 type Agreement = 'here' | 'amphoe' | 'province' | null;
 
@@ -29,8 +29,12 @@ export async function GET(request: NextRequest) {
   const q = (request.nextUrl.searchParams.get('q') ?? '').trim().slice(0, 80);
   if (q.length < 2) return NextResponse.json({ results: [] });
 
-  const first = q.split(/\s+/)[0].replace(/^(ต\.|ตำบล|แขวง)\s*/, '');
-  const hits = searchRegions(q, 40);
+  // ค้นแบบเดียวกับฟอร์มทีมงาน (24 พ.ย. 2026): "บ้านโนนสิน ต.ส้มป่อย" = ใช้ส่วน ต./อ./จ. ค้นตำบล (ชื่อหมู่บ้านไม่ต้องตรงตำบลไหน)
+  // หมุดครอบครัวยังลงจุดกลางตำบล (เป็นบ้านคน) — จึงไม่เรียก GISTDA หาพิกัดหมู่บ้าน
+  const loose = searchRegionsLoose(q, 40);
+  const hits = loose.regions;
+  const rest = loose.areaNameHint && q.includes(loose.areaNameHint) ? q.slice(q.indexOf(loose.areaNameHint) + loose.areaNameHint.length) : q;
+  const first = (rest.trim().split(/\s+/)[0] ?? '').replace(/^(ต\.|ตำบล|แขวง)\s*/, '');
   const areas = await agreementAreas().catch(() => []);
 
   const results = hits

@@ -3,15 +3,12 @@
 // พาย SVG ตามระดับ (ตัวเลข = จำนวนนโยบาย) + รายการรูปแบบนโยบาย — นับตามตัวกรองและขอบเขต (เหนือ+อีสาน/ทั้งประเทศ) เดียวกับแผนที่
 import { ArrowLeft, Download, List } from 'lucide-react';
 import { POLICY_LEVELS } from '@/app/lib/activityMeta';
+import { LEVEL_FILL, LEVEL_ON_FILL } from '@/app/lib/policyLevelColors';
 
-/** สีชิ้นพาย — โทนเดียวกับวงเหลืองบนแผนที่ (เหลือง/เทา/ขาว) · ตัวอักษรบนชิ้นสีเข้มอ่านได้ทุกชิ้น */
-export const SLICE: Record<string, { fill: string; ink: string }> = {
-  SUBDISTRICT: { fill: '#facc15', ink: '#111827' },
-  VILLAGE: { fill: '#f3f4f6', ink: '#111827' },
-  DISTRICT: { fill: '#6b7280', ink: '#ffffff' },
-  PROVINCE: { fill: '#fde68a', ink: '#111827' },
-  NATIONAL: { fill: '#111827', ink: '#ffffff' },
-};
+/** สีชิ้นพาย — แหล่งเดียวกับแดชบอร์ด (lib/policyLevelColors.ts ชุดเหลือง·เทา·ดำ·ขาว) */
+export const SLICE: Record<string, { fill: string; ink: string }> = Object.fromEntries(
+  Object.entries(LEVEL_FILL).map(([k, fill]) => [k, { fill, ink: LEVEL_ON_FILL[k as keyof typeof LEVEL_ON_FILL] }]),
+);
 
 /** ชื่อสั้นของรูปแบบนโยบาย (POLICY_TYPES ใน activityMeta) ให้พอดีการ์ด */
 export const SHORT: Record<string, string> = {

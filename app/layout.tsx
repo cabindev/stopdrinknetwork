@@ -21,7 +21,7 @@ export const metadata: Metadata = {
   // ให้ og:image ของหน้ากรณีศึกษาเป็น URL เต็ม (Facebook/LINE ต้องการ) — ใช้โดเมนจาก NEXTAUTH_URL
   metadataBase: new URL(process.env.NEXTAUTH_URL || "http://localhost:3000"),
   title: "Stop Drink Network",
-  description: "เครือข่ายงดเหล้า | ร่วมสร้างสังคมปลอดเหล้า เพื่อสุขภาพที่ดีของทุกคน",
+  description: "งานศพปลอดเหล้า | ส่งคนที่รักด้วยใจ ไม่ใช่ด้วยหนี้ — วางแผนงาน ดูนโยบาย และปักหมุดงานศพปลอดเหล้าทั่วประเทศ",
 };
 
 export default async function RootLayout({

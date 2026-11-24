@@ -122,7 +122,7 @@ export default function Sidebar({ user }: SidebarProps) {
                 <Image src="/brand/network-logo-horizontal-color.svg" alt="" width={86} height={20} unoptimized className="h-5 w-auto" />
               </Link>
               <Link href="/" className="ml-2.5 border-l border-gray-200 pl-2.5">
-                <span className="whitespace-nowrap text-gray-600 font-medium text-xs">เครือข่ายงดเหล้า</span>
+                <span className="whitespace-nowrap text-gray-600 font-medium text-xs">งานศพปลอดเหล้า</span>
               </Link>
             </div>
           ) : (

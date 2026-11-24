@@ -46,7 +46,7 @@ export default function Navbar() {
         {/* แบรนด์ */}
         <Link
           href="/"
-          aria-label="Stop Drink Network เครือข่ายงดเหล้า — หน้าแรก"
+          aria-label="Stop Drink Network งานศพปลอดเหล้า — หน้าแรก"
           className="pointer-events-auto inline-flex items-center gap-2.5 h-9 pl-1 pr-2"
         >
           {/* โลโก้ "Network" (สัญลักษณ์ hub + แฉกพู่กัน + โหนด) — ต้นฉบับ ~/Desktop/logo/network/*.ai · ไฟล์ใช้งาน public/brand/ */}
@@ -54,7 +54,7 @@ export default function Navbar() {
           {/* ฉากพื้นมืด (html[data-nav-tone=dark] เช่น ส่งด้วยใจ ขั้น 4–6) สลับเป็นโลโก้ขาว — globals.css */}
           <Image src="/brand/network-logo-horizontal-white.svg" alt="" width={97} height={24} unoptimized className="sdn-nav-logo-dark hidden h-6 w-auto" />
           <span className="hidden sm:inline border-l border-gray-200 pl-2.5 text-xs font-medium text-gray-600">
-            เครือข่ายงดเหล้า
+            งานศพปลอดเหล้า
           </span>
         </Link>
 

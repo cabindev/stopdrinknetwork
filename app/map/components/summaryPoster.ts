@@ -131,56 +131,78 @@ export async function drawSummaryPoster(input: PosterInput): Promise<Blob> {
     }
   }
 
-  // วงตัวเลข + ชื่อจังหวัด
+  // วงตัวเลข + ชื่อจังหวัด — ขนาดตามสเกลแผนที่ (ทั้งประเทศ = แผนที่เล็ก → วง/ตัวหนังสือเล็กลง, ไม่โชว์ชื่อจังหวัดที่ยังไม่มีนโยบาย)
   const max = Math.max(1, ...withPolicy.map(([, n]) => n));
-  const zoomK = Math.min(1.5, Math.max(0.9, scale / 140));
-  ctx.textAlign = 'center';
-  const labels: { x: number; y: number; name: string; has: boolean }[] = [];
+  const zoomK = Math.min(1.5, Math.max(0.5, scale / 140));
+  const txtK = Math.min(1, Math.max(0.72, zoomK));
+  const showEmptyNames = zoomK >= 0.8;
+  const bubbles: { x: number; y: number; d: number; n: number; name: string }[] = [];
+  const empties: { x: number; y: number; name: string }[] = [];
   for (const [name, n] of shownCounts) {
     const center = centers.get(name);
     if (!center) continue;
     const [x, y] = pt(center[0], center[1]);
-    if (n > 0) {
-      const d = (24 + Math.sqrt(n / max) * 28) * zoomK;
-      ctx.beginPath();
-      ctx.arc(x, y, d / 2, 0, Math.PI * 2);
-      ctx.fillStyle = '#facc15';
-      ctx.shadowColor = 'rgba(0,0,0,.25)';
-      ctx.shadowBlur = 6;
-      ctx.shadowOffsetY = 2;
-      ctx.fill();
-      ctx.shadowColor = 'transparent';
-      ctx.lineWidth = 2.5;
-      ctx.strokeStyle = '#111827';
-      ctx.stroke();
-      ctx.fillStyle = '#111827';
-      ctx.font = f(Math.round(d * 0.46), 800);
-      ctx.textBaseline = 'middle';
-      ctx.fillText(String(n), x, y + 1);
-      ctx.textBaseline = 'alphabetic';
-      labels.push({ x, y: y + d / 2 + 18, name, has: true });
-    } else {
-      labels.push({ x, y: y + 6, name, has: false });
-    }
+    if (n > 0) bubbles.push({ x, y, d: Math.max(20, (24 + Math.sqrt(n / max) * 28) * zoomK), n, name });
+    else if (showEmptyNames) empties.push({ x, y, name });
   }
-  // ชื่อชนกัน (จังหวัดเล็กติดกัน เช่น ยโสธร/อำนาจเจริญ) → เลื่อนป้ายหลังลงทีละบรรทัด
-  const placed: { x0: number; x1: number; y0: number; y1: number }[] = [];
-  for (const l of labels) {
-    ctx.font = f(l.has ? 16 : 15, l.has ? 700 : 500);
-    const w = ctx.measureText(l.name).width;
-    for (let i = 0; i < 4; i++) {
-      const r = { x0: l.x - w / 2 - 2, x1: l.x + w / 2 + 2, y0: l.y - 15, y1: l.y + 5 };
-      if (!placed.some((q) => r.x0 < q.x1 && r.x1 > q.x0 && r.y0 < q.y1 && r.y1 > q.y0)) {
+  ctx.textAlign = 'center';
+  // วงใหญ่ก่อน วงเล็กทับข้างบน (ไม่โดนวงใหญ่บังมิด)
+  for (const { x, y, d, n } of [...bubbles].sort((p, q) => q.d - p.d)) {
+    ctx.beginPath();
+    ctx.arc(x, y, d / 2, 0, Math.PI * 2);
+    ctx.fillStyle = '#facc15';
+    ctx.shadowColor = 'rgba(0,0,0,.25)';
+    ctx.shadowBlur = 6;
+    ctx.shadowOffsetY = 2;
+    ctx.fill();
+    ctx.shadowColor = 'transparent';
+    ctx.lineWidth = d < 30 ? 1.8 : 2.5;
+    ctx.strokeStyle = '#111827';
+    ctx.stroke();
+    ctx.fillStyle = '#111827';
+    ctx.font = f(Math.max(11, Math.round(d * 0.48)), 800);
+    ctx.textBaseline = 'middle';
+    ctx.fillText(String(n), x, y + 1);
+    ctx.textBaseline = 'alphabetic';
+  }
+
+  // ป้ายชื่อ: วงทุกวงเป็นสิ่งกีดขวาง · ลอง ใต้วง → ซ้าย/ขวา → เหนือวง → ลงอีกบรรทัด · ไม่มีที่ลง = ไม่วาด (ดีกว่าทับกันอ่านไม่ออก)
+  type Box = { x0: number; x1: number; y0: number; y1: number };
+  const placed: Box[] = bubbles.map((q) => ({ x0: q.x - q.d / 2, x1: q.x + q.d / 2, y0: q.y - q.d / 2, y1: q.y + q.d / 2 }));
+  const hit = (r: Box) => placed.some((q) => r.x0 < q.x1 && r.x1 > q.x0 && r.y0 < q.y1 && r.y1 > q.y0);
+  const labelFont = (has: boolean) => f(Math.round((has ? 16 : 15) * txtK), has ? 700 : 500);
+  const lh = 18 * txtK;
+  const drawn: { x: number; y: number; name: string; has: boolean }[] = [];
+  const place = (name: string, has: boolean, tries: [number, number][]) => {
+    ctx.font = labelFont(has);
+    const w = ctx.measureText(name).width;
+    for (const [x, y] of tries) {
+      const r = { x0: x - w / 2 - 2, x1: x + w / 2 + 2, y0: y - lh * 0.8, y1: y + lh * 0.25 };
+      if (!hit(r)) {
         placed.push(r);
-        break;
+        drawn.push({ x, y, name, has });
+        return;
       }
-      l.y += 18;
     }
+  };
+  for (const b of [...bubbles].sort((p, q) => q.n - p.n)) {
+    ctx.font = labelFont(true);
+    const w = ctx.measureText(b.name).width;
+    const r = b.d / 2;
+    const side = b.y + lh * 0.3;
+    place(b.name, true, [
+      [b.x, b.y + r + lh * 0.95],
+      [b.x - r - w / 2 - 5, side],
+      [b.x + r + w / 2 + 5, side],
+      [b.x, b.y - r - lh * 0.35],
+      [b.x, b.y + r + lh * 1.95],
+    ]);
   }
-  for (const l of labels) {
-    ctx.font = f(l.has ? 16 : 15, l.has ? 700 : 500);
+  for (const e of empties) place(e.name, false, [[e.x, e.y + 6], [e.x, e.y + 6 + lh], [e.x, e.y + 6 - lh]]);
+  for (const l of drawn) {
+    ctx.font = labelFont(l.has);
     ctx.lineJoin = 'round';
-    ctx.lineWidth = l.has ? 4 : 3.5;
+    ctx.lineWidth = (l.has ? 4 : 3.5) * txtK;
     ctx.strokeStyle = l.has ? '#111827' : '#ffffff';
     ctx.strokeText(l.name, l.x, l.y);
     ctx.fillStyle = l.has ? '#ffffff' : '#4b5563';
@@ -356,7 +378,7 @@ export async function drawSummaryPoster(input: PosterInput): Promise<Blob> {
   ctx.fillStyle = '#6b7280';
   ctx.font = f(15, 500);
   ctx.textAlign = 'right';
-  ctx.fillText('เครือข่ายงดเหล้า · ข้อมูลจากการบันทึกงานของเครือข่าย', W - 40, H - 28);
+  ctx.fillText('งานศพปลอดเหล้า · ข้อมูลจากการบันทึกงานของเครือข่าย', W - 40, H - 28);
   ctx.textAlign = 'left';
 
   return new Promise((resolve, reject) => c.toBlob((b) => (b ? resolve(b) : reject(new Error('toBlob failed'))), 'image/png'));

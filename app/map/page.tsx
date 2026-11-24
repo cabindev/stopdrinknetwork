@@ -31,7 +31,7 @@ export default async function MapPage() {
         user: { select: { firstName: true, lastName: true } },
         members: { where: { userId: myId }, select: { userId: true } },
         areas: { orderBy: { sortOrder: 'asc' } },
-        policies: { select: { level: true } },
+        policies: { select: { level: true, type: true } },
       },
       orderBy: { createdAt: 'desc' },
     }),
@@ -61,6 +61,8 @@ export default async function MapPage() {
       createdAt: a.createdAt.toISOString(),
       published: a.isPublished,
       // ระดับนโยบายสูงสุดของงาน (งานเดียวติ๊กได้หลายระดับ) → สี/ขนาดหมุด · ข้อมูลเดียวกับแผนที่ข้อตกลงสาธารณะ
+      policyCount: a.policies.length, // จำนวนระดับนโยบาย/ข้อตกลงของงาน — นับในโหมดสรุปรายจังหวัด
+      policies: a.policies.map((p) => ({ level: p.level, type: p.type })), // พายระดับ + รูปแบบนโยบายในโหมดสรุป (ข้อมูลสาธารณะเดียวกับ /dashboard/policies ระดับรวม)
       policyLevel:
         [...POLICY_LEVELS].reverse().find((l) => a.policies.some((p) => p.level === l.value))?.value ?? null,
       // พื้นที่ที่เกี่ยวข้อง → หมุดรอง · สาธารณะ: จุดกลางตำบล ไม่มีชื่อสถานที่ (กติกาเดียวกับพื้นที่หลัก)

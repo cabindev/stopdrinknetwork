@@ -62,7 +62,7 @@ const img = (name: string, alt: string, stack?: number, mark?: Mark): Visual => 
 });
 
 const VISUALS: Record<BoardKey, Record<string, Visual>> = {
-  days: { '1': { kind: 'calendar', n: 1 }, '3': { kind: 'calendar', n: 3 }, '5': { kind: 'calendar', n: 5 }, '7': { kind: 'calendar', n: 7 } },
+  days: { '1': { kind: 'calendar', n: 1 }, '3': { kind: 'calendar', n: 3 }, '4': { kind: 'calendar', n: 4 }, '5': { kind: 'calendar', n: 5 }, '7': { kind: 'calendar', n: 7 } },
   coffin: {
     // หีบที่ทีมออกแบบเอง = "เรียบง่าย" (ผู้ใช้สลับ 21 พ.ย. 2026) — โมเดล Blender เดียวกับหน้าเส้นทางสุดท้าย /farewell/journey
     //   (public/farewell/fallback-coffin.png ตัดพื้นแล้ว) · หีบขาวแบบขั้นจาก AI ย้ายไปเป็น "ตามที่นิยมในพื้นที่"

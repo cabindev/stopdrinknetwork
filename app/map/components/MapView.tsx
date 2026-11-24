@@ -3,7 +3,7 @@
 // แผนที่รวมการดำเนินงานทั้งองค์กร — เต็มความสูงจอ ควบคุมด้วยแผงลอยบนแผนที่
 // ใช้ Leaflet ล้วน (โหลดใน useEffect เพื่อเลี่ยง SSR)
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import type {
   Map as LeafletMap,
@@ -26,12 +26,15 @@ import {
   CalendarClock,
   CheckCircle2,
   Sparkles,
+  CircleDot,
+  Check,
+  Download,
 } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 import thailandGeo from '@/app/data/thailand.json';
 // เส้นขอบประเทศ (รวม 77 จังหวัดไว้ล่วงหน้า — scripts/build-thailand-outline.mjs) ใช้วาดขอบเข้ม + ฉากจางนอกประเทศ
 import thailandOutline from '@/app/data/thailand-outline.json';
-import { getRegionLabel } from '@/app/utils/healthZones';
+import { getRegionLabel, provinceHealthZones } from '@/app/utils/healthZones';
 import { makeColorOf } from '@/app/lib/categoryColors';
 import type { HealthZone } from '@/app/utils/healthZones';
 import { navigationUrl } from '@/app/lib/geoLink';
@@ -39,6 +42,8 @@ import { POLICY_LEVELS, POLICY_LABEL } from '@/app/lib/activityMeta';
 import { LEVEL_PIN_COLOR } from '@/app/lib/policyLevelColors';
 import { pinTitle } from '@/app/lib/funeralPins';
 import FamilyPinPanel from './FamilyPinPanel';
+import PolicySummaryCard from './PolicySummaryCard';
+import { drawSummaryPoster } from './summaryPoster';
 import type { PublicPin } from '@/app/lib/funeralPins';
 import { toast } from 'react-hot-toast';
 import NextImage from 'next/image';
@@ -61,6 +66,8 @@ export interface MapActivity {
   createdAt: string; // ISO
   mine: boolean; // งานของผู้ที่กำลังดู — ไม่นับเป็น "งานใหม่"
   published: boolean; // เผยแพร่เป็นกรณีศึกษาแล้ว → มีหน้า /stories/[id]
+  policyCount?: number; // จำนวนนโยบาย/ข้อตกลงของงาน (โหมดสรุปรายจังหวัด)
+  policies?: { level: string; type: string | null }[];
   policyLevel: string | null; // ระดับนโยบายสูงสุด (VILLAGE…NATIONAL) — null = ยังไม่มีนโยบาย
   // พื้นที่ที่เกี่ยวข้อง (ActivityArea) — หมุดรองของงานเดียวกัน ไม่นับในสถิติ/ความหนาแน่น/แผงจังหวัด
   extraAreas: MapArea[];
@@ -178,6 +185,55 @@ const COUNTRY_LINE = { color: '#1c1917', weight: 1.2, opacity: 0.55 };
 const PROVINCE_LINE = { color: '#d1d5db', weight: 1 };
 // โหมดหมุด: เส้นขอบบาง สีเทาปกติ ไม่ระบายพื้น (ผู้ใช้เลือก 4 พ.ย. 2026 — ลองพื้นเทาไล่ขั้น/เส้นไล่หนา/เส้นพาสเทลประจำภาคแล้วไม่เอา "ดูยาก")
 // มีงาน = เทาเข้มกว่าเล็กน้อย · เลือกอยู่ = พื้นส้มอ่อน+เส้นส้ม (ผู้ใช้ชอบ) · fillOpacity 0 แต่ยัง fill ไว้ให้คลิก/tooltip ทั้งพื้นที่ได้ · ใช้ทั้งบนจอและ PNG
+/** ภาคที่เน้นในโหมดสรุปรายจังหวัด (ผู้ใช้ขอ 24 พ.ย. 2026 — งานส่วนใหญ่อยู่เหนือ+อีสาน) */
+const FOCUS_ZONES = new Set(['north-upper', 'north-lower', 'northeast-upper', 'northeast-lower']);
+/** ปุ่มภาคบนแผนที่ (โหมดสรุป ขอบเขตเหนือ+อีสาน) — วางนอกเส้นเขตแดน: เหนือ = ฝั่งพม่า ชิดขวา, อีสานบน = ฝั่งลาว, อีสานล่าง = ฝั่งกัมพูชา */
+const ZONE_BUTTONS: { zone: HealthZone; at: [number, number]; align: 'end' | 'center' }[] = [
+  { zone: 'north-upper', at: [19.05, 97.3], align: 'end' },
+  { zone: 'north-lower', at: [16.25, 98.45], align: 'end' },
+  { zone: 'northeast-upper', at: [18.7, 103.0], align: 'center' },
+  { zone: 'northeast-lower', at: [13.9, 104.3], align: 'center' },
+];
+const ALL_ZONES: HealthZone[] = ['north-upper', 'north-lower', 'northeast-upper', 'northeast-lower', 'central', 'east', 'west', 'south-upper', 'south-lower', 'bangkok'];
+/** โหมดสรุป: ชื่อจังหวัดที่ชนกัน (จังหวัดเล็กติดกัน เช่น ยโสธร/อำนาจเจริญ) → เลื่อนป้ายหลังลงทีละบรรทัด
+ *  ใช้ top (ตำแหน่งเต็มพิกเซล) ไม่ใช้ transform ให้ตัวหนังสือคม · เรียกหลังวาดและทุกครั้งที่ซูมเสร็จ */
+function declutterSumNames(container: HTMLElement) {
+  const els = [...container.querySelectorAll<HTMLElement>('.sdn-sum-name')];
+  for (const el of els) {
+    el.style.top = '0px';
+    el.style.left = '0px';
+  }
+  // จังหวัดที่มีนโยบายได้ที่ก่อน
+  els.sort((a, b) => Number(b.classList.contains('sdn-sum-on')) - Number(a.classList.contains('sdn-sum-on')));
+  // วงตัวเลขเป็นสิ่งกีดขวางด้วย (ชื่อไม่ไปมุดใต้วงของจังหวัดข้าง ๆ) — ชื่อเลื่อนลงได้ 4 บรรทัด
+  const placed: DOMRect[] = [...container.querySelectorAll<HTMLElement>('.sdn-sum-pin')].map((e) => e.getBoundingClientRect());
+  for (const el of els) {
+    if (el.offsetParent === null) continue; // ซ่อนอยู่ (มือถือยังไม่ซูม)
+    // ตำแหน่งที่ลอง: ใต้วง (เดิม) → ข้างวง ซ้าย/ขวา (กลางแนววง — อ่านชัดว่าเป็นของวงไหน) → เหนือวง → ลงทีละบรรทัด
+    const box = el.getBoundingClientRect();
+    const h = Math.round(box.height) + 1;
+    const pin = el.previousElementSibling as HTMLElement | null;
+    const pw = pin?.offsetWidth ?? 0;
+    const ph = pin?.offsetHeight ?? 0;
+    const side = -Math.round(ph / 2 + 2 + box.height / 2);
+    const dx = Math.round(pw / 2 + box.width / 2 + 4);
+    const tries: [number, number][] = pin
+      ? [[0, 0], [-dx, side], [dx, side], [0, -(ph + h + 3)], [0, h], [0, 2 * h]]
+      : [[0, 0], [0, h], [0, -h], [0, 2 * h]];
+    for (const [x, y] of tries) {
+      el.style.left = `${x}px`;
+      el.style.top = `${y}px`;
+      const r = el.getBoundingClientRect();
+      if (!placed.some((q) => r.left < q.right - 1 && r.right > q.left + 1 && r.top < q.bottom - 1 && r.bottom > q.top + 1)) break;
+    }
+    placed.push(el.getBoundingClientRect());
+  }
+}
+/** ลำดับวนของจอบูธ (/map?mode=summary&booth=1): ภาพรวม → ทีละภาคที่มีนโยบาย */
+const BOOTH_STEP_MS = 9000;
+const BOOTH_PAUSE_MS = 30000;
+const zoneShort = (z: HealthZone) => getRegionLabel(z).replace(/^ภาค/, '');
+
 function provinceStyle(hasData: boolean, isSelected: boolean) {
   if (isSelected) return { fillColor: '#ea580c', fillOpacity: 0.12, color: '#ea580c', weight: 2.5 };
   return hasData
@@ -293,6 +349,7 @@ export default function MapView({ activities, categories, categoryLogos, subCate
   const mapElRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<LeafletMap | null>(null);
   const pinLayerRef = useRef<import('leaflet').LayerGroup | null>(null);
+  const tileRef = useRef<import('leaflet').TileLayer | null>(null);
   const [pins, setPins] = useState(initialPins);
   const maxPinIdRef = useRef(Math.max(0, ...initialPins.map((pin) => pin.id)));
   const pinQueryHandledRef = useRef(false);
@@ -312,7 +369,27 @@ export default function MapView({ activities, categories, categoryLogos, subCate
   const [levelFilter, setLevelFilter] = useState(''); // ระดับนโยบาย · NO_POLICY = ยังไม่มีนโยบาย
   const [search, setSearch] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(false); // เปิดเมื่อคลิกไอคอนหมวดหมู่
-  const [mapMode, setMapMode] = useState<'markers' | 'heat'>('markers');
+  const [mapMode, setMapMode] = useState<'markers' | 'heat' | 'summary'>('markers');
+  /** โหมดสรุปรายจังหวัด: เน้นภาคเหนือ+อีสาน (จังหวัดภาคอื่นจาง ไม่มีวงตัวเลข) หรือทั้งประเทศ */
+  const [summaryScope, setSummaryScope] = useState<'focus' | 'all'>('focus');
+  /** โหมดสรุป: จิ้มจังหวัด = การ์ดขวาเปลี่ยนเป็นข้อมูลจังหวัดนั้น · กด "ดูรายชื่องาน" ถึงเปิดแผงรายชื่อ */
+  const [summaryList, setSummaryList] = useState(false);
+  /** โหมดสรุป: ภาคที่เลือก (เลือกได้หลายภาค) · ว่าง = ทุกภาคในขอบเขต */
+  const [summaryZones, setSummaryZones] = useState<HealthZone[]>([]);
+  const [posterBusy, setPosterBusy] = useState(false);
+  /** จอบูธ: วนภาคอัตโนมัติ (?booth=1) · แตะจอ = หยุดชั่วคราว 30 วิ */
+  const [booth, setBooth] = useState(false);
+  const boothPausedUntil = useRef(0);
+  // ลิงก์เปิดตรงโหมด/ภาค: ?mode=summary&zones=northeast-lower,northeast-upper&scope=all&booth=1
+  useEffect(() => {
+    const sp = new URLSearchParams(window.location.search);
+    if (sp.get('mode') !== 'summary' && sp.get('booth') !== '1') return;
+    setMapMode('summary');
+    if (sp.get('scope') === 'all') setSummaryScope('all');
+    const zs = (sp.get('zones') ?? '').split(',').filter((z): z is HealthZone => (ALL_ZONES as string[]).includes(z));
+    if (zs.length) setSummaryZones(zs);
+    if (sp.get('booth') === '1') setBooth(true);
+  }, []);
   const [heatMetric, setHeatMetric] = useState<'activities' | 'people'>('activities');
   const [newOnly, setNewOnly] = useState(false);
   // null = ยังไม่รู้ (ก่อน mount อ่าน storage ไม่ได้) — ระหว่างนั้นไม่ไฮไลต์อะไร
@@ -390,6 +467,78 @@ export default function MapView({ activities, categories, categoryLogos, subCate
     [heatData, heatMetric]
   );
 
+  // โหมดสรุปรายจังหวัด (แบบอินโฟกราฟิก "ทำแล้วที่ไหนบ้าง"): จำนวนนโยบาย/ข้อตกลงต่อจังหวัด ตามตัวกรองที่เลือก
+  const summary = useMemo(() => {
+    const m = new Map<string, number>();
+    byProvince.forEach((list, province) => {
+      const n = list.reduce((s, a) => s + (a.policyCount ?? 0), 0);
+      if (n > 0) m.set(province, n);
+    });
+    return m;
+  }, [byProvince]);
+  /** จังหวัดนี้อยู่ในสิ่งที่กำลังดูในโหมดสรุปไหม (ขอบเขต + ภาคที่เลือก) */
+  const zoneOk = useCallback(
+    (province: string) => {
+      const z = provinceHealthZones[province];
+      if (!z) return false;
+      if (summaryScope === 'focus' && !FOCUS_ZONES.has(z)) return false;
+      return summaryZones.length === 0 || summaryZones.includes(z);
+    },
+    [summaryScope, summaryZones],
+  );
+  const summaryShown = useMemo(() => [...summary.entries()].filter(([p]) => zoneOk(p)), [summary, zoneOk]);
+  /** จำนวนนโยบายต่อภาค (ตามขอบเขต ไม่สนภาคที่เลือก) → ตัวเลขบนปุ่มภาค */
+  const zoneTotals = useMemo(() => {
+    const m = new Map<HealthZone, number>();
+    summary.forEach((n, p) => {
+      const z = provinceHealthZones[p];
+      if (z) m.set(z, (m.get(z) ?? 0) + n);
+    });
+    return m;
+  }, [summary]);
+  const scopeZones = summaryScope === 'focus' ? ALL_ZONES.filter((z) => FOCUS_ZONES.has(z)) : ALL_ZONES;
+  // จอบูธ: ภาพรวม → เหนือบน → อีสานบน → อีสานล่าง … (ข้ามภาคที่ยังไม่มีนโยบาย) ทุก 9 วิ
+  const boothSteps = useMemo(
+    () => [[] as HealthZone[], ...(summaryScope === 'focus' ? ALL_ZONES.filter((z) => FOCUS_ZONES.has(z)) : ALL_ZONES).filter((z) => (zoneTotals.get(z) ?? 0) > 0).map((z) => [z])],
+    [summaryScope, zoneTotals],
+  );
+  useEffect(() => {
+    if (!booth || mapMode !== 'summary') return;
+    const pause = () => {
+      boothPausedUntil.current = Date.now() + BOOTH_PAUSE_MS;
+    };
+    window.addEventListener('pointerdown', pause);
+    let i = 0;
+    const timer = window.setInterval(() => {
+      if (Date.now() < boothPausedUntil.current) return;
+      i = (i + 1) % boothSteps.length;
+      setSelectedProvince('');
+      setSummaryList(false);
+      setSummaryZones(boothSteps[i]);
+    }, BOOTH_STEP_MS);
+    return () => {
+      window.removeEventListener('pointerdown', pause);
+      clearInterval(timer);
+    };
+  }, [booth, mapMode, boothSteps]);
+  const zoneTitle = summaryZones.length
+    ? ALL_ZONES.filter((z) => summaryZones.includes(z)).map(zoneShort).join(' + ')
+    : null;
+  const toggleZone = (z: HealthZone) => {
+    setSelectedProvince('');
+    setSummaryZones((prev) => (prev.includes(z) ? prev.filter((x) => x !== z) : [...prev, z]));
+  };
+  const summaryTotal = summaryShown.reduce((s, [, n]) => s + n, 0);
+  // นโยบายทุกชิ้นในขอบเขตเดียวกับแผนที่สรุป → พายระดับ + รูปแบบ (การ์ดมุมขวา)
+  const summaryPolicies = useMemo(() => {
+    const out: { level: string; type: string | null }[] = [];
+    byProvince.forEach((list, province) => {
+      if (!zoneOk(province)) return;
+      for (const a of list) out.push(...(a.policies ?? []));
+    });
+    return out;
+  }, [byProvince, zoneOk]);
+
   // สีประจำประเด็น (นิยามรวมที่ lib/categoryColors.ts เพื่อให้หน้าอื่นใช้สีเดียวกัน)
   const colorOf = useMemo(() => makeColorOf(categories), [categories]);
 
@@ -403,9 +552,18 @@ export default function MapView({ activities, categories, categoryLogos, subCate
       const map = L.map(mapElRef.current, {
         zoomControl: false,
         scrollWheelZoom: true,
+        // ซูมพอดีกรอบได้ละเอียดขึ้น (เดิมปัดเป็นเลขเต็ม → มือถือได้ภาพเล็กเกิน) · ปุ่ม +/− ยังทีละ 1 ขั้น
+        zoomSnap: 0.25,
       }).setView([13.5, 101], 6);
       L.control.zoom({ position: 'bottomright' }).addTo(map);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      // โหมดสรุปบนมือถือ: ชื่อจังหวัดขึ้นเมื่อซูมเข้าพอ (ซูมไกลแล้วชื่อทับกันอ่านไม่ออก) — CSS .sdn-sum-zoomed ใน globals.css
+      const markZoom = () => {
+        map.getContainer().classList.toggle('sdn-sum-zoomed', map.getZoom() >= 6.75);
+        declutterSumNames(map.getContainer());
+      };
+      map.on('zoomend', markZoom);
+      markZoom();
+      tileRef.current = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 18,
         attribution: '&copy; OpenStreetMap contributors',
         crossOrigin: 'anonymous', // จำเป็นต่อการบันทึกภาพแผนที่เป็น PNG (ไม่ให้ canvas ถูก taint)
@@ -473,7 +631,7 @@ export default function MapView({ activities, categories, categoryLogos, subCate
 
         // ทุกงานเป็นหมุดของตัวเองตามตำแหน่งจริง สีตามประเด็น (ไม่รวมเป็นวงรายจังหวัด — ผู้ใช้อยากเห็นพื้นที่จริง)
         // งานที่พิกัดเดียวกันกระจายรอบจุดเล็กน้อยให้เห็นครบ · โหมดความหนาแน่นแสดงหมุดเฉพาะจังหวัดที่เลือก
-        if (mapMode === 'markers' || province === selectedProvince) {
+        if (mapMode === 'markers' || (mapMode === 'heat' && province === selectedProvince)) {
           const byLocation = new Map<string, MapSite[]>();
           for (const site of list) {
             // หมุดที่ปักตำแหน่งจริงแยกกลุ่มกันเอง (ละเอียด ~1 ม.) ไม่ปนกับจุดกลางตำบล
@@ -560,9 +718,55 @@ export default function MapView({ activities, categories, categoryLogos, subCate
         }
       });
 
+      // โหมดสรุป (อินโฟกราฟิก "ทำแล้วที่ไหนบ้าง"): **ชื่อทุกจังหวัด** ในขอบเขต + วงเหลืองตัวเลข = จำนวนนโยบาย (ยิ่งมากยิ่งใหญ่)
+      // มีนโยบาย = ชื่อขาวบนพื้นเข้ม · ยังไม่มี = ชื่อเทาบนพื้นขาว · ป้ายภาคตัวเอียงแบบอินโฟกราฟิก
+      if (mapMode === 'summary') {
+        const max = Math.max(1, ...summaryShown.map(([, n]) => n));
+        const k = window.innerWidth < 640 ? 0.6 : 1; // มือถือซูมได้น้อย — วงเล็กลง
+        centersRef.current.forEach((center, province) => {
+          if (!zoneOk(province)) return;
+          const n = summary.get(province) ?? 0;
+          const size = n ? Math.round((22 + Math.sqrt(n / max) * 26) * k) : 0;
+          const html = n
+            ? `<div class="sdn-sum"><div class="sdn-sum-pin" style="width:${size}px;height:${size}px;font-size:${Math.round(size * 0.44)}px">${n}</div><div class="sdn-sum-name sdn-sum-on">${esc(province)}</div></div>`
+            : `<div class="sdn-sum"><div class="sdn-sum-name sdn-sum-off">${esc(province)}</div></div>`;
+          const icon = L.divIcon({ className: '', iconSize: [0, 0], iconAnchor: [0, n ? 0 : -2], html });
+          const m = L.marker(center, { icon, keyboard: false, interactive: n > 0, zIndexOffset: n ? 600 : 400 }).addTo(map);
+          if (n) m.on('click', () => setSelectedProvince((prev) => (prev === province ? '' : province)));
+          markersRef.current.push(m);
+        });
+        // ปุ่มภาค: จิ้ม = เลือก/เลิกเลือกภาคนั้น (เลือกได้หลายภาค) — ตัวเลข = จำนวนนโยบายในภาค
+        requestAnimationFrame(() => declutterSumNames(map.getContainer()));
+        if (summaryScope === 'focus') {
+          for (const { zone, at, align } of ZONE_BUTTONS) {
+            const on = summaryZones.includes(zone);
+            const html = `<div class="sdn-zone sdn-zone-${align}"><span class="sdn-zone-btn${on ? ' is-on' : ''}" role="button" aria-pressed="${on}">${esc(zoneShort(zone))}<b>${zoneTotals.get(zone) ?? 0}</b></span></div>`;
+            const m = L.marker(at, {
+              icon: L.divIcon({ className: '', iconSize: [0, 0], html }),
+              keyboard: false,
+              zIndexOffset: 700,
+            }).addTo(map);
+            m.on('click', () => toggleZone(zone));
+            markersRef.current.push(m);
+          }
+        }
+      }
+
       geoLayerRef.current?.setStyle((feature) => {
         const name = feature?.properties?.name_th as string;
         const isSelected = name === selectedProvince;
+
+        // โหมดสรุป: มีนโยบาย = เทาเข้ม · ไม่มี = ขาว · นอกภาคที่เน้น = จาง
+        if (mapMode === 'summary') {
+          const outside = !zoneOk(name);
+          const has = summary.has(name) && !outside;
+          return {
+            fillColor: outside ? '#e5e7eb' : has ? '#3f3f46' : '#ffffff',
+            fillOpacity: outside ? 0.55 : 0.92,
+            color: isSelected ? '#facc15' : outside ? '#d1d5db' : has ? '#ffffff' : '#9ca3af',
+            weight: isSelected ? 3 : has ? 1.5 : 1,
+          };
+        }
 
         // โหมดความหนาแน่น: ระบายสีจังหวัดตามค่าเกณฑ์ที่เลือก
         if (mapMode === 'heat') {
@@ -592,12 +796,15 @@ export default function MapView({ activities, categories, categoryLogos, subCate
                 ? `${name} — ${v.activities} งาน${publicView ? '' : ` · เจ้าหน้าที่ ${v.people} คน`}`
                 : `${name} — ยังไม่มีงาน`
             );
+        } else if (mapMode === 'summary') {
+          const n = summary.get(name);
+          layer.getTooltip()?.setContent(n ? `${name} — ${n} นโยบาย/ข้อตกลง` : `${name} — ยังไม่มีนโยบาย`);
         } else {
           layer.getTooltip()?.setContent(name);
         }
       });
     })();
-  }, [mapReady, byProvince, sitesByProvince, selectedProvince, categoryFilter, colorOf, mapMode, heatMetric, heatData, heatMax, newIds, categoryLogos, subCategoryLogos, publicView]);
+  }, [mapReady, byProvince, sitesByProvince, selectedProvince, categoryFilter, colorOf, mapMode, heatMetric, heatData, heatMax, newIds, categoryLogos, subCategoryLogos, publicView, summary, summaryShown, summaryScope, summaryZones, zoneOk, zoneTotals]);
 
   // วาดหมุดงานศพจากแขกแยกชั้นจากข้อมูลกิจกรรม
   useEffect(() => {
@@ -621,6 +828,38 @@ export default function MapView({ activities, categories, categoryLogos, subCate
     })();
     return ()=>{cancelled=true};
   }, [mapReady,pins]);
+
+  // โหมดสรุป: ซ่อนหมุดบ้าน (ให้ภาพสรุปอ่านง่าย) + ซูมพอดีภาคเหนือ+อีสาน หรือทั้งประเทศ
+  useEffect(() => {
+    const map = mapRef.current;
+    const pinLayer = pinLayerRef.current;
+    if (!mapReady || !map || !pinLayer) return;
+    // แผนที่ฐานจางลงในโหมดสรุป ให้จังหวัด+วงตัวเลขเด่นแบบอินโฟกราฟิก
+    tileRef.current?.setOpacity(mapMode === 'summary' ? 0.3 : 1);
+    if (mapMode === 'summary') {
+      pinLayer.remove();
+      let bounds: import('leaflet').LatLngBounds | null = null;
+      geoLayerRef.current?.eachLayer((layer) => {
+        const name = (layer as GeoJSONLayer & { feature?: GeoJSON.Feature }).feature?.properties?.name_th as string;
+        if (!zoneOk(name)) return;
+        const b = (layer as unknown as { getBounds: () => import('leaflet').LatLngBounds }).getBounds();
+        bounds = bounds ? bounds.extend(b) : b;
+      });
+      // เว้นด้านบนให้หัวการ์ด "ทำแล้วที่ไหนบ้าง"
+      // จอกว้าง: เว้นขวาให้การ์ดพายระดับนโยบาย (PolicySummaryCard กว้าง 300)
+      // เว้นซ้ายให้ปุ่มภาคเหนือ (ฝั่งพม่า) และล่างให้ปุ่มอีสานล่าง
+      const wide = window.innerWidth >= 768;
+      const right = wide ? 330 : 20;
+      if (bounds)
+        map.flyToBounds(bounds, {
+          paddingTopLeft: [wide ? 150 : 20, wide ? 170 : 150],
+          paddingBottomRight: [right, wide ? 60 : 20],
+          duration: 0.8,
+        });
+    } else if (!map.hasLayer(pinLayer)) {
+      pinLayer.addTo(map);
+    }
+  }, [mapReady, mapMode, zoneOk]);
 
   // ?pin=<id> (หลังปักหมุด/แก้ไข หรือจากลิงก์ "ดูบนแผนที่") = บินไปหมุดแล้วเปิดแผงข้าง · &saved=1 = ขึ้นข้อความขอบคุณ
   useEffect(() => {
@@ -660,6 +899,8 @@ export default function MapView({ activities, categories, categoryLogos, subCate
   // ซูมตามสิ่งที่กำลังดู: จังหวัดที่เลือก → ขอบเขตของผลลัพธ์ที่กรองอยู่ → ทั้งประเทศ
   useEffect(() => {
     if (!mapReady || !mapRef.current) return;
+    // โหมดสรุป: แผนที่นิ่งที่ภาพรวมภาค จิ้มจังหวัด = เปลี่ยนข้อมูลในการ์ดขวาอย่างเดียว (เหมาะกับนำเสนอบนจอ)
+    if (mapMode === 'summary') return;
     const map = mapRef.current;
 
     if (selectedProvince) {
@@ -683,6 +924,34 @@ export default function MapView({ activities, categories, categoryLogos, subCate
     // ตั้งใจไม่ผูกกับ search เพื่อไม่ให้แผนที่ขยับทุกครั้งที่พิมพ์
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mapReady, selectedProvince, categoryFilter, subFilter, statusFilter, newOnly]);
+
+  // โหมดสรุป: ดาวน์โหลดภาพสรุปของภาคที่เลือก (วาดเวกเตอร์ใหม่ทั้งภาพ — summaryPoster.ts)
+  const downloadPoster = async () => {
+    if (posterBusy) return;
+    setPosterBusy(true);
+    try {
+      const provinces = new Set(
+        (thailandGeo as unknown as { features: { properties: Record<string, string> }[] }).features
+          .map((ft) => ft.properties?.name_th)
+          .filter((n) => n && zoneOk(n)),
+      );
+      const title = zoneTitle ?? (summaryScope === 'focus' ? 'ภาคเหนือ + ภาคอีสาน' : 'ทั้งประเทศ');
+      const blob = await drawSummaryPoster({ title, provinces, counts: summary, centers: centersRef.current, policies: summaryPolicies });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `นโยบายงานศพปลอดเหล้า-${title.replace(/[\s+]+/g, '-')}.png`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 4000);
+    } catch (e) {
+      console.error('[summary poster]', e);
+      toast.error('สร้างภาพไม่สำเร็จ ลองอีกครั้ง');
+    } finally {
+      setPosterBusy(false);
+    }
+  };
 
   // บันทึกมุมมองแผนที่ปัจจุบันเป็นภาพ PNG (ใส่แถบหัวเรื่องให้พร้อมแปะรายงาน)
   const [capturing, setCapturing] = useState(false);
@@ -1004,6 +1273,18 @@ export default function MapView({ activities, categories, categoryLogos, subCate
         </button>
 
         <button
+          onClick={() => {
+            setSelectedPinId(null); // แผงหมุดบ้านปิด — โหมดสรุปซ่อนหมุดบ้าน
+            setMapMode((m) => (m === 'summary' ? 'markers' : 'summary'));
+          }}
+          title="สรุปรายจังหวัด: จำนวนนโยบาย เน้นภาคเหนือและอีสาน"
+          className={railBtnCls(mapMode === 'summary')}
+        >
+          <CircleDot className="w-5 h-5" />
+          <span className="text-[9px] leading-tight text-center px-0.5">สรุปจังหวัด</span>
+        </button>
+
+        <button
           onClick={() => setSidebarOpen((o) => !o)}
           title="ตัวกรอง: สถานะและประเด็นงาน"
           className={railBtnCls(sidebarOpen)}
@@ -1302,6 +1583,127 @@ export default function MapView({ activities, categories, categoryLogos, subCate
       </div>
 
       {/* แผงรายละเอียดจังหวัด — ลอยขวา (จอเล็ก: ชิดล่าง) */}
+      {/* โหมดสรุป: หัวการ์ด "ทำแล้วที่ไหนบ้าง" + เลือกขอบเขต + คำอธิบายวง (แบบอินโฟกราฟิกที่ผู้ใช้ชอบ 24 พ.ย. 2026) */}
+      {mapMode === 'summary' && !(selectedProvince && summaryList) && (
+        <PolicySummaryCard
+          policies={selectedProvince ? selectedActivities.flatMap((a) => a.policies ?? []) : summaryPolicies}
+          province={selectedProvince || null}
+          areas={
+            selectedProvince
+              ? Object.entries(
+                  selectedActivities.reduce<Record<string, number>>((m, a) => {
+                    if (a.policyCount) m[a.amphoe] = (m[a.amphoe] ?? 0) + a.policyCount;
+                    return m;
+                  }, {}),
+                ).sort((a, b) => b[1] - a[1])
+              : []
+          }
+          workCount={selectedActivities.length}
+          onClear={() => setSelectedProvince('')}
+          onList={() => setSummaryList(true)}
+          title={zoneTitle}
+          onDownload={downloadPoster}
+          downloading={posterBusy}
+        />
+      )}
+      {mapMode === 'summary' && (
+        <div className="absolute left-1/2 top-16 z-[1000] w-[min(480px,calc(100vw-7rem))] -translate-x-1/2 rounded-2xl border border-gray-200 bg-white/95 px-4 py-3 shadow-lg backdrop-blur max-sm:left-[88px] max-sm:translate-x-0 max-sm:w-[calc(100vw-100px)]">
+          <div className="flex flex-wrap items-baseline justify-between gap-x-3">
+            <p className="text-base font-bold text-gray-900">
+              ทำแล้วที่ไหนบ้าง{zoneTitle && <span className="text-gray-900"> · {zoneTitle}</span>}
+            </p>
+            {booth && (
+              <button
+                type="button"
+                onClick={() => setBooth(false)}
+                className="order-last inline-flex min-h-7 items-center gap-1.5 rounded-full bg-yellow-100 px-2.5 text-xs font-medium text-gray-900 hover:bg-yellow-200"
+                title="หยุดวนอัตโนมัติ"
+              >
+                <span className="h-2 w-2 animate-pulse rounded-full bg-yellow-500" aria-hidden="true" /> วนภาคอัตโนมัติ · หยุด
+              </button>
+            )}
+            <p className="text-sm font-semibold tabular-nums text-gray-900">
+              {summaryTotal.toLocaleString('th-TH')} นโยบาย · {summaryShown.length} จังหวัด
+            </p>
+          </div>
+          <div className="mt-2 flex items-center gap-1.5">
+            {(
+              [
+                ['focus', 'เหนือ + อีสาน'],
+                ['all', 'ทั้งประเทศ'],
+              ] as const
+            ).map(([k, label]) => (
+              <button
+                key={k}
+                type="button"
+                onClick={() => {
+                  setSummaryScope(k);
+                  setSummaryZones([]);
+                  setSelectedProvince('');
+                }}
+                aria-pressed={summaryScope === k}
+                className={`min-h-8 whitespace-nowrap rounded-full px-3 text-xs font-medium ${summaryScope === k ? 'bg-gray-900 text-white' : 'border border-gray-300 text-gray-700 hover:bg-gray-50'}`}
+              >
+                {label}
+              </button>
+            ))}
+            {/* คำอธิบายวง: ตัวเลข = จำนวนนโยบายในจังหวัด · วงใหญ่ = มีมาก */}
+            <span className="ml-auto hidden items-center gap-1.5 text-xs text-gray-500 sm:flex">
+              {[16, 21, 27].map((d, i) => (
+                <span
+                  key={d}
+                  className="inline-flex items-center justify-center rounded-full bg-yellow-400 font-bold text-gray-900 ring-2 ring-gray-900"
+                  style={{ width: d, height: d, fontSize: 9 + i * 2 }}
+                  aria-hidden="true"
+                >
+                  {[1, 3, 8][i]}
+                </span>
+              ))}
+              <span>= จำนวนนโยบาย</span>
+            </span>
+          </div>
+          {/* เลือกภาค (หลายภาคได้) — ชุดเดียวกับปุ่มภาคบนแผนที่ · มือถือใช้แถวนี้ (ปุ่มบนแผนที่ซ่อน) */}
+          <div className="-mx-1 mt-2 flex items-center gap-1.5 overflow-x-auto border-t border-gray-100 px-1 pt-2">
+            <button
+              type="button"
+              onClick={() => {
+                setSummaryZones([]);
+                setSelectedProvince('');
+              }}
+              aria-pressed={summaryZones.length === 0}
+              className={`min-h-8 shrink-0 whitespace-nowrap rounded-full px-3 text-xs font-medium ${summaryZones.length === 0 ? 'bg-yellow-400 text-gray-900' : 'border border-gray-300 text-gray-700 hover:bg-gray-50'}`}
+            >
+              ทุกภาค
+            </button>
+            {scopeZones.map((z) => {
+              const on = summaryZones.includes(z);
+              return (
+                <button
+                  key={z}
+                  type="button"
+                  onClick={() => toggleZone(z)}
+                  aria-pressed={on}
+                  className={`inline-flex min-h-8 shrink-0 items-center gap-1 whitespace-nowrap rounded-full px-3 text-xs font-medium ${on ? 'bg-gray-900 text-white' : 'border border-gray-300 text-gray-700 hover:bg-gray-50'}`}
+                >
+                  {on && <Check className="w-3.5 h-3.5" />}
+                  {zoneShort(z)}
+                  <span className={`tabular-nums ${on ? 'text-yellow-300' : 'text-gray-500'}`}>{zoneTotals.get(z) ?? 0}</span>
+                </button>
+              );
+            })}
+            <button
+              type="button"
+              onClick={downloadPoster}
+              disabled={posterBusy || summaryTotal === 0}
+              className="ml-auto inline-flex min-h-8 shrink-0 items-center gap-1 rounded-full border border-gray-300 px-3 text-xs font-medium text-gray-900 hover:bg-gray-50 disabled:opacity-50 md:hidden"
+              aria-label="ดาวน์โหลดภาพสรุป"
+            >
+              <Download className="w-3.5 h-3.5" /> ภาพ
+            </button>
+          </div>
+        </div>
+      )}
+
       {selectedPinId != null && !selectedProvince && (() => {
         const pin = pins.find((p) => p.id === selectedPinId);
         return pin ? (
@@ -1309,7 +1711,7 @@ export default function MapView({ activities, categories, categoryLogos, subCate
         ) : null;
       })()}
 
-      {selectedProvince && (
+      {selectedProvince && (mapMode !== 'summary' || summaryList) && (
         <aside className="absolute z-[1000] bg-white rounded-2xl border border-gray-200 shadow-xl overflow-auto sm:top-16 sm:right-4 sm:bottom-4 sm:w-[340px] max-sm:inset-x-2 max-sm:bottom-2 max-sm:max-h-[45%]">
         <div className="sticky top-0 bg-white/95 backdrop-blur border-b border-gray-200 p-4 flex items-start justify-between gap-2">
           <div>
@@ -1323,7 +1725,10 @@ export default function MapView({ activities, categories, categoryLogos, subCate
           </div>
           <div className="flex items-center gap-0.5 shrink-0">
             <button
-              onClick={() => setSelectedProvince('')}
+              onClick={() => {
+                setSelectedProvince('');
+                setSummaryList(false);
+              }}
               className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100"
               aria-label="ปิด"
             >
@@ -1393,7 +1798,7 @@ export default function MapView({ activities, categories, categoryLogos, subCate
       )}
 
       {/* ชวนครอบครัวปักหมุดงานศพปลอดเหล้า — จอใหญ่ = QR (ย่อเก็บได้) · มือถือ = ปุ่มไปฟอร์ม · ซ่อนเมื่อแผงข้างเปิด (ไม่ให้ทับกัน) */}
-      {selectedPinId == null && !selectedProvince && (
+      {selectedPinId == null && !selectedProvince && mapMode !== 'summary' && (
         <div className="absolute bottom-16 right-3 z-[900] sm:right-14">
           {pinCardOpen ? (
             <div className="hidden items-center gap-4 rounded-2xl border border-gray-200 bg-white p-4 shadow-lg md:flex">

@@ -42,6 +42,8 @@ interface SearchResult {
   regions?: RegionData[];
   regionsFirst?: boolean;
   placesError?: string;
+  /** ส่วนชื่อหมู่บ้าน/สถานที่ในคำค้น (เช่น "บ้านโนนสิน" จาก "บ้านโนนสิน ต.ส้มป่อย") */
+  areaNameHint?: string | null;
 }
 interface Nearby {
   name: string;
@@ -206,13 +208,15 @@ export default function LocationField({ location, pin, areaName, onLocation, onP
     for (const p of result.recent ?? [])
       items.push({ key: p.id, kind: 'recent', title: p.name, sub: p.address, apply: () => applyPlace(p) });
   } else {
+    const hint = result.areaNameHint;
     const regionItems: Item[] = (result.regions ?? []).map((r) => ({
       key: `r:${r.district}|${r.amphoe}|${r.province}`,
       kind: 'region',
-      title: `ต.${r.district} อ.${r.amphoe}`,
-      sub: `จ.${r.province} · ${getRegionLabel(getProvinceHealthZone(r.province))}`,
+      title: hint ? `${hint} · ต.${r.district} อ.${r.amphoe}` : `ต.${r.district} อ.${r.amphoe}`,
+      sub: `จ.${r.province} · ${getRegionLabel(getProvinceHealthZone(r.province))}${hint ? ' · ปักหมุดตำแหน่งจริงบนแผนที่ได้' : ''}`,
       apply: () => {
         onLocation(r);
+        if (hint) onAreaName(hint);
         onPin(null);
         setNearby([]);
         setShowMap(true);

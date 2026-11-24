@@ -13,7 +13,7 @@ import { provinceAt } from '@/app/lib/provinceGeo';
 import { getTambonCoords, nearestTambon } from '@/app/lib/tambonCoords';
 import { isInThailandBox } from '@/app/lib/geoLink';
 import { reverseGeocode, searchPlaces, searchNearby, sphereKey } from '@/app/lib/sphere';
-import { findRegion, searchRegions, looksLikeRegionQuery } from '@/app/lib/regionLookup';
+import { findRegion, searchRegionsLoose, looksLikeRegionQuery } from '@/app/lib/regionLookup';
 import { planPlaceSearch, matchRank } from '@/app/lib/placeQuery';
 import type { SphereItem } from '@/app/lib/sphere';
 
@@ -182,10 +182,12 @@ export async function GET(request: NextRequest) {
     );
   }
 
+  const regionHits = searchRegionsLoose(q, 5);
   return NextResponse.json({
     saved: toSavedPlaces(savedRows, 4),
     places: shown.slice(0, 8),
-    regions: searchRegions(q, 5),
+    regions: regionHits.regions,
+    areaNameHint: regionHits.areaNameHint, // "บ้านโนนสิน ต.ส้มป่อย" → เลือกตำบลแล้วเติม "บ้านโนนสิน" เป็นชื่อสถานที่ให้
     regionsFirst: looksLikeRegionQuery(q),
     placesError: placeResult.error,
   });

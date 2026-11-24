@@ -113,6 +113,16 @@ export async function GET(request: NextRequest) {
     sphereCalls.unshift(searchNearby(plan.areaKeyword, plan.area.lat, plan.area.lng));
   }
 
+  // "บ้านดอนอุดม ต.ห้วยยาง" → ค้นชื่อหมู่บ้านเปล่า ๆ รอบจุดกลางตำบลที่ตรง (Sphere ค้นแบบวลี ทั้งประโยคมักไม่เจอ)
+  // GISTDA มีหมุดหมู่บ้าน (Muban) บางส่วน — เจอ = ได้พิกัดจริงของหมู่บ้านแทนจุดกลางตำบล (ทดสอบ 24 พ.ย. 2026)
+  const regionHits = searchRegionsLoose(q, 5);
+  const villageName = (regionHits.areaNameHint ?? '').replace(/(ม\.|หมู่(ที่)?)\s*\d+/g, '').trim();
+  if (villageName.length >= 2 && sphereKey()) {
+    for (const r of regionHits.regions.slice(0, 3)) {
+      sphereCalls.unshift(searchPlaces(villageName, getTambonCoords(r.district, r.amphoe, r.province)));
+    }
+  }
+
   const [savedRows, placeResult] = await Promise.all([
     prisma.activity.findMany({
       where: { OR: [...new Set([q, plan.expanded])].map((k) => ({ areaName: { contains: k } })) },
@@ -131,7 +141,7 @@ export async function GET(request: NextRequest) {
   ]);
 
   // ชื่อตรงคำค้นขึ้นก่อน (sort เสถียร — ภายในระดับเดียวกันคงลำดับความใกล้ของ Sphere)
-  const rankKeywords = [...plan.keywords, plan.areaKeyword].filter(Boolean);
+  const rankKeywords = [villageName, ...plan.keywords, plan.areaKeyword].filter(Boolean);
   placeResult.items.sort((a, b) => matchRank(a.name ?? '', rankKeywords) - matchRank(b.name ?? '', rankKeywords));
 
   // ตู้ ATM ชื่อพ่วงสถานที่ดัง (เช่น "เอทีเอ็ม ธนาคารออมสิน วัดพระธาตุดอยสุเทพ") ท่วมผล → ตัด ยกเว้นตั้งใจค้น
@@ -176,19 +186,27 @@ export async function GET(request: NextRequest) {
     );
     if (inArea.length > 0) shown = inArea;
   }
-  if (province) {
+  // มีชื่อหมู่บ้าน + ตำบล: ผล GISTDA ที่อยู่ในตำบลที่ตรงขึ้นก่อน และขึ้นก่อนกลุ่มตำบล (มีพิกัดจริง)
+  let villageFirst = false;
+  if (villageName) {
+    const inTambon = (p: (typeof places)[number]) =>
+      !!p.region && regionHits.regions.some((r) => r.district === p.region!.district && r.amphoe === p.region!.amphoe && r.province === p.region!.province);
+    const hits = shown.filter(inTambon);
+    villageFirst = hits.length > 0;
+    if (villageFirst) shown = [...hits, ...shown.filter((p) => !inTambon(p))];
+  }
+  if (province && !villageFirst) {
     shown.sort(
       (a, b) => Number(b.region?.province === province) - Number(a.region?.province === province)
     );
   }
 
-  const regionHits = searchRegionsLoose(q, 5);
   return NextResponse.json({
     saved: toSavedPlaces(savedRows, 4),
     places: shown.slice(0, 8),
     regions: regionHits.regions,
     areaNameHint: regionHits.areaNameHint, // "บ้านโนนสิน ต.ส้มป่อย" → เลือกตำบลแล้วเติม "บ้านโนนสิน" เป็นชื่อสถานที่ให้
-    regionsFirst: looksLikeRegionQuery(q),
+    regionsFirst: looksLikeRegionQuery(q) && !villageFirst,
     placesError: placeResult.error,
   });
 }

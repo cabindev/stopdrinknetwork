@@ -6,7 +6,7 @@
 //   หมู่บ้าน/จังหวัด/ประเทศ = จำนวนนโยบาย · นับจากพื้นที่หลักของงานเท่านั้น (ไม่รวม ActivityArea) · ไม่นับงานในถังขยะ
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { ExternalLink, Search } from 'lucide-react';
+import { ExternalLink, Eye, Pencil, Search } from 'lucide-react';
 import prisma, { ACTIVE_ACTIVITY } from '@/app/lib/db';
 import { getAdminUser } from '@/app/lib/adminAuth';
 import { POLICY_LEVELS, POLICY_TYPES } from '@/app/lib/activityMeta';
@@ -481,7 +481,7 @@ export default async function PoliciesByAreaPage({
           <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-5 py-4 [&::-webkit-details-marker]:hidden">
             <span>
               <span className="text-sm font-semibold text-gray-900">ข้อมูลที่ควรแก้ {issues.length} รายการ</span>
-              <span className="block text-xs text-gray-500">นโยบายที่ยังไม่ระบุประเภท/ปี หรือประเภทไม่ตรงกับระดับ — กดแก้ไขงานเพื่อเติมข้อมูล</span>
+              <span className="block text-xs text-gray-500">นโยบายที่ยังไม่ระบุประเภท/ปี หรือประเภทไม่ตรงกับระดับ — กดดูงานหรือแก้ไขเพื่อเติมข้อมูล</span>
             </span>
             <span className="shrink-0 whitespace-nowrap text-xs text-gray-500 underline underline-offset-2 group-open:hidden">ดูรายการ</span>
             <span className="hidden shrink-0 whitespace-nowrap text-xs text-gray-500 underline underline-offset-2 group-open:inline">ซ่อน</span>
@@ -510,9 +510,15 @@ export default async function PoliciesByAreaPage({
                     </td>
                     <td className="py-2 pr-3 text-gray-900">{why.join(' · ')}</td>
                     <td className="py-2">
-                      <Link href={`/activity/${p.activity.id}/edit`} className="inline-flex items-center gap-1 whitespace-nowrap text-xs text-gray-500 hover:text-gray-900">
-                        แก้ไขงาน <ExternalLink className="w-3.5 h-3.5" />
-                      </Link>
+                      {/* ดูงานก่อนแก้ (ผู้ใช้ขอ 24 พ.ย. 2026 — เดิมมีแค่แก้ไข) */}
+                      <span className="inline-flex items-center gap-3 whitespace-nowrap text-xs">
+                        <Link href={`/activity/${p.activity.id}`} className="inline-flex min-h-8 items-center gap-1 text-gray-900 hover:underline">
+                          <Eye className="w-3.5 h-3.5" /> ดูงาน
+                        </Link>
+                        <Link href={`/activity/${p.activity.id}/edit`} className="inline-flex min-h-8 items-center gap-1 text-gray-500 hover:text-gray-900">
+                          <Pencil className="w-3.5 h-3.5" /> แก้ไข
+                        </Link>
+                      </span>
                     </td>
                   </tr>
                 ))}

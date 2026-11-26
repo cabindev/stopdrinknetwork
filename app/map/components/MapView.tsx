@@ -511,6 +511,9 @@ export default function MapView({ activities, categories, categoryLogos, subCate
     for (const a of filtered) {
       push(a.province, { a, latitude: a.latitude, longitude: a.longitude, locationSource: a.locationSource, extra: null });
       for (const x of a.extraAreas) {
+        // พื้นที่ที่เกี่ยวข้องในตำบลเดียวกับพื้นที่หลัก = ไม่วาดหมุดซ้ำ (ไม่บอกตำแหน่งเพิ่ม และทำให้นับหมุดไม่ตรงกับจำนวนงาน
+        // — ผู้ใช้ทัก 26 พ.ย. 2026: บึงกาฬ 4 หมุดแต่แผงบอก 2 งาน)
+        if (x.district === a.district && x.amphoe === a.amphoe && x.province === a.province) continue;
         push(x.province, { a, latitude: x.latitude, longitude: x.longitude, locationSource: x.locationSource, extra: x });
       }
     }
@@ -518,6 +521,17 @@ export default function MapView({ activities, categories, categoryLogos, subCate
   }, [filtered]);
 
   const selectedActivities = selectedProvince ? byProvince.get(selectedProvince) ?? [] : [];
+  // หมุดรอง (พื้นที่ที่เกี่ยวข้องต่างตำบล) ในจังหวัดนี้ — แผงจังหวัดแสดงด้วย ให้จำนวนหมุดบนแผนที่ตรงกับแผง (26 พ.ย. 2026)
+  const extrasByProvince = useMemo(() => {
+    const m = new Map<string, MapSite[]>();
+    sitesByProvince.forEach((list, province) => {
+      const ex = list.filter((x) => x.extra);
+      if (ex.length) m.set(province, ex);
+    });
+    return m;
+  }, [sitesByProvince]);
+  const hasSites = useCallback((p: string) => byProvince.has(p) || extrasByProvince.has(p), [byProvince, extrasByProvince]);
+  const selectedExtras = selectedProvince ? extrasByProvince.get(selectedProvince) ?? [] : [];
   const selectedUserCount = new Set(selectedActivities.map((a) => a.userName)).size;
 
   // ค่าความเข้มรายจังหวัดสำหรับโหมด heat: จำนวนงาน + จำนวนเจ้าหน้าที่ (ไม่ซ้ำคน)
@@ -995,7 +1009,7 @@ export default function MapView({ activities, categories, categoryLogos, subCate
           };
         }
 
-        return provinceStyle(byProvince.has(name), isSelected);
+        return provinceStyle(hasSites(name), isSelected);
       });
 
       // tooltip จังหวัด: โหมด heat โชว์ตัวเลขประกอบ
@@ -1020,7 +1034,7 @@ export default function MapView({ activities, categories, categoryLogos, subCate
         }
       });
     })();
-  }, [mapReady, byProvince, sitesByProvince, selectedProvince, categoryFilter, colorOf, mapMode, heatMetric, heatData, heatMax, newIds, categoryLogos, subCategoryLogos, publicView, summary, summaryShown, summaryScope, summaryZones, zoneOk, zoneTotals, zoomBucket, expo]);
+  }, [mapReady, byProvince, sitesByProvince, selectedProvince, categoryFilter, colorOf, mapMode, heatMetric, heatData, heatMax, newIds, categoryLogos, subCategoryLogos, publicView, summary, summaryShown, summaryScope, summaryZones, zoneOk, zoneTotals, zoomBucket, expo, hasSites]);
 
   // วาดหมุดงานศพจากแขกแยกชั้นจากข้อมูลกิจกรรม
   useEffect(() => {
@@ -1109,8 +1123,8 @@ export default function MapView({ activities, categories, categoryLogos, subCate
   // เปลี่ยนฟิลเตอร์แล้วจังหวัดที่เลือกไม่มีงานเหลือ → ยกเลิกการเลือก
   // (ไม่งั้นแผนที่จะค้างอยู่ที่จังหวัดที่ว่างเปล่า มองไม่เห็นว่าผลลัพธ์ใหม่อยู่ตรงไหน)
   useEffect(() => {
-    if (selectedProvince && !byProvince.has(selectedProvince)) setSelectedProvince('');
-  }, [byProvince, selectedProvince]);
+    if (selectedProvince && !hasSites(selectedProvince)) setSelectedProvince('');
+  }, [hasSites, selectedProvince]);
 
   // ซูมตามสิ่งที่กำลังดู: จังหวัดที่เลือก → ขอบเขตของผลลัพธ์ที่กรองอยู่ → ทั้งประเทศ
   useEffect(() => {
@@ -1262,7 +1276,7 @@ export default function MapView({ activities, categories, categoryLogos, subCate
         if (!name) continue;
         const isSelected = name === selectedProvince;
         const heatValue = heatData.get(name)?.[heatMetric] ?? 0;
-        const ps = provinceStyle(byProvince.has(name), isSelected);
+        const ps = provinceStyle(hasSites(name), isSelected);
         const fill = mapMode === 'heat' ? heatColor(heatValue, heatMax) : ps.fillColor;
 
         ctx.beginPath();
@@ -1980,10 +1994,9 @@ export default function MapView({ activities, categories, categoryLogos, subCate
           <div>
             <h2 className="text-lg font-bold text-gray-800">จ.{selectedProvince}</h2>
             <p className="text-xs text-gray-500 mt-0.5">
-              {selectedActivities.length > 0 && (
-                <>{getRegionLabel(selectedActivities[0].region as HealthZone)} · </>
-              )}
-              {selectedActivities.length} งาน
+              {provinceHealthZones[selectedProvince] && <>{getRegionLabel(provinceHealthZones[selectedProvince])} · </>}
+              {(selectedActivities.length > 0 || selectedExtras.length === 0) && <>{selectedActivities.length} งาน</>}
+              {selectedExtras.length > 0 && <>{selectedActivities.length > 0 ? ' · ' : ''}พื้นที่ที่เกี่ยวข้อง {selectedExtras.length} แห่ง</>}
             </p>
           </div>
           <div className="flex items-center gap-0.5 shrink-0">
@@ -2008,7 +2021,7 @@ export default function MapView({ activities, categories, categoryLogos, subCate
             </div>
           )}
 
-          {selectedActivities.length === 0 ? (
+          {selectedActivities.length === 0 && selectedExtras.length === 0 ? (
             <p className="py-6 text-sm text-gray-400 text-center">
               ไม่มีงานที่ตรงกับฟิลเตอร์ในจังหวัดนี้
             </p>
@@ -2055,6 +2068,31 @@ export default function MapView({ activities, categories, categoryLogos, subCate
                 </li>
               ))}
             </ul>
+          )}
+
+          {selectedExtras.length > 0 && (
+            <>
+              <h3 className="mt-5 mb-2 text-xs font-semibold text-gray-900">พื้นที่ที่เกี่ยวข้องของงานอื่น</h3>
+              <ul className="space-y-3">
+                {selectedExtras.map((site, i) => {
+                  const a = site.a;
+                  const x = site.extra!;
+                  return (
+                    <li key={`${a.id}-${i}`}>
+                      <PanelItem href={publicView ? (a.published ? `/stories/${a.id}` : null) : `/activity/${a.id}`}>
+                        <p className="text-[11px] text-gray-500">พื้นที่ที่เกี่ยวข้องของงาน{x.note ? ` · ${x.note}` : ''}</p>
+                        <p className="mt-1 text-sm font-medium text-gray-800">{a.title}</p>
+                        <p className="mt-1 text-xs text-gray-500">
+                          <MapPin className="inline w-3.5 h-3.5 mr-0.5 text-gray-600" />
+                          {x.areaName ? `${x.areaName} · ` : ''}ต.{x.district} อ.{x.amphoe}
+                          <span className="text-gray-400"> · งานหลักอยู่ ต.{a.district}{a.province !== selectedProvince ? ` จ.${a.province}` : ''}</span>
+                        </p>
+                      </PanelItem>
+                    </li>
+                  );
+                })}
+              </ul>
+            </>
           )}
         </div>
         </aside>

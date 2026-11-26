@@ -169,6 +169,15 @@ interface LogoSpec {
   dashed: boolean;
   size: number;
 }
+// วงตัวเลขรวมหมุดที่ทับกัน (export PNG วาดจาก spec นี้)
+interface ClusterSpec {
+  kind: 'cluster';
+  n: number;
+  size: number;
+}
+/** ระยะบนจอ (px) ที่ถือว่าหมุดทับกัน → รวมเป็นวงตัวเลข · ซูมตั้งแต่ระดับนี้ไม่รวมแล้ว (เห็นทุกงานแยกกัน) */
+const CLUSTER_RADIUS = 26;
+const CLUSTER_OFF_ZOOM = 10;
 // หมุดโลโก้แยกตามระดับนโยบาย = วงกลมทึบสีระดับ ขอบดำ + สัญลักษณ์ข้างใน (26 พ.ย. 2026 — ผู้ใช้เห็นด้วยหลังตรวจหน้าเว็บจริง)
 // เดิม (4 พ.ย.) เป็นโลโก้ล้วนระบายสี: ย่อ 28px แล้วอ่านเป็น "ป้ายห้าม/กากบาท", ตำบล↔จังหวัด และ อำเภอ↔ไม่มีนโยบาย แยกไม่ออก
 // สีพื้น = LEVEL_FILL ชุดเดียวกับแดชบอร์ด (หมู่บ้าน ขาวเทา · ตำบล เหลือง · อำเภอ เทา · จังหวัด เหลืองอ่อน · ประเทศ ดำ) · ink = สีสัญลักษณ์บนพื้น
@@ -376,6 +385,8 @@ export default function MapView({ activities, categories, categoryLogos, subCate
   const boundsRef = useRef<Map<string, LatLngBounds>>(new Map());
   const fullBoundsRef = useRef<LatLngBounds | null>(null);
   const [mapReady, setMapReady] = useState(false);
+  // ระดับซูม (ปัดลง, ไม่เกิน CLUSTER_OFF_ZOOM) — เปลี่ยนแล้ววาดหมุดใหม่เพื่อจัดกลุ่มวงตัวเลขตามระยะบนจอ
+  const [zoomBucket, setZoomBucket] = useState(6);
   const [selectedProvince, setSelectedProvince] = useState<string>('');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [subFilter, setSubFilter] = useState(''); // ประเด็นย่อย — ใช้ได้เมื่อเลือกประเด็นแล้ว
@@ -575,6 +586,7 @@ export default function MapView({ activities, categories, categoryLogos, subCate
       // โหมดสรุปบนมือถือ: ชื่อจังหวัดขึ้นเมื่อซูมเข้าพอ (ซูมไกลแล้วชื่อทับกันอ่านไม่ออก) — CSS .sdn-sum-zoomed ใน globals.css
       const markZoom = () => {
         map.getContainer().classList.toggle('sdn-sum-zoomed', map.getZoom() >= 6.75);
+        setZoomBucket(Math.min(Math.floor(map.getZoom()), CLUSTER_OFF_ZOOM));
         declutterSumNames(map.getContainer());
       };
       map.on('zoomend', markZoom);
@@ -644,6 +656,7 @@ export default function MapView({ activities, categories, categoryLogos, subCate
       const animate = animKey !== lastAnimKeyRef.current;
       lastAnimKeyRef.current = animKey;
       let animIndex = 0;
+      const items: { site: MapSite; pos: [number, number] }[] = [];
 
       sitesByProvince.forEach((list, province) => {
         const center = centersRef.current.get(province);
@@ -672,7 +685,6 @@ export default function MapView({ activities, categories, categoryLogos, subCate
                 ? center
                 : [group[0].latitude!, group[0].longitude!];
             group.forEach((site, i) => {
-              const a = site.a;
               // กระจายหมุดที่จุดเดียวกันเป็นวงรอบ ๆ ให้เห็นครบทุกงาน
               // (หมุดตำแหน่งจริงกระจายวงเล็ก ~50 ม. ไม่ให้หลุดจากที่ตั้งจริงไกล)
               const offset = group.length > 1 ? (key.startsWith('pin:') ? 0.0005 : 0.012) : 0;
@@ -681,62 +693,127 @@ export default function MapView({ activities, categories, categoryLogos, subCate
                 base[0] + offset * Math.sin(angle),
                 base[1] + offset * Math.cos(angle),
               ];
-              const isNew = newIds.has(a.id) && !site.extra; // วงกระเพื่อมเฉพาะหมุดหลัก
-              // งานใหม่: วงกระเพื่อมสีส้มรอบหมุด (divIcon อยู่ marker pane เหนือหมุด — pointer-events ปิดไว้)
-              if (isNew) {
-                const pulse = L.marker(pos, {
-                  icon: L.divIcon({ html: '<span class="sdn-pulse"></span>', className: '', iconSize: [34, 34], iconAnchor: [17, 17] }),
-                  interactive: false,
-                  keyboard: false,
-                }).addTo(map);
-                (pulse.options as { sdn?: PulseSpec }).sdn = { kind: 'pulse' };
-                markersRef.current.push(pulse);
-              }
-              // ปักตำแหน่งจริง = สีทึบขอบขาว · จุดกลางตำบล (โดยประมาณ) = สีจางขอบประ (0.6 — จางกว่านี้มองไม่เห็นในมุมทั้งประเทศ)
-              const color = colorOf(a.category);
-              const precise = site.locationSource !== 'TAMBON' && site.latitude != null;
-              const logo = logoOf(a);
-              let marker: CircleMarker | Marker;
-              if (logo) {
-                // สีโลโก้+ขนาดตามระดับนโยบาย · หมุดรองเล็กลง 6px · ระดับสูงวางบนสุด (zIndexOffset) ไม่ให้หมุดเล็กบัง
-                const pinStyle = levelPin(a.policyLevel);
-                const size = site.extra ? pinStyle.size - 4 : pinStyle.size;
-                marker = L.marker(pos, {
-                  icon: L.divIcon({
-                    html: logoPinHtml(tinted.get(`${logo}|${pinStyle.ink}`) ?? logo, pinStyle, !precise, size, animate ? waveDelay(pos[0], animIndex++) : null),
-                    className: '',
-                    iconSize: [size, size],
-                    iconAnchor: [size / 2, size / 2],
-                    popupAnchor: [0, -size / 2],
-                    tooltipAnchor: [0, -size / 2],
-                  }),
-                  riseOnHover: true,
-                  zIndexOffset: size * 10,
-                  alt: a.category,
-                }).addTo(map);
-                (marker.options as { sdn?: LogoSpec }).sdn = { kind: 'logo', color, approx: !precise, fill: pinStyle.fill, dashed: pinStyle.dashed, size };
-              } else {
-                // หมุดรอง (พื้นที่ที่เกี่ยวข้อง) เล็กกว่าหมุดหลักเล็กน้อย
-                const r = site.extra ? 2 : 0;
-                marker = L.circleMarker(
-                  pos,
-                  precise
-                    ? { radius: 8 - r, color: '#ffffff', weight: 2, fillColor: color, fillOpacity: 1 }
-                    : { radius: 7 - r, color, weight: 2, dashArray: '3 3', fillColor: color, fillOpacity: 0.6 }
-                ).addTo(map);
-              }
-              marker.bindTooltip(`${isNew ? '🆕 ' : ''}${site.extra ? 'พื้นที่ที่เกี่ยวข้อง: ' : ''}${esc(a.title)}`, { direction: 'top' });
-              // คลิกหมุด = เปิด popup ตรงจุดนั้น (ไม่เด้งออกจากหน้าแผนที่)
-              marker.bindPopup(activityPopupHtml(a, color, isNew, publicView, site.extra), {
-                closeButton: true,
-                autoPanPadding: [24, 24],
-                maxWidth: 260,
-              });
-              markersRef.current.push(marker);
+              items.push({ site, pos });
             });
           });
         }
       });
+
+      // วาดหมุดเดี่ยว 1 งาน (สี/ขนาดตามระดับนโยบาย + popup)
+      const drawPin = (site: MapSite, pos: [number, number]) => {
+        const a = site.a;
+        const isNew = newIds.has(a.id) && !site.extra; // วงกระเพื่อมเฉพาะหมุดหลัก
+        // งานใหม่: วงกระเพื่อมสีส้มรอบหมุด (divIcon อยู่ marker pane เหนือหมุด — pointer-events ปิดไว้)
+        if (isNew) {
+          const pulse = L.marker(pos, {
+            icon: L.divIcon({ html: '<span class="sdn-pulse"></span>', className: '', iconSize: [34, 34], iconAnchor: [17, 17] }),
+            interactive: false,
+            keyboard: false,
+          }).addTo(map);
+          (pulse.options as { sdn?: PulseSpec }).sdn = { kind: 'pulse' };
+          markersRef.current.push(pulse);
+        }
+        // ปักตำแหน่งจริง = สีทึบขอบขาว · จุดกลางตำบล (โดยประมาณ) = สีจางขอบประ (0.6 — จางกว่านี้มองไม่เห็นในมุมทั้งประเทศ)
+        const color = colorOf(a.category);
+        const precise = site.locationSource !== 'TAMBON' && site.latitude != null;
+        const logo = logoOf(a);
+        let marker: CircleMarker | Marker;
+        if (logo) {
+          // สีโลโก้+ขนาดตามระดับนโยบาย · หมุดรองเล็กลง 6px · ระดับสูงวางบนสุด (zIndexOffset) ไม่ให้หมุดเล็กบัง
+          const pinStyle = levelPin(a.policyLevel);
+          const size = site.extra ? pinStyle.size - 4 : pinStyle.size;
+          marker = L.marker(pos, {
+            icon: L.divIcon({
+              html: logoPinHtml(tinted.get(`${logo}|${pinStyle.ink}`) ?? logo, pinStyle, !precise, size, animate ? waveDelay(pos[0], animIndex++) : null),
+              className: '',
+              iconSize: [size, size],
+              iconAnchor: [size / 2, size / 2],
+              popupAnchor: [0, -size / 2],
+              tooltipAnchor: [0, -size / 2],
+            }),
+            riseOnHover: true,
+            zIndexOffset: size * 10,
+            alt: a.category,
+          }).addTo(map);
+          (marker.options as { sdn?: LogoSpec }).sdn = { kind: 'logo', color, approx: !precise, fill: pinStyle.fill, dashed: pinStyle.dashed, size };
+        } else {
+          // หมุดรอง (พื้นที่ที่เกี่ยวข้อง) เล็กกว่าหมุดหลักเล็กน้อย
+          const r = site.extra ? 2 : 0;
+          marker = L.circleMarker(
+            pos,
+            precise
+              ? { radius: 8 - r, color: '#ffffff', weight: 2, fillColor: color, fillOpacity: 1 }
+              : { radius: 7 - r, color, weight: 2, dashArray: '3 3', fillColor: color, fillOpacity: 0.6 }
+          ).addTo(map);
+        }
+        marker.bindTooltip(`${isNew ? '🆕 ' : ''}${site.extra ? 'พื้นที่ที่เกี่ยวข้อง: ' : ''}${esc(a.title)}`, { direction: 'top' });
+        // คลิกหมุด = เปิด popup ตรงจุดนั้น (ไม่เด้งออกจากหน้าแผนที่)
+        marker.bindPopup(activityPopupHtml(a, color, isNew, publicView, site.extra), {
+          closeButton: true,
+          autoPanPadding: [24, 24],
+          maxWidth: 260,
+        });
+        markersRef.current.push(marker);
+      };
+
+      // ── รวมหมุดที่ทับกันบนจอเป็นวงตัวเลข (26 พ.ย. 2026 — ผู้ใช้ขอ: อุบล/อำนาจเจริญ/ยโสธร กองเป็นก้อน นับ/กดแยกไม่ได้ โดยเฉพาะมือถือ)
+      // จัดกลุ่มตามระยะบนจอที่ซูมปัจจุบัน (ไม่ใช่รายจังหวัด) · ซูม ≥ CLUSTER_OFF_ZOOM = ทุกงานเป็นหมุดของตัวเองตามกฎเดิม
+      // ระดับสูงจับกลุ่มก่อน (เป็นจุดกลางของกลุ่ม) · คลิกวง = ซูมเข้าพอดีสมาชิก
+      const clusters: { pos: [number, number]; px: { x: number; y: number }; members: { site: MapSite; pos: [number, number] }[] }[] = [];
+      const zoomNow = map.getZoom();
+      const rank = (site: MapSite) => LEVEL_SIZE[site.a.policyLevel ?? ''] ?? 0;
+      const sorted = zoomNow >= CLUSTER_OFF_ZOOM ? items : [...items].sort((x, y) => rank(y.site) - rank(x.site));
+      for (const it of sorted) {
+        const px = map.project(it.pos, zoomNow);
+        const hit = zoomNow >= CLUSTER_OFF_ZOOM ? undefined : clusters.find((c) => Math.hypot(c.px.x - px.x, c.px.y - px.y) < CLUSTER_RADIUS);
+        if (hit) hit.members.push(it);
+        else clusters.push({ pos: it.pos, px, members: [it] });
+      }
+      for (const c of clusters) {
+        if (c.members.length === 1) {
+          drawPin(c.members[0].site, c.members[0].pos);
+          continue;
+        }
+        // จุดกลางของกลุ่ม = เฉลี่ยตำแหน่งสมาชิก
+        const lat = c.members.reduce((t, m) => t + m.pos[0], 0) / c.members.length;
+        const lng = c.members.reduce((t, m) => t + m.pos[1], 0) / c.members.length;
+        const n = c.members.length;
+        const size = Math.round(28 + Math.min(16, Math.sqrt(n) * 3));
+        if (c.members.some((m) => newIds.has(m.site.a.id) && !m.site.extra)) {
+          const pulse = L.marker([lat, lng], {
+            icon: L.divIcon({ html: '<span class="sdn-pulse"></span>', className: '', iconSize: [size + 6, size + 6], iconAnchor: [(size + 6) / 2, (size + 6) / 2] }),
+            interactive: false,
+            keyboard: false,
+          }).addTo(map);
+          (pulse.options as { sdn?: PulseSpec }).sdn = { kind: 'pulse' };
+          markersRef.current.push(pulse);
+        }
+        const delay = animate ? waveDelay(lat, animIndex++) : null;
+        const m = L.marker([lat, lng], {
+          icon: L.divIcon({
+            html: `<div class="sdn-cluster${delay != null ? ' sdn-anim' : ''}" style="width:${size}px;height:${size}px;font-size:${size >= 36 ? 14 : 12}px${delay != null ? `;--d:${delay}ms` : ''}"><span>${n}</span></div>`,
+            className: '',
+            iconSize: [size, size],
+            iconAnchor: [size / 2, size / 2],
+          }),
+          riseOnHover: true,
+          zIndexOffset: 1000,
+          alt: `${n} งาน`,
+        }).addTo(map);
+        (m.options as { sdn?: ClusterSpec }).sdn = { kind: 'cluster', n, size };
+        // tooltip บอกว่ากลุ่มนี้มีระดับไหนกี่งาน
+        const levels = new Map<string, number>();
+        for (const mm of c.members) {
+          const lv = mm.site.a.policyLevel ? `ระดับ${POLICY_LABEL[mm.site.a.policyLevel] ?? mm.site.a.policyLevel}` : 'ยังไม่มีนโยบาย';
+          levels.set(lv, (levels.get(lv) ?? 0) + 1);
+        }
+        m.bindTooltip(`${n} งาน — ${[...levels].map(([k, v]) => `${esc(k)} ${v}`).join(' · ')}<br><span style="color:#6b7280">คลิกเพื่อซูมเข้า</span>`, { direction: 'top', offset: [0, -size / 2] });
+        m.on('click', () => {
+          const b = L.latLngBounds(c.members.map((mm) => mm.pos));
+          map.flyToBounds(b, { padding: [60, 60], maxZoom: Math.max(CLUSTER_OFF_ZOOM, Math.ceil(zoomNow) + 2), duration: 0.6 });
+        });
+        markersRef.current.push(m);
+      }
 
       // โหมดสรุป (อินโฟกราฟิก "ทำแล้วที่ไหนบ้าง"): **ชื่อทุกจังหวัด** ในขอบเขต + วงเหลืองตัวเลข = จำนวนนโยบาย (ยิ่งมากยิ่งใหญ่)
       // มีนโยบาย = ชื่อขาวบนพื้นเข้ม · ยังไม่มี = ชื่อเทาบนพื้นขาว · ป้ายภาคตัวเอียงแบบอินโฟกราฟิก
@@ -830,7 +907,7 @@ export default function MapView({ activities, categories, categoryLogos, subCate
         }
       });
     })();
-  }, [mapReady, byProvince, sitesByProvince, selectedProvince, categoryFilter, colorOf, mapMode, heatMetric, heatData, heatMax, newIds, categoryLogos, subCategoryLogos, publicView, summary, summaryShown, summaryScope, summaryZones, zoneOk, zoneTotals]);
+  }, [mapReady, byProvince, sitesByProvince, selectedProvince, categoryFilter, colorOf, mapMode, heatMetric, heatData, heatMax, newIds, categoryLogos, subCategoryLogos, publicView, summary, summaryShown, summaryScope, summaryZones, zoneOk, zoneTotals, zoomBucket]);
 
   // วาดหมุดงานศพจากแขกแยกชั้นจากข้อมูลกิจกรรม
   useEffect(() => {
@@ -1115,7 +1192,30 @@ export default function MapView({ activities, categories, categoryLogos, subCate
         const ll = (layer as CircleMarker).getLatLng?.();
         if (!ll) continue;
         const { x, y } = pt(ll.lat, ll.lng);
-        const sdn = (layer.options as { sdn?: PulseSpec | LogoSpec }).sdn;
+        const sdn = (layer.options as { sdn?: PulseSpec | LogoSpec | ClusterSpec }).sdn;
+
+        if (sdn?.kind === 'cluster') {
+          // วงตัวเลข: พื้นดำ ขอบขาว ตัวเลขขาว — เหมือน .sdn-cluster บนจอ
+          const R = (sdn.size / 2) * k;
+          ctx.save();
+          ctx.shadowColor = 'rgba(0,0,0,.3)';
+          ctx.shadowBlur = 3 * k;
+          ctx.shadowOffsetY = 1 * k;
+          ctx.beginPath();
+          ctx.arc(x, y, R - 1 * k, 0, Math.PI * 2);
+          ctx.fillStyle = '#111827';
+          ctx.fill();
+          ctx.restore();
+          ctx.lineWidth = 2 * k;
+          ctx.strokeStyle = '#ffffff';
+          ctx.stroke();
+          ctx.fillStyle = '#ffffff';
+          ctx.font = `600 ${(sdn.size >= 36 ? 14 : 12) * k}px ${getComputedStyle(document.body).fontFamily}`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(String(sdn.n), x, y + 0.5 * k);
+          continue;
+        }
 
         if (sdn?.kind === 'logo') {
           // วาดจาก <img> ที่โหลดอยู่บนแผนที่แล้ว (same-origin ผ่าน /api/files — canvas ไม่โดน taint)

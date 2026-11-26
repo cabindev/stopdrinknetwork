@@ -120,6 +120,26 @@ input:-webkit-autofill {
 .sdn-logo-pin--none {
   border-style: dashed;
 }
+/* วงตัวเลข = หมุดที่ทับกันบนจอรวมเป็นกลุ่ม (คลิก = ซูมเข้า) — ดำ ขอบขาว ไม่ใช้สีระดับ (ไม่ให้สับสนกับหมุดงานเดี่ยว) */
+.sdn-cluster {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background: #111827;
+  color: #fff;
+  border: 2px solid #fff;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.35);
+  transition: transform 0.15s;
+}
+.sdn-cluster:hover {
+  transform: scale(1.1);
+}
 .sdn-logo-pin:hover {
   transform: scale(1.15);
 }
@@ -186,7 +206,7 @@ svg.lucide[stroke-width="2"]:is(.w-5, .w-6, .w-7, .w-8, .w-10, .w-12) { stroke-w
 /* ── motion บน /map (ผู้ใช้ขอ 26 พ.ย. 2026 — คนสแกนเห็นสิ่งที่เคลื่อนไหว) ─────────────────────────────
    เล่นครั้งเดียวตอนเปิด/เปลี่ยนตัวกรอง/เปลี่ยนภาค (MapView ใส่คลาส sdn-anim* เฉพาะรอบนั้น) · ทุกอันจบที่ transform:none (ตัวหนังสือคม)
    --d = หน่วงเวลาไล่จากเหนือลงใต้ · ปิดทั้งหมดเมื่อ prefers-reduced-motion */
-.sdn-anim img { animation: sdn-drop .6s cubic-bezier(.2,.9,.3,1.3) backwards; animation-delay: var(--d, 0ms); }
+.sdn-anim img, .sdn-cluster.sdn-anim span { animation: sdn-drop .6s cubic-bezier(.2,.9,.3,1.3) backwards; animation-delay: var(--d, 0ms); }
 @keyframes sdn-drop { from { transform: translateY(-22px) scale(.5); opacity: 0; } to { transform: none; opacity: 1; } }
 .sdn-sum-pin.sdn-anim-pop { animation: sdn-pop .55s cubic-bezier(.2,.9,.3,1.4) backwards; animation-delay: var(--d, 0ms); }
 @keyframes sdn-pop { from { transform: scale(0); opacity: 0; } to { transform: none; opacity: 1; } }
@@ -207,6 +227,6 @@ svg.lucide[stroke-width="2"]:is(.w-5, .w-6, .w-7, .w-8, .w-10, .w-12) { stroke-w
 .sdn-nudge { animation: sdn-nudge 5s ease-in-out infinite; }
 @keyframes sdn-nudge { 0%, 84%, 100% { transform: none; } 88% { transform: translateY(-5px); } 92% { transform: none; } 95% { transform: translateY(-2px); } }
 @media (prefers-reduced-motion: reduce) {
-  .sdn-anim img, .sdn-sum-pin.sdn-anim-pop, .sdn-anim-fade, .sdn-pie-in, .sdn-nudge, .sdn-family-pulse, .sdn-sum-pin.sdn-sum-top::after { animation: none !important; }
+  .sdn-anim img, .sdn-cluster.sdn-anim span, .sdn-sum-pin.sdn-anim-pop, .sdn-anim-fade, .sdn-pie-in, .sdn-nudge, .sdn-family-pulse, .sdn-sum-pin.sdn-sum-top::after { animation: none !important; }
   .leaflet-overlay-pane path { transition: none; }
 }

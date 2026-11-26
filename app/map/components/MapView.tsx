@@ -810,11 +810,12 @@ export default function MapView({ activities, categories, categoryLogos, subCate
       const rank = (site: MapSite) => LEVEL_SIZE[site.a.policyLevel ?? ''] ?? 0;
       // ซูม ≥ CLUSTER_OFF_ZOOM: หมุดที่ยังทับกันบนจอ (จุดกลางตำบลเดียวกัน/หมู่บ้านห่างกันไม่กี่ร้อยเมตร) กางเป็นวงรอบจุดกลางกลุ่ม
       // ระยะเป็นพิกเซลตามขนาดหมุด (จอจัดแสดงหมุดใหญ่ 1.4 เท่า) — ผู้ใช้ทัก 26 พ.ย. 2026 "หมุดมีหลายชั้น ดูซ้อน"
-      // จอจัดแสดง: ไม่รวมเป็นวงตัวเลขเลย ทุกระดับซูม — กางหมุดแยกให้เห็นทุกหมุด (ผู้ใช้ขอ 26 พ.ย. 2026 "ไม่ต้องซ่อนหมุดในกลุ่ม แยกดูง่ายกว่า")
-      // ภาพรวม (ซูม < 10) หมุดย่อเหลือขนาดปกติ (.sdn-expo-near ใน globals.css) จึงเว้นระยะแคบกว่า
-      const fanOut = expo || zoomNow >= CLUSTER_OFF_ZOOM;
-      if (fanOut) {
-        const gap = expo ? (zoomNow >= CLUSTER_OFF_ZOOM ? 46 : 30) : 32;
+      // จอจัดแสดงตอนภาพรวม (ซูม < 10) = จุดสีเล็กตำแหน่งจริงทุกงาน ไม่รวมวงตัวเลข ไม่ขยับตำแหน่ง (ผู้ใช้เลือก "แบบที่นิยม" 26 พ.ย. 2026
+      // หลังลองกางหมุดแยกทุกอันแล้วหมุดหลุดจากตำแหน่งจริง) · ซูมเจาะ = หมุดเต็ม กางเฉพาะที่ทับกัน
+      const dots = expo && zoomNow < CLUSTER_OFF_ZOOM;
+      const fanOut = dots || zoomNow >= CLUSTER_OFF_ZOOM;
+      if (zoomNow >= CLUSTER_OFF_ZOOM) {
+        const gap = expo ? 46 : 32;
         const groups: { x: number; y: number; members: typeof items }[] = [];
         for (const it of items) {
           const p = map.project(it.pos, zoomNow);
@@ -867,6 +868,21 @@ export default function MapView({ activities, categories, categoryLogos, subCate
         else clusters.push({ pos: it.pos, px, members: [it] });
       }
       for (const c of clusters) {
+        if (dots) {
+          const { site, pos } = c.members[0];
+          const lp = levelPin(site.a.policyLevel);
+          const dot = L.circleMarker(pos, {
+            radius: site.extra ? 5 : 7.5, // จอบูธมองจากไกล
+            fillColor: lp.fill,
+            fillOpacity: 1,
+            color: LEVEL_STROKE,
+            weight: 1.5,
+            dashArray: lp.dashed ? '2 2' : undefined,
+            interactive: false,
+          }).addTo(map);
+          markersRef.current.push(dot);
+          continue;
+        }
         if (c.members.length === 1) {
           drawPin(c.members[0].site, c.members[0].pos);
           continue;

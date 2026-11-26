@@ -261,7 +261,7 @@ html.sdn-expo-on .sdn-nav { display: none; }
   .sdn-spot i { opacity: .6; transform: scale(.5); }
 }
 /* จอใหญ่มองจากไกล: หมุด/วงตัวเลขใหญ่ขึ้น (ใช้ scale แยกจาก transform ของแอนิเมชัน) */
-/* ซูมเจาะหมุด (≥10) ขยาย 1.4 · ภาพรวมขนาดปกติ — จอจัดแสดงไม่รวมวงตัวเลข หมุดทุกอันกางแยกกัน */
+/* ซูมเจาะหมุด (≥10) ขยาย 1.4 · ภาพรวม = จุดสีเล็ก (circleMarker ใน MapView) ส่วนหมุดบ้านคงไว้ */
 .sdn-expo-near .sdn-logo-pin, .sdn-expo-near .sdn-family-pin { scale: 1.4; }
-.sdn-expo .sdn-family-pin { scale: 1.2; }
+.sdn-expo .sdn-family-pin { scale: 1.1; }
 .sdn-expo-near .sdn-family-pin { scale: 1.4; }

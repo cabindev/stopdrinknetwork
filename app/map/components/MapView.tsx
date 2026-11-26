@@ -809,7 +809,7 @@ export default function MapView({ activities, categories, categoryLogos, subCate
       const sorted = zoomNow >= CLUSTER_OFF_ZOOM ? items : [...items].sort((x, y) => rank(y.site) - rank(x.site));
       for (const it of sorted) {
         const px = map.project(it.pos, zoomNow);
-        const hit = zoomNow >= CLUSTER_OFF_ZOOM ? undefined : clusters.find((c) => Math.hypot(c.px.x - px.x, c.px.y - px.y) < CLUSTER_RADIUS);
+        const hit = zoomNow >= CLUSTER_OFF_ZOOM ? undefined : clusters.find((c) => Math.hypot(c.px.x - px.x, c.px.y - px.y) < (expo ? CLUSTER_RADIUS * 1.5 : CLUSTER_RADIUS));
         if (hit) hit.members.push(it);
         else clusters.push({ pos: it.pos, px, members: [it] });
       }
@@ -951,7 +951,7 @@ export default function MapView({ activities, categories, categoryLogos, subCate
         }
       });
     })();
-  }, [mapReady, byProvince, sitesByProvince, selectedProvince, categoryFilter, colorOf, mapMode, heatMetric, heatData, heatMax, newIds, categoryLogos, subCategoryLogos, publicView, summary, summaryShown, summaryScope, summaryZones, zoneOk, zoneTotals, zoomBucket]);
+  }, [mapReady, byProvince, sitesByProvince, selectedProvince, categoryFilter, colorOf, mapMode, heatMetric, heatData, heatMax, newIds, categoryLogos, subCategoryLogos, publicView, summary, summaryShown, summaryScope, summaryZones, zoneOk, zoneTotals, zoomBucket, expo]);
 
   // วาดหมุดงานศพจากแขกแยกชั้นจากข้อมูลกิจกรรม
   useEffect(() => {

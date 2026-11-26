@@ -117,6 +117,7 @@ export default function ExpoMode({ mapRef, mapReady, activities: allActivities, 
   const timerRef = useRef<number | null>(null);
   const pausedUntil = useRef(0);
   const spotRef = useRef<Marker | null>(null);
+  const spotToken = useRef(0); // ขั้นใหม่เริ่มก่อนกล้องหยุด = วงของขั้นเก่าไม่ต้องวาง
   const seenPins = useRef<Set<number> | null>(null);
 
   const buildLoop = useCallback((): Stop[] => {
@@ -180,6 +181,7 @@ export default function ExpoMode({ mapRef, mapReady, activities: allActivities, 
       setHold(ms);
       const L = (await import('leaflet')).default;
       if (s.kind === 'overview') {
+        spotToken.current++;
         placeSpot(null, null, false);
         const wide = map.getSize().x >= 768;
         map.flyToBounds(L.latLngBounds(overview), {
@@ -192,8 +194,17 @@ export default function ExpoMode({ mapRef, mapReady, activities: allActivities, 
       const lat = s.kind === 'site' ? s.a.latitude! : s.p.latitude;
       const lng = s.kind === 'site' ? s.a.longitude! : s.p.longitude;
       const z = s.kind === 'pin' ? 11 : 10;
-      map.flyTo(await centerFor(lat, lng, z), z, { duration: s.kind === 'pin' && s.fresh ? 2.4 : 3 });
-      placeSpot(lat, lng, s.kind === 'pin' && s.fresh);
+      // วงส้มขึ้นหลังกล้องหยุด + หมุดแยกจากวงตัวเลขแล้ว (MapView วาดหมุดใหม่ตอน zoomend) — เดิมวางตั้งแต่เริ่มบิน
+      // คนดูเห็นวงวิ้ง ๆ ก่อนหมุดราว 3 วิ (ผู้ใช้ทักบนเว็บจริง 26 พ.ย. 2026)
+      placeSpot(null, null, false);
+      const token = ++spotToken.current;
+      const center = await centerFor(lat, lng, z);
+      map.flyTo(center, z, { duration: s.kind === 'pin' && s.fresh ? 2.4 : 3 });
+      map.once('moveend', () => {
+        window.setTimeout(() => {
+          if (token === spotToken.current) placeSpot(lat, lng, s.kind === 'pin' && s.fresh);
+        }, 250);
+      });
       return ms;
     },
     [mapRef, centerFor, placeSpot, overview],

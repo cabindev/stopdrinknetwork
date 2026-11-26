@@ -43,6 +43,7 @@ import { LEVEL_PIN_COLOR } from '@/app/lib/policyLevelColors';
 import { pinTitle } from '@/app/lib/funeralPins';
 import FamilyPinPanel from './FamilyPinPanel';
 import PolicySummaryCard from './PolicySummaryCard';
+import { useCountUp } from '@/app/lib/useCountUp';
 import { drawSummaryPoster } from './summaryPoster';
 import type { PublicPin } from '@/app/lib/funeralPins';
 import { toast } from 'react-hot-toast';
@@ -206,7 +207,14 @@ function declutterSumNames(container: HTMLElement) {
   // จังหวัดที่มีนโยบายได้ที่ก่อน
   els.sort((a, b) => Number(b.classList.contains('sdn-sum-on')) - Number(a.classList.contains('sdn-sum-on')));
   // วงตัวเลขเป็นสิ่งกีดขวางด้วย (ชื่อไม่ไปมุดใต้วงของจังหวัดข้าง ๆ) — ชื่อเลื่อนลงได้ 4 บรรทัด
-  const placed: DOMRect[] = [...container.querySelectorAll<HTMLElement>('.sdn-sum-pin')].map((e) => e.getBoundingClientRect());
+  // ใช้ขนาดจริงของวง (offsetWidth) รอบจุดกลาง — ระหว่างแอนิเมชันเด้ง (scale 0→1) getBoundingClientRect ยังเล็กเกือบศูนย์
+  const placed: { left: number; right: number; top: number; bottom: number }[] = [...container.querySelectorAll<HTMLElement>('.sdn-sum-pin')].map((e) => {
+    const r = e.getBoundingClientRect();
+    const cx = r.left + r.width / 2;
+    const cy = r.top + r.height / 2;
+    const h = e.offsetWidth / 2;
+    return { left: cx - h, right: cx + h, top: cy - h, bottom: cy + h };
+  });
   for (const el of els) {
     if (el.offsetParent === null) continue; // ซ่อนอยู่ (มือถือยังไม่ซูม)
     // ตำแหน่งที่ลอง: ใต้วง (เดิม) → ข้างวง ซ้าย/ขวา (กลางแนววง — อ่านชัดว่าเป็นของวงไหน) → เหนือวง → ลงทีละบรรทัด
@@ -243,8 +251,11 @@ function provinceStyle(hasData: boolean, isSelected: boolean) {
 // วงนอกของแผ่นดินใหญ่ + เกาะ ([lng, lat]) — ใช้วาดเส้นขอบประเทศใน PNG
 const OUTLINE_RINGS = (thailandOutline.geometry.coordinates as number[][][][]).map((p) => p[0]);
 
-const logoPinHtml = (src: string, color: string, approx: boolean, size: number) =>
-  `<div class="sdn-logo-pin${approx ? ' sdn-logo-pin--approx' : ''}" style="--c:${color};width:${size}px;height:${size}px"><img src="${esc(src)}" alt="" draggable="false"></div>`;
+// delay = มิลลิวินาที (หมุดทยอยหล่นลงจากเหนือลงใต้ — globals.css .sdn-anim) · null = ไม่เล่นแอนิเมชัน
+const logoPinHtml = (src: string, color: string, approx: boolean, size: number, delay: number | null = null) =>
+  `<div class="sdn-logo-pin${approx ? ' sdn-logo-pin--approx' : ''}${delay != null ? ' sdn-anim' : ''}" style="--c:${color};width:${size}px;height:${size}px${delay != null ? `;--d:${delay}ms` : ''}"><img src="${esc(src)}" alt="" draggable="false"></div>`;
+/** หน่วงตามละติจูด: เหนือสุด (~20.5) ขึ้นก่อน ใต้สุด (~5.6) หลังสุด ~1 วิ + กระจายเล็กน้อยไม่ให้ขึ้นเป็นแถว */
+const waveDelay = (lat: number, i: number) => Math.round(Math.max(0, Math.min(1, (20.6 - lat) / 15)) * 1000 + (i % 7) * 18);
 
 // ระบายสีโลโก้ (โลโก้ขาวดำ): สูตร screen ทีละพิกเซล → ดำ = สี, ขาว = ขาว, โปร่งใสคงโปร่งใส · ได้ data URL (cache ต่อโลโก้+สี)
 // โลโก้มาจาก /api/files หรือ /api/public-logo (same-origin) จึงอ่านพิกเซลได้ · โหลดพลาด = ใช้โลโก้เดิม
@@ -357,7 +368,9 @@ export default function MapView({ activities, categories, categoryLogos, subCate
   const [selectedPinId, setSelectedPinId] = useState<number | null>(null);
   const geoLayerRef = useRef<GeoJSONLayer | null>(null);
   const markersRef = useRef<(CircleMarker | Marker)[]>([]);
-  const drawRunRef = useRef(0); // นับรอบวาดหมุด — รอบเก่าที่ยังรอโลโก้ระบายสีอยู่จะไม่วาดทับ
+  const drawRunRef = useRef(0);
+  /** motion: เล่นแอนิเมชันหมุดเฉพาะตอนเปิด/เปลี่ยนโหมด-ตัวกรอง-ภาค (จิ้มจังหวัดไม่เล่นซ้ำ) */
+  const lastAnimKeyRef = useRef(''); // นับรอบวาดหมุด — รอบเก่าที่ยังรอโลโก้ระบายสีอยู่จะไม่วาดทับ
   const centersRef = useRef<Map<string, [number, number]>>(new Map());
   const boundsRef = useRef<Map<string, LatLngBounds>>(new Map());
   const fullBoundsRef = useRef<LatLngBounds | null>(null);
@@ -529,6 +542,8 @@ export default function MapView({ activities, categories, categoryLogos, subCate
     setSummaryZones((prev) => (prev.includes(z) ? prev.filter((x) => x !== z) : [...prev, z]));
   };
   const summaryTotal = summaryShown.reduce((s, [, n]) => s + n, 0);
+  const countTotal = useCountUp(summaryTotal);
+  const countProv = useCountUp(summaryShown.length);
   // นโยบายทุกชิ้นในขอบเขตเดียวกับแผนที่สรุป → พายระดับ + รูปแบบ (การ์ดมุมขวา)
   const summaryPolicies = useMemo(() => {
     const out: { level: string; type: string | null }[] = [];
@@ -624,6 +639,10 @@ export default function MapView({ activities, categories, categoryLogos, subCate
 
       markersRef.current.forEach((m) => m.remove());
       markersRef.current = [];
+      const animKey = [mapMode, categoryFilter, subFilter, statusFilter, levelFilter, newOnly, summaryScope, summaryZones.join(','), filtered.length].join('|');
+      const animate = animKey !== lastAnimKeyRef.current;
+      lastAnimKeyRef.current = animKey;
+      let animIndex = 0;
 
       sitesByProvince.forEach((list, province) => {
         const center = centersRef.current.get(province);
@@ -683,7 +702,7 @@ export default function MapView({ activities, categories, categoryLogos, subCate
                 const size = site.extra ? levelSize - 6 : levelSize;
                 marker = L.marker(pos, {
                   icon: L.divIcon({
-                    html: logoPinHtml(tinted.get(`${logo}|${ring}`) ?? logo, color, !precise, size),
+                    html: logoPinHtml(tinted.get(`${logo}|${ring}`) ?? logo, color, !precise, size, animate ? waveDelay(pos[0], animIndex++) : null),
                     className: '',
                     iconSize: [size, size],
                     iconAnchor: [size / 2, size / 2],
@@ -722,14 +741,20 @@ export default function MapView({ activities, categories, categoryLogos, subCate
       // มีนโยบาย = ชื่อขาวบนพื้นเข้ม · ยังไม่มี = ชื่อเทาบนพื้นขาว · ป้ายภาคตัวเอียงแบบอินโฟกราฟิก
       if (mapMode === 'summary') {
         const max = Math.max(1, ...summaryShown.map(([, n]) => n));
+        const top3 = new Set([...summaryShown].sort((a, b) => b[1] - a[1]).slice(0, 3).map(([p]) => p));
         const k = window.innerWidth < 640 ? 0.6 : 1; // มือถือซูมได้น้อย — วงเล็กลง
         centersRef.current.forEach((center, province) => {
           if (!zoneOk(province)) return;
           const n = summary.get(province) ?? 0;
           const size = n ? Math.round((22 + Math.sqrt(n / max) * 26) * k) : 0;
+          // motion: วงเด้งทีละวงไล่เหนือ→ใต้ ชื่อค่อย ๆ ขึ้นตาม · 3 จังหวัดมากสุดมีวงกระเพื่อมตลอด
+          const d = animate ? Math.round(Math.max(0, Math.min(1, (20.6 - center[0]) / 15)) * 900) : null;
+          const pop = d != null ? ` sdn-anim-pop" style="--d:${d}ms;` : '" style="';
+          const fade = d != null ? ` sdn-anim-fade" style="--d:${d + 180}ms"` : '"';
+          const topCls = top3.has(province) ? ' sdn-sum-top' : '';
           const html = n
-            ? `<div class="sdn-sum"><div class="sdn-sum-pin" style="width:${size}px;height:${size}px;font-size:${Math.round(size * 0.44)}px">${n}</div><div class="sdn-sum-name sdn-sum-on">${esc(province)}</div></div>`
-            : `<div class="sdn-sum"><div class="sdn-sum-name sdn-sum-off">${esc(province)}</div></div>`;
+            ? `<div class="sdn-sum"><div class="sdn-sum-pin${topCls}${pop}--r:${(animIndex++ % 3) * 0.8}s;width:${size}px;height:${size}px;font-size:${Math.round(size * 0.44)}px">${n}</div><div class="sdn-sum-name sdn-sum-on${fade}>${esc(province)}</div></div>`
+            : `<div class="sdn-sum"><div class="sdn-sum-name sdn-sum-off${fade}>${esc(province)}</div></div>`;
           const icon = L.divIcon({ className: '', iconSize: [0, 0], iconAnchor: [0, n ? 0 : -2], html });
           const m = L.marker(center, { icon, keyboard: false, interactive: n > 0, zIndexOffset: n ? 600 : 400 }).addTo(map);
           if (n) m.on('click', () => setSelectedProvince((prev) => (prev === province ? '' : province)));
@@ -740,7 +765,7 @@ export default function MapView({ activities, categories, categoryLogos, subCate
         if (summaryScope === 'focus') {
           for (const { zone, at, align } of ZONE_BUTTONS) {
             const on = summaryZones.includes(zone);
-            const html = `<div class="sdn-zone sdn-zone-${align}"><span class="sdn-zone-btn${on ? ' is-on' : ''}" role="button" aria-pressed="${on}">${esc(zoneShort(zone))}<b>${zoneTotals.get(zone) ?? 0}</b></span></div>`;
+            const html = `<div class="sdn-zone sdn-zone-${align}"><span class="sdn-zone-btn${on ? ' is-on' : ''}${animate ? ' sdn-anim-fade" style="--d:300ms' : ''}" role="button" aria-pressed="${on}">${esc(zoneShort(zone))}<b>${zoneTotals.get(zone) ?? 0}</b></span></div>`;
             const m = L.marker(at, {
               icon: L.divIcon({ className: '', iconSize: [0, 0], html }),
               keyboard: false,
@@ -816,7 +841,7 @@ export default function MapView({ activities, categories, categoryLogos, subCate
       pinLayerRef.current.clearLayers();
       for (const p of pins) {
         const fresh = Date.now() - Date.parse(p.createdAt) < 10 * 60 * 1000;
-        const html = `<span class="sdn-family-pin${fresh ? ' sdn-family-new' : ''}">${fresh ? '<i class="sdn-family-pulse"></i>' : ''}<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="white" d="M3 11.2 12 4l9 7.2-1.4 1.7-1.6-1.3V20h-5v-5h-2v5H8v-8.4l-1.6 1.3z"/></svg></span>`;
+        const html = `<span class="sdn-family-pin${fresh ? ' sdn-family-new' : ''}"><i class="sdn-family-pulse${fresh ? '' : ' sdn-family-pulse--soft'}"></i><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="white" d="M3 11.2 12 4l9 7.2-1.4 1.7-1.6-1.3V20h-5v-5h-2v5H8v-8.4l-1.6 1.3z"/></svg></span>`;
         const marker = L.marker([p.latitude,p.longitude], { icon:L.divIcon({html,className:'',iconSize:[30,30],iconAnchor:[15,15],popupAnchor:[0,-14]}), riseOnHover:true }).addTo(pinLayerRef.current);
         // คลิก = เปิดแผงข้าง (FamilyPinPanel) แทน popup · ชื่อบน hover
         marker.bindTooltip(esc(pinTitle(p)), { direction: 'top', offset: [0, -14] });
@@ -1623,7 +1648,7 @@ export default function MapView({ activities, categories, categoryLogos, subCate
               </button>
             )}
             <p className="text-sm font-semibold tabular-nums text-gray-900">
-              {summaryTotal.toLocaleString('th-TH')} นโยบาย · {summaryShown.length} จังหวัด
+              {countTotal.toLocaleString('th-TH')} นโยบาย · {countProv} จังหวัด
             </p>
           </div>
           <div className="mt-2 flex items-center gap-1.5">
@@ -1801,7 +1826,7 @@ export default function MapView({ activities, categories, categoryLogos, subCate
       {selectedPinId == null && !selectedProvince && mapMode !== 'summary' && (
         <div className="absolute bottom-16 right-3 z-[900] sm:right-14">
           {pinCardOpen ? (
-            <div className="hidden items-center gap-4 rounded-2xl border border-gray-200 bg-white p-4 shadow-lg md:flex">
+            <div className="sdn-nudge hidden items-center gap-4 rounded-2xl border border-gray-200 bg-white p-4 shadow-lg md:flex">
               <NextImage src="/farewell/qr-pin.svg" alt="QR ปักหมุดงานศพปลอดเหล้า" width={128} height={128} unoptimized />
               <div className="max-w-44">
                 <p className="text-base font-semibold leading-snug text-gray-900">บ้านคุณเคยจัดงานศพปลอดเหล้า? สแกนปักหมุด</p>
@@ -1818,7 +1843,7 @@ export default function MapView({ activities, categories, categoryLogos, subCate
               ปักหมุด · {pins.length} แห่ง
             </button>
           )}
-          <a href="/pin" className="inline-flex h-11 items-center gap-2 rounded-full bg-gray-900 px-5 text-sm font-medium text-white shadow-lg md:hidden">
+          <a href="/pin" className="sdn-nudge inline-flex h-11 items-center gap-2 rounded-full bg-gray-900 px-5 text-sm font-medium text-white shadow-lg md:hidden">
             ปักหมุดของบ้านคุณ <span className="tabular-nums text-white/70">· {pins.length}</span>
           </a>
         </div>

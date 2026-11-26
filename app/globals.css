@@ -172,3 +172,31 @@ svg.lucide[stroke-width="2"]:is(.w-5, .w-6, .w-7, .w-8, .w-10, .w-12) { stroke-w
   .sdn-zone { display:none; }
   .leaflet-container:not(.sdn-sum-zoomed) .sdn-sum-name { display:none; }
 }
+
+/* ── motion บน /map (ผู้ใช้ขอ 26 พ.ย. 2026 — คนสแกนเห็นสิ่งที่เคลื่อนไหว) ─────────────────────────────
+   เล่นครั้งเดียวตอนเปิด/เปลี่ยนตัวกรอง/เปลี่ยนภาค (MapView ใส่คลาส sdn-anim* เฉพาะรอบนั้น) · ทุกอันจบที่ transform:none (ตัวหนังสือคม)
+   --d = หน่วงเวลาไล่จากเหนือลงใต้ · ปิดทั้งหมดเมื่อ prefers-reduced-motion */
+.sdn-anim img { animation: sdn-drop .6s cubic-bezier(.2,.9,.3,1.3) backwards; animation-delay: var(--d, 0ms); }
+@keyframes sdn-drop { from { transform: translateY(-22px) scale(.5); opacity: 0; } to { transform: none; opacity: 1; } }
+.sdn-sum-pin.sdn-anim-pop { animation: sdn-pop .55s cubic-bezier(.2,.9,.3,1.4) backwards; animation-delay: var(--d, 0ms); }
+@keyframes sdn-pop { from { transform: scale(0); opacity: 0; } to { transform: none; opacity: 1; } }
+.sdn-anim-fade { animation: sdn-fade .5s ease-out backwards; animation-delay: var(--d, 0ms); }
+@keyframes sdn-fade { from { opacity: 0; } to { opacity: 1; } }
+/* วงกระเพื่อมรอบวงตัวเลข 3 จังหวัดที่มากสุด (เล่นตลอด เบา ๆ) */
+.sdn-sum-pin { position: relative; }
+.sdn-sum-pin.sdn-sum-top::after { content: ''; position: absolute; inset: -2px; border-radius: 9999px; border: 3px solid #facc15; animation: sdn-sum-ripple 2.6s ease-out infinite; animation-delay: var(--r, 0s); pointer-events: none; }
+@keyframes sdn-sum-ripple { 0% { transform: scale(1); opacity: .9; } 80%, 100% { transform: scale(1.9); opacity: 0; } }
+/* จังหวัดเปลี่ยนสีนุ่ม ๆ (เลือกภาค/โหมด) */
+.leaflet-overlay-pane path { transition: fill .45s ease, fill-opacity .45s ease, stroke .3s ease; }
+/* พายหมุนเข้า (การ์ดสรุป — key เปลี่ยนตามข้อมูล = เล่นใหม่) */
+.sdn-pie-in { animation: sdn-pie-in .7s cubic-bezier(.2,.8,.2,1) backwards; transform-box: fill-box; transform-origin: center; }
+@keyframes sdn-pie-in { from { transform: rotate(-110deg) scale(.55); opacity: 0; } to { transform: none; opacity: 1; } }
+/* หมุดบ้านทุกหมุดมีวงกระเพื่อมจาง ๆ (หมุดใหม่ใช้วงเข้มเดิม) */
+.sdn-family-pulse--soft { opacity: .55; animation-duration: 2.8s; }
+/* ปุ่ม/การ์ดชวนปักหมุด: เด้งเบา ๆ ทุก 5 วิ */
+.sdn-nudge { animation: sdn-nudge 5s ease-in-out infinite; }
+@keyframes sdn-nudge { 0%, 84%, 100% { transform: none; } 88% { transform: translateY(-5px); } 92% { transform: none; } 95% { transform: translateY(-2px); } }
+@media (prefers-reduced-motion: reduce) {
+  .sdn-anim img, .sdn-sum-pin.sdn-anim-pop, .sdn-anim-fade, .sdn-pie-in, .sdn-nudge, .sdn-family-pulse, .sdn-sum-pin.sdn-sum-top::after { animation: none !important; }
+  .leaflet-overlay-pane path { transition: none; }
+}

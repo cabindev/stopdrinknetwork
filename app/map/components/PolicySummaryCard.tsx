@@ -2,6 +2,7 @@
 // การ์ด "มีนโยบาย/ข้อตกลง ระดับไหนบ้าง" มุมขวาของ /map โหมดสรุปจังหวัด (แบบอินโฟกราฟิกที่ผู้ใช้ส่ง 24 พ.ย. 2026)
 // พาย SVG ตามระดับ (ตัวเลข = จำนวนนโยบาย) + รายการรูปแบบนโยบาย — นับตามตัวกรองและขอบเขต (เหนือ+อีสาน/ทั้งประเทศ) เดียวกับแผนที่
 import { ArrowLeft, Download, List } from 'lucide-react';
+import { useCountUp } from '@/app/lib/useCountUp';
 import { POLICY_LEVELS } from '@/app/lib/activityMeta';
 import { LEVEL_FILL, LEVEL_ON_FILL } from '@/app/lib/policyLevelColors';
 
@@ -60,6 +61,7 @@ export default function PolicySummaryCard({
   downloading?: boolean;
 }) {
   const { total, levels, types, untyped, pct } = policyBreakdown(policies);
+  const shownTotal = useCountUp(total);
   if (!total && !province) return null;
 
   // ชิ้นพาย: เริ่มที่ 12 นาฬิกา ทวนเข็ม→ตามเข็ม · ชิ้นเดียว = วงกลมเต็ม
@@ -92,21 +94,22 @@ export default function PolicySummaryCard({
           </button>
           <p className="text-lg font-bold leading-snug text-gray-900">จ.{province}</p>
           <p className="text-xs text-gray-500">
-            {total.toLocaleString('th-TH')} นโยบาย · {workCount} งาน
+            {shownTotal.toLocaleString('th-TH')} นโยบาย · {workCount} งาน
           </p>
         </>
       ) : (
         <>
           {title && <p className="text-lg font-bold leading-snug text-gray-900">{title}</p>}
           <p className={title ? 'text-sm font-semibold text-gray-900' : 'text-base font-bold leading-snug text-gray-900'}>มีนโยบาย/ข้อตกลง ระดับไหนบ้าง</p>
-          <p className="text-xs text-gray-500">จาก {total.toLocaleString('th-TH')} นโยบาย · จิ้มจังหวัดเพื่อดูรายจังหวัด</p>
+          <p className="text-xs text-gray-500">จาก {shownTotal.toLocaleString('th-TH')} นโยบาย · จิ้มจังหวัดเพื่อดูรายจังหวัด</p>
         </>
       )}
       {province && !total && <p className="mt-3 rounded-xl bg-gray-50 p-3 text-sm text-gray-600">จังหวัดนี้ยังไม่มีนโยบาย/ข้อตกลงที่บันทึกไว้</p>}
 
       {total > 0 && (
         <div className="mt-2 flex items-center gap-3">
-          <svg viewBox="0 0 160 160" className="h-32 w-32 shrink-0" role="img" aria-label="สัดส่วนนโยบายตามระดับ">
+          {/* key ตามข้อมูล = พายหมุนเข้าใหม่ทุกครั้งที่เปลี่ยนภาค/จังหวัด (motion — globals.css .sdn-pie-in) */}
+          <svg key={levels.map((l) => `${l.value}${l.n}`).join('|')} viewBox="0 0 160 160" className="sdn-pie-in h-32 w-32 shrink-0" role="img" aria-label="สัดส่วนนโยบายตามระดับ">
             {slices.map((s) =>
               s.d ? (
                 <path key={s.value} d={s.d} fill={SLICE[s.value].fill} stroke="#111827" strokeWidth={1.5} />

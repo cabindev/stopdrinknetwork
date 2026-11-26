@@ -337,7 +337,7 @@ function activityPopupHtml(a: MapActivity, color: string, isNew: boolean, public
         place.amphoe
       )} จ.${esc(place.province)}</div>
       ${extraLine}
-      ${a.policyLevel ? `<div style="display:flex;align-items:center;gap:5px;font-size:11px;color:#374151;margin-top:4px"><span style="width:10px;height:10px;box-sizing:border-box;border-radius:50%;background:${levelPin(a.policyLevel).fill};border:1.5px solid ${LEVEL_STROKE};flex:none"></span>นโยบายระดับ${esc(POLICY_LABEL[a.policyLevel] ?? a.policyLevel)}</div>` : ''}
+      ${a.policyLevel ? `<div style="display:flex;align-items:center;gap:5px;font-size:11px;color:#374151;margin-top:4px"><span style="width:10px;height:10px;box-sizing:border-box;border-radius:50%;background:${levelPin(a.policyLevel).fill};border:1.5px solid ${LEVEL_STROKE};flex:none"></span>ข้อตกลงระดับ${esc(POLICY_LABEL[a.policyLevel] ?? a.policyLevel)}</div>` : ''}
       ${publicView ? '' : `<div style="font-size:11px;color:#9ca3af;margin-top:2px">โดย ${esc(a.userName)}</div>`}
       ${publicView ? publicPopupFooter(a) : `
       <div style="display:flex;align-items:center;gap:12px;margin-top:8px">
@@ -750,7 +750,9 @@ export default function MapView({ activities, categories, categoryLogos, subCate
         // คลิกหมุด = เปิด popup ตรงจุดนั้น (ไม่เด้งออกจากหน้าแผนที่)
         marker.bindPopup(activityPopupHtml(a, color, isNew, publicView, site.extra), {
           closeButton: true,
-          autoPanPadding: [24, 24],
+          // เว้นช่องค้นหา (บน) และการ์ดคำอธิบาย (ล่าง) — มือถือ popup เคยโดนช่องค้นหาบังชื่องาน
+          autoPanPaddingTopLeft: [16, 124],
+          autoPanPaddingBottomRight: [16, 100],
           maxWidth: 260,
         });
         markersRef.current.push(marker);
@@ -798,16 +800,16 @@ export default function MapView({ activities, categories, categoryLogos, subCate
           }),
           riseOnHover: true,
           zIndexOffset: 1000,
-          alt: `${n} งาน`,
+          alt: `${n} พื้นที่`,
         }).addTo(map);
         (m.options as { sdn?: ClusterSpec }).sdn = { kind: 'cluster', n, size };
         // tooltip บอกว่ากลุ่มนี้มีระดับไหนกี่งาน
         const levels = new Map<string, number>();
         for (const mm of c.members) {
-          const lv = mm.site.a.policyLevel ? `ระดับ${POLICY_LABEL[mm.site.a.policyLevel] ?? mm.site.a.policyLevel}` : 'ยังไม่มีนโยบาย';
+          const lv = mm.site.a.policyLevel ? `ข้อตกลงระดับ${POLICY_LABEL[mm.site.a.policyLevel] ?? mm.site.a.policyLevel}` : 'ยังไม่มีข้อตกลง';
           levels.set(lv, (levels.get(lv) ?? 0) + 1);
         }
-        m.bindTooltip(`${n} งาน — ${[...levels].map(([k, v]) => `${esc(k)} ${v}`).join(' · ')}<br><span style="color:#6b7280">คลิกเพื่อซูมเข้า</span>`, { direction: 'top', offset: [0, -size / 2] });
+        m.bindTooltip(`<b>${n} พื้นที่</b><br>${[...levels].map(([k, v]) => `${esc(k)} ${v}`).join(' · ')}<br><span style="color:#6b7280">คลิกเพื่อซูมเข้า</span>`, { direction: 'top', offset: [0, -size / 2] });
         m.on('click', () => {
           const b = L.latLngBounds(c.members.map((mm) => mm.pos));
           map.flyToBounds(b, { padding: [60, 60], maxZoom: Math.max(CLUSTER_OFF_ZOOM, Math.ceil(zoomNow) + 2), duration: 0.6 });
@@ -1636,9 +1638,9 @@ export default function MapView({ activities, categories, categoryLogos, subCate
                   })}
                 </ul>
                 {/* ระดับนโยบาย = คำอธิบายสี/ขนาดหมุด + กดกรองได้ */}
-                <p className="mt-4 mb-1.5 text-[11px] font-semibold text-gray-500">ระดับนโยบาย (สี/ขนาดหมุด)</p>
+                <p className="mt-4 mb-1.5 text-[11px] font-semibold text-gray-500">ข้อตกลงระดับ (สีหมุด)</p>
                 <ul className="space-y-0.5">
-                  {[...POLICY_LEVELS.map((l) => ({ value: l.value as string, label: `ระดับ${l.label}` })), { value: NO_POLICY, label: 'ยังไม่มีนโยบาย' }]
+                  {[...POLICY_LEVELS.map((l) => ({ value: l.value as string, label: `ระดับ${l.label}` })), { value: NO_POLICY, label: 'ยังไม่มีข้อตกลง' }]
                     .filter(({ value }) => (countByLevel.get(value) ?? 0) > 0 || levelFilter === value)
                     .map(({ value, label }) => {
                       const on = levelFilter === value;
@@ -1943,7 +1945,7 @@ export default function MapView({ activities, categories, categoryLogos, subCate
 
       {/* ชวนครอบครัวปักหมุดงานศพปลอดเหล้า — จอใหญ่ = QR (ย่อเก็บได้) · มือถือ = ปุ่มไปฟอร์ม · ซ่อนเมื่อแผงข้างเปิด (ไม่ให้ทับกัน) */}
       {selectedPinId == null && !selectedProvince && mapMode !== 'summary' && (
-        <div className="absolute bottom-16 right-3 z-[900] sm:right-14">
+        <div className="absolute bottom-24 right-3 z-[900] sm:right-14 md:bottom-16">
           {pinCardOpen ? (
             <div className="sdn-nudge hidden items-center gap-3 rounded-2xl border border-gray-200 bg-white p-3 shadow-lg md:flex">
               <NextImage src="/farewell/qr-pin.svg" alt="QR ปักหมุดงานศพปลอดเหล้า" width={88} height={88} unoptimized />
@@ -1968,12 +1970,18 @@ export default function MapView({ activities, categories, categoryLogos, subCate
         </div>
       )}
 
-      {/* คำอธิบายสีหมุด = ระดับนโยบาย (ทุกขนาดจอ — มือถือเลื่อนข้าง) · กดแต่ละระดับ = กรอง (ตัวเดียวกับแผงตัวกรอง) · โหมดหมุดเท่านั้น */}
+      {/* การ์ดล่างซ้าย (โหมดหมุด, ทุกจอ): บรรทัดบน = แผนที่นี้คืออะไร + จำนวน (ตัวเลขในวงมีหน่วย) · บรรทัดล่าง = สีหมุด = ข้อตกลงระดับ… กดกรองได้ + หมุดบ้าน
+          (26 พ.ย. 2026 ผู้ใช้ตรวจแล้วคนทั่วไปงง "40 คืออะไร", "หมู่บ้าน 64 = จำนวนหมู่บ้าน?" — บนแผนที่ใช้คำ "ข้อตกลง" แทน "นโยบาย") */}
       {mapMode === 'markers' && !sidebarOpen && (
-        <div className="absolute bottom-4 left-3 right-14 sm:right-auto z-[1000] flex">
-          <div className="flex max-w-full items-center gap-1 overflow-x-auto whitespace-nowrap rounded-full border border-gray-200 bg-white/95 px-2 py-1.5 text-xs text-gray-700 shadow-lg backdrop-blur [scrollbar-width:none]">
-            <span className="hidden pl-2 pr-1 text-gray-500 sm:inline">ระดับนโยบาย</span>
-            {[...POLICY_LEVELS.map((l) => ({ value: l.value as string, label: l.label })), { value: NO_POLICY, label: 'ยังไม่มี' }]
+        <div className="absolute bottom-4 left-3 right-14 sm:right-auto sm:max-w-[680px] z-[1000] flex">
+          <div className="min-w-0 max-w-full rounded-2xl border border-gray-200 bg-white/95 px-3 py-2 text-xs text-gray-700 shadow-lg backdrop-blur">
+          <p className="truncate font-semibold text-gray-900">
+            งานศพปลอดเหล้า <span className="tabular-nums">{filtered.length}</span> พื้นที่ · <span className="tabular-nums">{byProvince.size}</span> จังหวัด
+            <span className="hidden font-normal text-gray-500 sm:inline"> · วงตัวเลข = หลายพื้นที่ใกล้กัน คลิกเพื่อซูม</span>
+          </p>
+          <div className="-mx-1 mt-1 flex items-center gap-1 overflow-x-auto whitespace-nowrap [scrollbar-width:none]">
+            <span className="shrink-0 px-1 text-gray-500">ข้อตกลงระดับ</span>
+            {[...POLICY_LEVELS.map((l) => ({ value: l.value as string, label: l.label })), { value: NO_POLICY, label: 'ยังไม่มีข้อตกลง' }]
               .filter(({ value }) => (countByLevel.get(value) ?? 0) > 0)
               .map(({ value, label }) => {
                 const on = levelFilter === value;
@@ -1993,6 +2001,15 @@ export default function MapView({ activities, categories, categoryLogos, subCate
                   </button>
                 );
               })}
+            {pins.length > 0 && (
+              <>
+                <span className="mx-1 h-3.5 w-px shrink-0 bg-gray-200" />
+                <span className="inline-flex shrink-0 items-center gap-1.5 px-1">
+                  <HouseDot size={14} />
+                  ครอบครัวปักหมุด <span className="tabular-nums text-gray-500">{pins.length}</span>
+                </span>
+              </>
+            )}
             {newIds.size > 0 && (
               <>
                 <span className="mx-1 h-3.5 w-px shrink-0 bg-gray-200" />
@@ -2005,6 +2022,7 @@ export default function MapView({ activities, categories, categoryLogos, subCate
                 </span>
               </>
             )}
+          </div>
           </div>
         </div>
       )}
@@ -2030,11 +2048,20 @@ function LegendDot({ solid = false }: { solid?: boolean }) {
   );
 }
 
+/** หมุดบ้าน (ครอบครัวปักหมุด) ย่อส่วน — หน้าตาเดียวกับ .sdn-family-pin บนแผนที่ */
+function HouseDot({ size }: { size: number }) {
+  return (
+    <span className="inline-flex shrink-0 items-center justify-center rounded-full border-2 border-white bg-orange-600 shadow" style={{ width: size + 4, height: size + 4 }}>
+      <svg viewBox="0 0 24 24" style={{ width: size * 0.65, height: size * 0.65 }} aria-hidden="true"><path fill="white" d="M3 11.2 12 4l9 7.2-1.4 1.7-1.6-1.3V20h-5v-5h-2v5H8v-8.4l-1.6 1.3z" /></svg>
+    </span>
+  );
+}
+
 function MapLegend({ publicView }: { publicView: boolean }) {
   return (
     <div className="mt-4 pt-3 border-t border-gray-100 space-y-2 text-[11px] text-gray-500 leading-snug">
-      <p className="flex items-center gap-2"><span className="inline-flex h-5 w-5 items-center justify-center rounded-full border-2 border-white bg-orange-600 shadow"><svg viewBox="0 0 24 24" className="h-3 w-3" aria-hidden="true"><path fill="white" d="M3 11.2 12 4l9 7.2-1.4 1.7-1.6-1.3V20h-5v-5h-2v5H8v-8.4l-1.6 1.3z" /></svg></span><span>ครอบครัว/ชุมชนที่ปักหมุด</span></p>
-      <p>สีและขนาดวง = ระดับนโยบาย (วงเล็ก = หมู่บ้าน → วงใหญ่ = จังหวัด/ประเทศ) — คลิกหมุดดูรายละเอียด คลิกจังหวัดดูรายการทั้งหมด</p>
+      <p className="flex items-center gap-2"><HouseDot size={16} /><span>ครอบครัว/ชุมชนที่ปักหมุด</span></p>
+      <p>สีและขนาดวง = ข้อตกลงระดับไหน (วงเล็ก = หมู่บ้าน → วงใหญ่ = จังหวัด/ประเทศ) · วงดำตัวเลข = หลายพื้นที่ใกล้กัน คลิกเพื่อซูม — คลิกหมุดดูรายละเอียด คลิกจังหวัดดูรายการทั้งหมด</p>
       <p className={publicView ? 'hidden' : 'flex items-center gap-2'}>
         <LegendDot solid />
         <span>ปักหมุดตำแหน่งจริง</span>

@@ -39,7 +39,7 @@ import { makeColorOf } from '@/app/lib/categoryColors';
 import type { HealthZone } from '@/app/utils/healthZones';
 import { navigationUrl } from '@/app/lib/geoLink';
 import { POLICY_LEVELS, POLICY_LABEL } from '@/app/lib/activityMeta';
-import { LEVEL_PIN_COLOR } from '@/app/lib/policyLevelColors';
+import { LEVEL_FILL, LEVEL_ON_FILL, LEVEL_STROKE } from '@/app/lib/policyLevelColors';
 import { pinTitle } from '@/app/lib/funeralPins';
 import FamilyPinPanel from './FamilyPinPanel';
 import PolicySummaryCard from './PolicySummaryCard';
@@ -165,19 +165,20 @@ interface LogoSpec {
   kind: 'logo';
   color: string;
   approx: boolean;
-  ring: string;
+  fill: string;
+  dashed: boolean;
   size: number;
 }
-// หมุดโลโก้แยกตามระดับนโยบาย (ผู้ใช้ขอ 4 พ.ย. 2026 — หมุดงานศพหน้าตาเหมือนกันหมด แยกไม่ออก)
-// เปลี่ยนสีตัวโลโก้ ไม่มีขอบ ไม่มีวงพื้นขาว (ผู้ใช้เลือก) — tintLogo() ระบายส่วนดำของโลโก้เป็นสีนี้ ส่วนขาวคงขาว
-// สีตามระดับ = ชุดเดียวกับแดชบอร์ดนโยบาย (LEVEL_PIN_COLOR ใน lib/policyLevelColors.ts — ผู้ใช้ขอ 11 พ.ย. 2026 ให้ตรงกัน)
-// ขนาดโตขึ้นตามระดับ (อ่านลำดับได้แม้ตาบอดสี) · ขนาดเล็กลงจากรุ่นแรก — กลุ่มเชียงราย/อุบลฯ ทับกันจนนับไม่ได้ที่มุมทั้งประเทศ
-const LEVEL_SIZE: Record<string, number> = { VILLAGE: 28, SUBDISTRICT: 32, DISTRICT: 36, PROVINCE: 42, NATIONAL: 46 };
-const LEVEL_PIN: Record<string, { ring: string; size: number }> = Object.fromEntries(
-  Object.entries(LEVEL_PIN_COLOR).map(([lv, ring]) => [lv, { ring, size: LEVEL_SIZE[lv] }])
+// หมุดโลโก้แยกตามระดับนโยบาย = วงกลมทึบสีระดับ ขอบดำ + สัญลักษณ์ข้างใน (26 พ.ย. 2026 — ผู้ใช้เห็นด้วยหลังตรวจหน้าเว็บจริง)
+// เดิม (4 พ.ย.) เป็นโลโก้ล้วนระบายสี: ย่อ 28px แล้วอ่านเป็น "ป้ายห้าม/กากบาท", ตำบล↔จังหวัด และ อำเภอ↔ไม่มีนโยบาย แยกไม่ออก
+// สีพื้น = LEVEL_FILL ชุดเดียวกับแดชบอร์ด (หมู่บ้าน ขาวเทา · ตำบล เหลือง · อำเภอ เทา · จังหวัด เหลืองอ่อน · ประเทศ ดำ) · ink = สีสัญลักษณ์บนพื้น
+// ขนาดโตขึ้นตามระดับ (อ่านลำดับได้แม้ตาบอดสี) · ยังไม่มีนโยบาย = วงขาวขอบประ (กลวง)
+const LEVEL_SIZE: Record<string, number> = { VILLAGE: 22, SUBDISTRICT: 25, DISTRICT: 28, PROVINCE: 32, NATIONAL: 36 };
+type LevelPinStyle = { fill: string; ink: string; size: number; dashed: boolean };
+const LEVEL_PIN: Record<string, LevelPinStyle> = Object.fromEntries(
+  Object.entries(LEVEL_FILL).map(([lv, fill]) => [lv, { fill, ink: LEVEL_ON_FILL[lv as keyof typeof LEVEL_ON_FILL], size: LEVEL_SIZE[lv], dashed: false }])
 );
-// ไม่ได้ระบุระดับ = โลโก้ดำตามต้นฉบับ (ผู้ใช้เลือก) — ดำจึงห้ามใช้ในระดับข้างบน
-const NO_POLICY_PIN = { ring: '#000000', size: 28 };
+const NO_POLICY_PIN: LevelPinStyle = { fill: '#ffffff', ink: '#374151', size: 20, dashed: true };
 const NO_POLICY = '__none';
 const levelPin = (level: string | null) => (level && LEVEL_PIN[level]) || NO_POLICY_PIN;
 // เส้นขอบประเทศบาง ๆ สีเกือบดำ — แค่พอสังเกตขอบเขต ไม่ให้หน้าตาแผนที่ต่างจากเดิม (ผู้ใช้ไม่เอาฉากจางนอกประเทศ)
@@ -252,8 +253,8 @@ function provinceStyle(hasData: boolean, isSelected: boolean) {
 const OUTLINE_RINGS = (thailandOutline.geometry.coordinates as number[][][][]).map((p) => p[0]);
 
 // delay = มิลลิวินาที (หมุดทยอยหล่นลงจากเหนือลงใต้ — globals.css .sdn-anim) · null = ไม่เล่นแอนิเมชัน
-const logoPinHtml = (src: string, color: string, approx: boolean, size: number, delay: number | null = null) =>
-  `<div class="sdn-logo-pin${approx ? ' sdn-logo-pin--approx' : ''}${delay != null ? ' sdn-anim' : ''}" style="--c:${color};width:${size}px;height:${size}px${delay != null ? `;--d:${delay}ms` : ''}"><img src="${esc(src)}" alt="" draggable="false"></div>`;
+const logoPinHtml = (src: string, pin: LevelPinStyle, approx: boolean, size: number, delay: number | null = null) =>
+  `<div class="sdn-logo-pin${pin.dashed ? ' sdn-logo-pin--none' : ''}${approx ? ' sdn-logo-pin--approx' : ''}${delay != null ? ' sdn-anim' : ''}" style="--fill:${pin.fill};--stroke:${LEVEL_STROKE};width:${size}px;height:${size}px${delay != null ? `;--d:${delay}ms` : ''}"><img src="${esc(src)}" alt="" draggable="false"></div>`;
 /** หน่วงตามละติจูด: เหนือสุด (~20.5) ขึ้นก่อน ใต้สุด (~5.6) หลังสุด ~1 วิ + กระจายเล็กน้อยไม่ให้ขึ้นเป็นแถว */
 const waveDelay = (lat: number, i: number) => Math.round(Math.max(0, Math.min(1, (20.6 - lat) / 15)) * 1000 + (i % 7) * 18);
 
@@ -327,7 +328,7 @@ function activityPopupHtml(a: MapActivity, color: string, isNew: boolean, public
         place.amphoe
       )} จ.${esc(place.province)}</div>
       ${extraLine}
-      ${a.policyLevel ? `<div style="display:flex;align-items:center;gap:5px;font-size:11px;color:#374151;margin-top:4px"><span style="width:9px;height:9px;border-radius:50%;background:${levelPin(a.policyLevel).ring};flex:none"></span>นโยบายระดับ${esc(POLICY_LABEL[a.policyLevel] ?? a.policyLevel)}</div>` : ''}
+      ${a.policyLevel ? `<div style="display:flex;align-items:center;gap:5px;font-size:11px;color:#374151;margin-top:4px"><span style="width:10px;height:10px;box-sizing:border-box;border-radius:50%;background:${levelPin(a.policyLevel).fill};border:1.5px solid ${LEVEL_STROKE};flex:none"></span>นโยบายระดับ${esc(POLICY_LABEL[a.policyLevel] ?? a.policyLevel)}</div>` : ''}
       ${publicView ? '' : `<div style="font-size:11px;color:#9ca3af;margin-top:2px">โดย ${esc(a.userName)}</div>`}
       ${publicView ? publicPopupFooter(a) : `
       <div style="display:flex;align-items:center;gap:12px;margin-top:8px">
@@ -629,9 +630,9 @@ export default function MapView({ activities, categories, categoryLogos, subCate
         filtered.map(async (a) => {
           const src = logoOf(a);
           if (!src) return;
-          const key = `${src}|${levelPin(a.policyLevel).ring}`;
+          const key = `${src}|${levelPin(a.policyLevel).ink}`;
           if (!tinted.has(key)) tinted.set(key, src);
-          tinted.set(key, await tintLogo(src, levelPin(a.policyLevel).ring));
+          tinted.set(key, await tintLogo(src, levelPin(a.policyLevel).ink));
         })
       );
       if (run !== drawRunRef.current || !mapRef.current) return;
@@ -698,11 +699,11 @@ export default function MapView({ activities, categories, categoryLogos, subCate
               let marker: CircleMarker | Marker;
               if (logo) {
                 // สีโลโก้+ขนาดตามระดับนโยบาย · หมุดรองเล็กลง 6px · ระดับสูงวางบนสุด (zIndexOffset) ไม่ให้หมุดเล็กบัง
-                const { ring, size: levelSize } = levelPin(a.policyLevel);
-                const size = site.extra ? levelSize - 6 : levelSize;
+                const pinStyle = levelPin(a.policyLevel);
+                const size = site.extra ? pinStyle.size - 4 : pinStyle.size;
                 marker = L.marker(pos, {
                   icon: L.divIcon({
-                    html: logoPinHtml(tinted.get(`${logo}|${ring}`) ?? logo, color, !precise, size, animate ? waveDelay(pos[0], animIndex++) : null),
+                    html: logoPinHtml(tinted.get(`${logo}|${pinStyle.ink}`) ?? logo, pinStyle, !precise, size, animate ? waveDelay(pos[0], animIndex++) : null),
                     className: '',
                     iconSize: [size, size],
                     iconAnchor: [size / 2, size / 2],
@@ -713,7 +714,7 @@ export default function MapView({ activities, categories, categoryLogos, subCate
                   zIndexOffset: size * 10,
                   alt: a.category,
                 }).addTo(map);
-                (marker.options as { sdn?: LogoSpec }).sdn = { kind: 'logo', color, approx: !precise, ring, size };
+                (marker.options as { sdn?: LogoSpec }).sdn = { kind: 'logo', color, approx: !precise, fill: pinStyle.fill, dashed: pinStyle.dashed, size };
               } else {
                 // หมุดรอง (พื้นที่ที่เกี่ยวข้อง) เล็กกว่าหมุดหลักเล็กน้อย
                 const r = site.extra ? 2 : 0;
@@ -942,7 +943,14 @@ export default function MapView({ activities, categories, categoryLogos, subCate
       corners.push([b.getSouth(), b.getWest()], [b.getNorth(), b.getEast()]);
     }
     if (corners.length > 0) {
-      map.flyToBounds(corners, { padding: [56, 56], maxZoom: 9, duration: 0.6 });
+      // เว้นที่ให้ UI ที่ลอยทับ: แถบไอคอนซ้าย+ช่องค้นหาบน, แถบคำอธิบายล่าง, การ์ด QR ขวาล่าง (จอ md+) — ไม่ให้หมุดไปอยู่ใต้การ์ด
+      const md = map.getContainer().clientWidth >= 768;
+      map.flyToBounds(corners, {
+        paddingTopLeft: md ? [96, 110] : [16, 120],
+        paddingBottomRight: md ? [pinCardOpen ? 340 : 64, 56] : [16, 70],
+        maxZoom: 9,
+        duration: 0.6,
+      });
     } else if (fullBoundsRef.current) {
       map.flyToBounds(fullBoundsRef.current, { padding: [16, 16], duration: 0.6 });
     }
@@ -1113,14 +1121,25 @@ export default function MapView({ activities, categories, categoryLogos, subCate
           // วาดจาก <img> ที่โหลดอยู่บนแผนที่แล้ว (same-origin ผ่าน /api/files — canvas ไม่โดน taint)
           const img = (layer as Marker).getElement()?.querySelector('img');
           const R = (sdn.size / 2) * k;
-          // โลโก้ระบายสีแล้ว (data URL) ไม่มีวงพื้นขาว — เงาเดียวกับ drop-shadow บนจอ
+          // วงพื้นสีระดับ + ขอบดำ (ประ = ยังไม่มีนโยบาย) แล้ววางสัญลักษณ์ 62% ของวง — เหมือน .sdn-logo-pin บนจอ
+          ctx.save();
+          ctx.shadowColor = 'rgba(0,0,0,.3)';
+          ctx.shadowBlur = 2 * k;
+          ctx.shadowOffsetY = 1 * k;
+          ctx.beginPath();
+          ctx.arc(x, y, R - 0.75 * k, 0, Math.PI * 2);
+          ctx.fillStyle = sdn.fill;
+          ctx.fill();
+          ctx.restore();
+          ctx.lineWidth = 1.5 * k;
+          ctx.strokeStyle = LEVEL_STROKE;
+          if (sdn.dashed) ctx.setLineDash([3 * k, 2 * k]);
+          ctx.stroke();
+          ctx.setLineDash([]);
           if (img?.complete && img.naturalWidth > 0) {
             ctx.save();
-            ctx.shadowColor = 'rgba(0,0,0,.35)';
-            ctx.shadowBlur = 2 * k;
-            ctx.shadowOffsetY = 1 * k;
             // object-fit: contain เหมือนบนจอ — โลโก้ไม่จำเป็นต้องจัตุรัส (สัญลักษณ์งานศพเป็นแนวตั้ง)
-            const f = Math.min((R * 2) / img.naturalWidth, (R * 2) / img.naturalHeight);
+            const f = Math.min((R * 1.24) / img.naturalWidth, (R * 1.24) / img.naturalHeight);
             const w = img.naturalWidth * f;
             const h = img.naturalHeight * f;
             ctx.drawImage(img, x - w / 2, y - h / 2, w, h);
@@ -1523,8 +1542,8 @@ export default function MapView({ activities, categories, categoryLogos, subCate
                     .filter(({ value }) => (countByLevel.get(value) ?? 0) > 0 || levelFilter === value)
                     .map(({ value, label }) => {
                       const on = levelFilter === value;
-                      const { ring, size } = levelPin(value === NO_POLICY ? null : value);
-                      const d = Math.round(size / 3); // ย่อขนาดจริงลงในรายการ แต่ยังเห็นเล็ก→ใหญ่
+                      const pin = levelPin(value === NO_POLICY ? null : value);
+                      const d = Math.round(pin.size / 2.2); // ย่อขนาดจริงลงในรายการ แต่ยังเห็นเล็ก→ใหญ่
                       return (
                         <li key={value}>
                           <button
@@ -1535,7 +1554,7 @@ export default function MapView({ activities, categories, categoryLogos, subCate
                             }`}
                           >
                             <span className="w-5 flex justify-center shrink-0">
-                              <span className="rounded-full" style={{ width: d, height: d, backgroundColor: ring }} />
+                              <LevelSwatch pin={pin} size={d} />
                             </span>
                             <span className="flex-1 truncate">{label}</span>
                             <span className="text-[10px] text-gray-400">{countByLevel.get(value) ?? 0}</span>
@@ -1826,11 +1845,11 @@ export default function MapView({ activities, categories, categoryLogos, subCate
       {selectedPinId == null && !selectedProvince && mapMode !== 'summary' && (
         <div className="absolute bottom-16 right-3 z-[900] sm:right-14">
           {pinCardOpen ? (
-            <div className="sdn-nudge hidden items-center gap-4 rounded-2xl border border-gray-200 bg-white p-4 shadow-lg md:flex">
-              <NextImage src="/farewell/qr-pin.svg" alt="QR ปักหมุดงานศพปลอดเหล้า" width={128} height={128} unoptimized />
-              <div className="max-w-44">
-                <p className="text-base font-semibold leading-snug text-gray-900">บ้านคุณเคยจัดงานศพปลอดเหล้า? สแกนปักหมุด</p>
-                <p className="mt-2 text-sm text-gray-600">
+            <div className="sdn-nudge hidden items-center gap-3 rounded-2xl border border-gray-200 bg-white p-3 shadow-lg md:flex">
+              <NextImage src="/farewell/qr-pin.svg" alt="QR ปักหมุดงานศพปลอดเหล้า" width={88} height={88} unoptimized />
+              <div className="max-w-40">
+                <p className="text-sm font-semibold leading-snug text-gray-900">บ้านคุณเคยจัดงานศพปลอดเหล้า? สแกนปักหมุด</p>
+                <p className="mt-1.5 text-xs text-gray-600">
                   ปักหมุดแล้ว <span className="font-semibold tabular-nums text-gray-900">{pins.length}</span> แห่ง
                 </p>
               </div>
@@ -1849,26 +1868,44 @@ export default function MapView({ activities, categories, categoryLogos, subCate
         </div>
       )}
 
-      {/* คำอธิบายสัญลักษณ์ (เดสก์ท็อป) — โหมดหมุดเท่านั้น, โหมดความหนาแน่นมีสเกลสีในแผงหมวดหมู่ */}
+      {/* คำอธิบายสีหมุด = ระดับนโยบาย (ทุกขนาดจอ — มือถือเลื่อนข้าง) · กดแต่ละระดับ = กรอง (ตัวเดียวกับแผงตัวกรอง) · โหมดหมุดเท่านั้น */}
       {mapMode === 'markers' && !sidebarOpen && (
-        <div className="absolute bottom-4 left-3 z-[1000] hidden sm:flex items-center gap-3 bg-white/95 backdrop-blur rounded-full border border-gray-200 shadow-lg px-4 py-2 text-[11px] text-gray-600">
-          {!publicView && (
-            <>
-              <LegendDot solid /> ตำแหน่งจริง
-            </>
-          )}
-          <LegendDot /> {publicView ? 'ตำแหน่งระดับตำบล' : 'โดยประมาณ'}
-          <span className="text-gray-400">· สี/ขนาดโลโก้ = ระดับนโยบาย — คลิกหมุดดูรายละเอียด</span>
-          {newIds.size > 0 && (
-            <>
-              <span className="w-px h-3.5 bg-gray-200" />
-              <span className="relative inline-flex w-3 h-3 items-center justify-center">
-                <span className="absolute inset-0 rounded-full border-2 border-gray-700 motion-safe:animate-ping" />
-                <span className="w-1.5 h-1.5 rounded-full bg-gray-900" />
-              </span>
-              งานใหม่
-            </>
-          )}
+        <div className="absolute bottom-4 left-3 right-14 sm:right-auto z-[1000] flex">
+          <div className="flex max-w-full items-center gap-1 overflow-x-auto whitespace-nowrap rounded-full border border-gray-200 bg-white/95 px-2 py-1.5 text-xs text-gray-700 shadow-lg backdrop-blur [scrollbar-width:none]">
+            <span className="hidden pl-2 pr-1 text-gray-500 sm:inline">ระดับนโยบาย</span>
+            {[...POLICY_LEVELS.map((l) => ({ value: l.value as string, label: l.label })), { value: NO_POLICY, label: 'ยังไม่มี' }]
+              .filter(({ value }) => (countByLevel.get(value) ?? 0) > 0)
+              .map(({ value, label }) => {
+                const on = levelFilter === value;
+                return (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setLevelFilter(on ? '' : value)}
+                    aria-pressed={on}
+                    className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2 py-1 transition-colors ${
+                      on ? 'bg-gray-900 text-white' : 'hover:bg-gray-100'
+                    }`}
+                  >
+                    <LevelSwatch pin={levelPin(value === NO_POLICY ? null : value)} size={12} />
+                    {label}
+                    <span className={`tabular-nums ${on ? 'text-white/70' : 'text-gray-500'}`}>{countByLevel.get(value) ?? 0}</span>
+                  </button>
+                );
+              })}
+            {newIds.size > 0 && (
+              <>
+                <span className="mx-1 h-3.5 w-px shrink-0 bg-gray-200" />
+                <span className="inline-flex shrink-0 items-center gap-1.5 pr-2">
+                  <span className="relative inline-flex w-3 h-3 items-center justify-center">
+                    <span className="absolute inset-0 rounded-full border-2 border-gray-700 motion-safe:animate-ping" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-gray-900" />
+                  </span>
+                  งานใหม่
+                </span>
+              </>
+            )}
+          </div>
         </div>
       )}
     </div>
@@ -1876,6 +1913,15 @@ export default function MapView({ activities, categories, categoryLogos, subCate
 }
 
 // ── คำอธิบายสัญลักษณ์บนแผนที่ (ใช้ทั้งแผงหมวดหมู่และแถบล่างซ้าย)
+/** จุดตัวอย่างสีระดับนโยบาย — หน้าตาเดียวกับหมุด (พื้นสีระดับ ขอบดำ · ประ = ยังไม่มีนโยบาย) */
+function LevelSwatch({ pin, size }: { pin: LevelPinStyle; size: number }) {
+  return (
+    <span
+      className="inline-block shrink-0 rounded-full"
+      style={{ width: size, height: size, backgroundColor: pin.fill, border: `1.5px ${pin.dashed ? 'dashed' : 'solid'} ${LEVEL_STROKE}` }}
+    />
+  );
+}
 function LegendDot({ solid = false }: { solid?: boolean }) {
   return solid ? (
     <span className="w-3 h-3 rounded-full shrink-0 bg-gray-600 ring-2 ring-white shadow" />
@@ -1888,7 +1934,7 @@ function MapLegend({ publicView }: { publicView: boolean }) {
   return (
     <div className="mt-4 pt-3 border-t border-gray-100 space-y-2 text-[11px] text-gray-500 leading-snug">
       <p className="flex items-center gap-2"><span className="inline-flex h-5 w-5 items-center justify-center rounded-full border-2 border-white bg-orange-600 shadow"><svg viewBox="0 0 24 24" className="h-3 w-3" aria-hidden="true"><path fill="white" d="M3 11.2 12 4l9 7.2-1.4 1.7-1.6-1.3V20h-5v-5h-2v5H8v-8.4l-1.6 1.3z" /></svg></span><span>ครอบครัว/ชุมชนที่ปักหมุด</span></p>
-      <p>สีและขนาดโลโก้ = ระดับนโยบาย (เหลืองเล็ก = หมู่บ้าน → แดงเข้มใหญ่ = จังหวัด) — คลิกหมุดดูรายละเอียด คลิกจังหวัดดูรายการทั้งหมด</p>
+      <p>สีและขนาดวง = ระดับนโยบาย (วงเล็ก = หมู่บ้าน → วงใหญ่ = จังหวัด/ประเทศ) — คลิกหมุดดูรายละเอียด คลิกจังหวัดดูรายการทั้งหมด</p>
       <p className={publicView ? 'hidden' : 'flex items-center gap-2'}>
         <LegendDot solid />
         <span>ปักหมุดตำแหน่งจริง</span>

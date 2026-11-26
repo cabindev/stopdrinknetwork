@@ -102,21 +102,31 @@ input:-webkit-autofill {
 }
 
 /* ── แผนที่: หมุดโลโก้ประเด็นงาน — โลโก้ล้วน ไม่มีวงพื้นขาว (ผู้ใช้เลือก 4 พ.ย. 2026) สีตามระดับนโยบาย (MapView tintLogo) */
+/* หมุดงาน = วงกลมทึบสีระดับนโยบาย (--fill) ขอบดำ (--stroke) + สัญลักษณ์ 62% ตรงกลาง (26 พ.ย. 2026 — เดิมโลโก้ล้วนอ่านเป็นป้ายห้าม) */
 .sdn-logo-pin {
   box-sizing: border-box;
-  width: 36px;
-  height: 36px;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background: var(--fill, #fff);
+  border: 1.5px solid var(--stroke, #111827);
   cursor: pointer;
   transition: transform 0.15s;
-  filter: drop-shadow(0 1px 1px rgb(0 0 0 / 0.35));
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.3);
+}
+.sdn-logo-pin--none {
+  border-style: dashed;
 }
 .sdn-logo-pin:hover {
   transform: scale(1.15);
 }
 .sdn-logo-pin img {
   display: block;
-  width: 100%;
-  height: 100%;
+  width: 62%;
+  height: 62%;
   object-fit: contain;
   pointer-events: none;
 }

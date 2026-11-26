@@ -751,7 +751,7 @@ export default function MapView({ activities, categories, categoryLogos, subCate
         marker.bindPopup(activityPopupHtml(a, color, isNew, publicView, site.extra), {
           closeButton: true,
           // เว้นช่องค้นหา (บน) และการ์ดคำอธิบาย (ล่าง) — มือถือ popup เคยโดนช่องค้นหาบังชื่องาน
-          autoPanPaddingTopLeft: [16, 124],
+          autoPanPaddingTopLeft: [88, 124],
           autoPanPaddingBottomRight: [16, 100],
           maxWidth: 260,
         });
@@ -1973,7 +1973,7 @@ export default function MapView({ activities, categories, categoryLogos, subCate
       {/* การ์ดล่างซ้าย (โหมดหมุด, ทุกจอ): บรรทัดบน = แผนที่นี้คืออะไร + จำนวน (ตัวเลขในวงมีหน่วย) · บรรทัดล่าง = สีหมุด = ข้อตกลงระดับ… กดกรองได้ + หมุดบ้าน
           (26 พ.ย. 2026 ผู้ใช้ตรวจแล้วคนทั่วไปงง "40 คืออะไร", "หมู่บ้าน 64 = จำนวนหมู่บ้าน?" — บนแผนที่ใช้คำ "ข้อตกลง" แทน "นโยบาย") */}
       {mapMode === 'markers' && !sidebarOpen && (
-        <div className="absolute bottom-4 left-3 right-14 sm:right-auto sm:max-w-[680px] z-[1000] flex">
+        <div className="absolute bottom-4 left-3 right-14 sm:right-auto sm:max-w-[calc(100vw-120px)] md:max-w-[calc(100vw-440px)] z-[1000] flex">
           <div className="min-w-0 max-w-full rounded-2xl border border-gray-200 bg-white/95 px-3 py-2 text-xs text-gray-700 shadow-lg backdrop-blur">
           <p className="truncate font-semibold text-gray-900">
             งานศพปลอดเหล้า <span className="tabular-nums">{filtered.length}</span> พื้นที่ · <span className="tabular-nums">{byProvince.size}</span> จังหวัด

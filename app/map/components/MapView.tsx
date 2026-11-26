@@ -810,8 +810,11 @@ export default function MapView({ activities, categories, categoryLogos, subCate
       const rank = (site: MapSite) => LEVEL_SIZE[site.a.policyLevel ?? ''] ?? 0;
       // ซูม ≥ CLUSTER_OFF_ZOOM: หมุดที่ยังทับกันบนจอ (จุดกลางตำบลเดียวกัน/หมู่บ้านห่างกันไม่กี่ร้อยเมตร) กางเป็นวงรอบจุดกลางกลุ่ม
       // ระยะเป็นพิกเซลตามขนาดหมุด (จอจัดแสดงหมุดใหญ่ 1.4 เท่า) — ผู้ใช้ทัก 26 พ.ย. 2026 "หมุดมีหลายชั้น ดูซ้อน"
-      if (zoomNow >= CLUSTER_OFF_ZOOM) {
-        const gap = expo ? 46 : 32;
+      // จอจัดแสดง: ไม่รวมเป็นวงตัวเลขเลย ทุกระดับซูม — กางหมุดแยกให้เห็นทุกหมุด (ผู้ใช้ขอ 26 พ.ย. 2026 "ไม่ต้องซ่อนหมุดในกลุ่ม แยกดูง่ายกว่า")
+      // ภาพรวม (ซูม < 10) หมุดย่อเหลือขนาดปกติ (.sdn-expo-near ใน globals.css) จึงเว้นระยะแคบกว่า
+      const fanOut = expo || zoomNow >= CLUSTER_OFF_ZOOM;
+      if (fanOut) {
+        const gap = expo ? (zoomNow >= CLUSTER_OFF_ZOOM ? 46 : 30) : 32;
         const groups: { x: number; y: number; members: typeof items }[] = [];
         for (const it of items) {
           const p = map.project(it.pos, zoomNow);
@@ -822,22 +825,44 @@ export default function MapView({ activities, categories, categoryLogos, subCate
             g.y += (p.y - g.y) / g.members.length;
           } else groups.push({ x: p.x, y: p.y, members: [it] });
         }
+        // วางวงเริ่มต้นเป็นพิกเซล แล้วดันคู่ที่ยังชนกัน (วงของกลุ่มข้าง ๆ) ออกจากกันทีละนิดจนห่างพอ
+        const pts = new Map<(typeof items)[number], { x: number; y: number }>();
         for (const g of groups) {
           const n = g.members.length;
-          if (n < 2) continue;
-          const r = gap / (2 * Math.sin(Math.PI / n));
+          const r = n < 2 ? 0 : gap / (2 * Math.sin(Math.PI / n));
           g.members.forEach((it, i) => {
             const ang = -Math.PI / 2 + (2 * Math.PI * i) / n;
-            const ll = map.unproject(L.point(g.x + r * Math.cos(ang), g.y + r * Math.sin(ang)), zoomNow);
-            it.pos = [ll.lat, ll.lng];
+            pts.set(it, { x: g.x + r * Math.cos(ang), y: g.y + r * Math.sin(ang) });
           });
         }
+        const all = [...pts.values()];
+        for (let iter = 0; iter < 30; iter++) {
+          let moved = false;
+          for (let i = 0; i < all.length; i++) {
+            for (let j = i + 1; j < all.length; j++) {
+              const a = all[i], b = all[j];
+              const dx = b.x - a.x, dy = b.y - a.y;
+              const d = Math.hypot(dx, dy);
+              if (d >= gap * 0.9) continue;
+              const push = (gap * 0.9 - d) / 2 + 0.5;
+              const ux = d > 0.01 ? dx / d : Math.cos(i + j), uy = d > 0.01 ? dy / d : Math.sin(i + j);
+              a.x -= ux * push; a.y -= uy * push;
+              b.x += ux * push; b.y += uy * push;
+              moved = true;
+            }
+          }
+          if (!moved) break;
+        }
+        pts.forEach((p, it) => {
+          const ll = map.unproject(L.point(p.x, p.y), zoomNow);
+          it.pos = [ll.lat, ll.lng];
+        });
       }
       shownPosRef.current = new Map(items.filter((it) => !it.site.extra).map((it) => [it.site.a.id, it.pos]));
-      const sorted = zoomNow >= CLUSTER_OFF_ZOOM ? items : [...items].sort((x, y) => rank(y.site) - rank(x.site));
+      const sorted = fanOut ? items : [...items].sort((x, y) => rank(y.site) - rank(x.site));
       for (const it of sorted) {
         const px = map.project(it.pos, zoomNow);
-        const hit = zoomNow >= CLUSTER_OFF_ZOOM ? undefined : clusters.find((c) => Math.hypot(c.px.x - px.x, c.px.y - px.y) < (expo ? CLUSTER_RADIUS * 1.5 : CLUSTER_RADIUS));
+        const hit = fanOut ? undefined : clusters.find((c) => Math.hypot(c.px.x - px.x, c.px.y - px.y) < (expo ? CLUSTER_RADIUS * 1.5 : CLUSTER_RADIUS));
         if (hit) hit.members.push(it);
         else clusters.push({ pos: it.pos, px, members: [it] });
       }
@@ -1472,7 +1497,7 @@ export default function MapView({ activities, categories, categoryLogos, subCate
     }`;
 
   return (
-    <div className={`relative h-screen${expo ? ' sdn-expo' : ''}`}>
+    <div className={`relative h-screen${expo ? ` sdn-expo${zoomBucket >= CLUSTER_OFF_ZOOM ? ' sdn-expo-near' : ''}` : ''}`}>
       <div ref={mapElRef} className="sdn-expo-keep absolute inset-0 z-0" />
       {expo && <ExpoMode mapRef={mapRef} shownPosRef={shownPosRef} mapReady={mapReady} activities={activities} pins={pins} zones={expoZones} onExit={exitExpo} />}
 

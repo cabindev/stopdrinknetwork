@@ -511,9 +511,6 @@ export default function MapView({ activities, categories, categoryLogos, subCate
     for (const a of filtered) {
       push(a.province, { a, latitude: a.latitude, longitude: a.longitude, locationSource: a.locationSource, extra: null });
       for (const x of a.extraAreas) {
-        // พื้นที่ที่เกี่ยวข้องในตำบลเดียวกับพื้นที่หลัก = ไม่วาดหมุดซ้ำ (ไม่บอกตำแหน่งเพิ่ม และทำให้นับหมุดไม่ตรงกับจำนวนงาน
-        // — ผู้ใช้ทัก 26 พ.ย. 2026: บึงกาฬ 4 หมุดแต่แผงบอก 2 งาน)
-        if (x.district === a.district && x.amphoe === a.amphoe && x.province === a.province) continue;
         push(x.province, { a, latitude: x.latitude, longitude: x.longitude, locationSource: x.locationSource, extra: x });
       }
     }
@@ -521,7 +518,7 @@ export default function MapView({ activities, categories, categoryLogos, subCate
   }, [filtered]);
 
   const selectedActivities = selectedProvince ? byProvince.get(selectedProvince) ?? [] : [];
-  // หมุดรอง (พื้นที่ที่เกี่ยวข้องต่างตำบล) ในจังหวัดนี้ — แผงจังหวัดแสดงด้วย ให้จำนวนหมุดบนแผนที่ตรงกับแผง (26 พ.ย. 2026)
+  // หมุดรอง (พื้นที่ที่เกี่ยวข้อง — ตำบลเดียวกันก็อาจคนละหมู่บ้าน จึงวาดทุกแห่ง) ในจังหวัดนี้ — แผงจังหวัดแสดงด้วย ให้จำนวนหมุดบนแผนที่ตรงกับแผง (26 พ.ย. 2026)
   const extrasByProvince = useMemo(() => {
     const m = new Map<string, MapSite[]>();
     sitesByProvince.forEach((list, province) => {
@@ -2072,7 +2069,7 @@ export default function MapView({ activities, categories, categoryLogos, subCate
 
           {selectedExtras.length > 0 && (
             <>
-              <h3 className="mt-5 mb-2 text-xs font-semibold text-gray-900">พื้นที่ที่เกี่ยวข้องของงานอื่น</h3>
+              <h3 className="mt-5 mb-2 text-xs font-semibold text-gray-900">พื้นที่ที่เกี่ยวข้อง (หมุดรอง)</h3>
               <ul className="space-y-3">
                 {selectedExtras.map((site, i) => {
                   const a = site.a;
@@ -2085,7 +2082,7 @@ export default function MapView({ activities, categories, categoryLogos, subCate
                         <p className="mt-1 text-xs text-gray-500">
                           <MapPin className="inline w-3.5 h-3.5 mr-0.5 text-gray-600" />
                           {x.areaName ? `${x.areaName} · ` : ''}ต.{x.district} อ.{x.amphoe}
-                          <span className="text-gray-400"> · งานหลักอยู่ ต.{a.district}{a.province !== selectedProvince ? ` จ.${a.province}` : ''}</span>
+                          <span className="text-gray-400"> · พื้นที่หลักของงาน ต.{a.district}{a.province !== selectedProvince ? ` จ.${a.province}` : ''}</span>
                         </p>
                       </PanelItem>
                     </li>

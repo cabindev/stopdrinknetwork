@@ -293,8 +293,9 @@ export default function ExpoMode({ mapRef, mapReady, activities: allActivities, 
         </div>
 
         <div className="px-6 pt-5">
-          <h1 className="text-[34px] font-bold leading-tight text-gray-900">งานศพปลอดเหล้า</h1>
-          <p className="mt-1 text-base text-gray-600">เกิดขึ้นจริงแล้ว ในชุมชน<b className="font-semibold text-gray-900">{zoneName}</b></p>
+          <h1 className="text-[32px] font-bold leading-tight text-gray-900">งานศพแบบไหน<br />ที่เราอยากให้เป็น?</h1>
+          <p className="mt-2 text-base text-gray-600">ชุมชน<b className="font-semibold text-gray-900">{zoneName}</b> ตกลงกันแล้ว</p>
+          <p className="mt-0.5 text-base font-semibold text-gray-900">ลดเหล้า · ลดของห่อ · ลดรายจ่าย</p>
         </div>
 
         <div className="mx-6 mt-5 grid grid-cols-3 divide-x divide-gray-200 rounded-2xl border border-gray-200">
@@ -354,10 +355,10 @@ export default function ExpoMode({ mapRef, mapReady, activities: allActivities, 
         {/* QR — หัวใจของจอ: คนดูเปลี่ยนเป็นคนร่วม แล้วเห็นหมุดตัวเองขึ้นจอ */}
         <div className="mx-4 mb-4 mt-4 flex shrink-0 items-center gap-4 rounded-2xl bg-gray-900 p-4 text-white">
           <div className="sdn-qr-glow shrink-0 rounded-xl bg-white p-2">
-            <NextImage src="/farewell/qr-pin.svg" alt="QR ปักหมุดงานศพปลอดเหล้า" width={136} height={136} unoptimized />
+            <NextImage src="/farewell/qr-pin.svg" alt="QR ปักหมุดงานศพของครอบครัว" width={136} height={136} unoptimized />
           </div>
           <div className="min-w-0">
-            <p className="text-lg font-bold leading-snug">บ้านคุณเคยจัดงานศพปลอดเหล้า?</p>
+            <p className="text-lg font-bold leading-snug">บ้านคุณจัดงานศพแบบไหน?</p>
             <ol className="mt-2 space-y-1 text-sm text-white/80">
               <li><span className="font-semibold text-white">1</span> · สแกน QR</li>
               <li><span className="font-semibold text-white">2</span> · ปักหมุดบ้านคุณ</li>
@@ -371,7 +372,7 @@ export default function ExpoMode({ mapRef, mapReady, activities: allActivities, 
       <div className="pointer-events-auto absolute inset-x-3 top-3 rounded-2xl border border-gray-200 bg-white px-4 py-3 shadow-xl md:hidden">
         <div className="flex items-center gap-2">
           <span className="sdn-live-dot h-2 w-2 rounded-full bg-orange-500" />
-          <p className="truncate text-base font-bold text-gray-900">งานศพปลอดเหล้า · {zoneName}</p>
+          <p className="truncate text-base font-bold text-gray-900">งานศพแบบไหนที่เราอยากให้เป็น?</p>
           <button type="button" onClick={onExit} aria-label="ออกจากจอจัดแสดง" className="ml-auto -mr-1 rounded-full p-1 text-gray-400">
             <X className="h-4 w-4" />
           </button>
@@ -406,7 +407,7 @@ export default function ExpoMode({ mapRef, mapReady, activities: allActivities, 
 
       {stop.kind === 'overview' && (
         <div key={stepKey} className="sdn-expo-card absolute bottom-6 right-6 rounded-full border border-gray-200 bg-white px-5 py-3 text-base text-gray-900 shadow-xl max-md:inset-x-3 max-md:bottom-3 max-md:text-center max-md:text-sm">
-          {zoneName} · ทุกวงคือชุมชนที่ตกลงกัน <b>ไม่เลี้ยงเหล้าในงานศพ</b>
+          {zoneName} · ทุกวงคือชุมชนที่มี<b>ข้อตกลงเรื่องงานศพ</b>ร่วมกัน
         </div>
       )}
 
@@ -445,7 +446,7 @@ function SiteStory({ a }: { a: MapActivity }) {
     <>
       <div className="flex items-center gap-2 text-sm text-gray-700">
         <LevelDot level={a.policyLevel} />
-        <span className="font-semibold">{a.policyLevel ? `ข้อตกลงระดับ${POLICY_LABEL[a.policyLevel] ?? a.policyLevel}` : 'งานศพปลอดเหล้า'}</span>
+        <span className="font-semibold">{a.policyLevel ? `ข้อตกลงระดับ${POLICY_LABEL[a.policyLevel] ?? a.policyLevel}` : 'งานศพในชุมชน'}</span>
         <span className="ml-auto text-xs text-gray-500">{getRegionLabel(a.region as HealthZone)}</span>
       </div>
       <p className="mt-2 line-clamp-2 text-xl font-bold leading-snug text-gray-900">{a.title}</p>

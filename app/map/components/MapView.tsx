@@ -383,6 +383,8 @@ export default function MapView({ activities, categories, categoryLogos, subCate
   const geoLayerRef = useRef<GeoJSONLayer | null>(null);
   const markersRef = useRef<(CircleMarker | Marker)[]>([]);
   const drawRunRef = useRef(0);
+  /** ตำแหน่งที่วาดหมุดหลักจริง (หลังกางหมุดที่ทับกัน) — จอจัดแสดงวางวงส้มตรงนี้ */
+  const shownPosRef = useRef<Map<number, [number, number]>>(new Map());
   /** motion: เล่นแอนิเมชันหมุดเฉพาะตอนเปิด/เปลี่ยนโหมด-ตัวกรอง-ภาค (จิ้มจังหวัดไม่เล่นซ้ำ) */
   const lastAnimKeyRef = useRef(''); // นับรอบวาดหมุด — รอบเก่าที่ยังรอโลโก้ระบายสีอยู่จะไม่วาดทับ
   const centersRef = useRef<Map<string, [number, number]>>(new Map());
@@ -806,6 +808,32 @@ export default function MapView({ activities, categories, categoryLogos, subCate
       const clusters: { pos: [number, number]; px: { x: number; y: number }; members: { site: MapSite; pos: [number, number] }[] }[] = [];
       const zoomNow = map.getZoom();
       const rank = (site: MapSite) => LEVEL_SIZE[site.a.policyLevel ?? ''] ?? 0;
+      // ซูม ≥ CLUSTER_OFF_ZOOM: หมุดที่ยังทับกันบนจอ (จุดกลางตำบลเดียวกัน/หมู่บ้านห่างกันไม่กี่ร้อยเมตร) กางเป็นวงรอบจุดกลางกลุ่ม
+      // ระยะเป็นพิกเซลตามขนาดหมุด (จอจัดแสดงหมุดใหญ่ 1.4 เท่า) — ผู้ใช้ทัก 26 พ.ย. 2026 "หมุดมีหลายชั้น ดูซ้อน"
+      if (zoomNow >= CLUSTER_OFF_ZOOM) {
+        const gap = expo ? 46 : 32;
+        const groups: { x: number; y: number; members: typeof items }[] = [];
+        for (const it of items) {
+          const p = map.project(it.pos, zoomNow);
+          const g = groups.find((gr) => Math.hypot(gr.x - p.x, gr.y - p.y) < gap);
+          if (g) {
+            g.members.push(it);
+            g.x += (p.x - g.x) / g.members.length;
+            g.y += (p.y - g.y) / g.members.length;
+          } else groups.push({ x: p.x, y: p.y, members: [it] });
+        }
+        for (const g of groups) {
+          const n = g.members.length;
+          if (n < 2) continue;
+          const r = gap / (2 * Math.sin(Math.PI / n));
+          g.members.forEach((it, i) => {
+            const ang = -Math.PI / 2 + (2 * Math.PI * i) / n;
+            const ll = map.unproject(L.point(g.x + r * Math.cos(ang), g.y + r * Math.sin(ang)), zoomNow);
+            it.pos = [ll.lat, ll.lng];
+          });
+        }
+      }
+      shownPosRef.current = new Map(items.filter((it) => !it.site.extra).map((it) => [it.site.a.id, it.pos]));
       const sorted = zoomNow >= CLUSTER_OFF_ZOOM ? items : [...items].sort((x, y) => rank(y.site) - rank(x.site));
       for (const it of sorted) {
         const px = map.project(it.pos, zoomNow);
@@ -1446,7 +1474,7 @@ export default function MapView({ activities, categories, categoryLogos, subCate
   return (
     <div className={`relative h-screen${expo ? ' sdn-expo' : ''}`}>
       <div ref={mapElRef} className="sdn-expo-keep absolute inset-0 z-0" />
-      {expo && <ExpoMode mapRef={mapRef} mapReady={mapReady} activities={activities} pins={pins} zones={expoZones} onExit={exitExpo} />}
+      {expo && <ExpoMode mapRef={mapRef} shownPosRef={shownPosRef} mapReady={mapReady} activities={activities} pins={pins} zones={expoZones} onExit={exitExpo} />}
 
       {/* แถบไอคอนลอยด้านซ้าย (การ์ดเดี่ยว ไม่กินพื้นที่แผนที่) */}
       <nav className="absolute top-28 left-3 z-[1100] w-16 bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden divide-y divide-gray-100">

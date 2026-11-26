@@ -59,6 +59,8 @@ const shuffle = <T,>(xs: T[]) => {
 
 interface Props {
   mapRef: RefObject<LeafletMap | null>;
+  /** ตำแหน่งที่หมุดถูกวางจริงบนจอ (MapView กางหมุดที่ทับกันออก) */
+  shownPosRef: RefObject<Map<number, [number, number]>>;
   mapReady: boolean;
   activities: MapActivity[];
   pins: PublicPin[];
@@ -67,7 +69,7 @@ interface Props {
   onExit: () => void;
 }
 
-export default function ExpoMode({ mapRef, mapReady, activities: allActivities, pins, zones, onExit }: Props) {
+export default function ExpoMode({ mapRef, shownPosRef, mapReady, activities: allActivities, pins, zones, onExit }: Props) {
   // เน้นภาคที่เลือก: ตัวเลขพื้นที่/จังหวัด สีหมุด และจุดที่กล้องพาไปดู = เฉพาะภาคนี้
   // (หมุดครอบครัว = นับ/ฉลองทุกหมุด — คนที่บูธอาจปักบ้านจากภาคอื่น ต้องเห็นตัวเลขขยับ)
   const zoneKey = zones?.join(',') ?? 'all';
@@ -202,12 +204,14 @@ export default function ExpoMode({ mapRef, mapReady, activities: allActivities, 
       map.flyTo(center, z, { duration: s.kind === 'pin' && s.fresh ? 2.4 : 3 });
       map.once('moveend', () => {
         window.setTimeout(() => {
-          if (token === spotToken.current) placeSpot(lat, lng, s.kind === 'pin' && s.fresh);
+          if (token !== spotToken.current) return;
+          const at = s.kind === 'site' ? shownPosRef.current.get(s.a.id) : undefined;
+          placeSpot(at?.[0] ?? lat, at?.[1] ?? lng, s.kind === 'pin' && s.fresh);
         }, 250);
       });
       return ms;
     },
-    [mapRef, centerFor, placeSpot, overview],
+    [mapRef, shownPosRef, centerFor, placeSpot, overview],
   );
 
   const nextRef = useRef<() => void>(() => {});

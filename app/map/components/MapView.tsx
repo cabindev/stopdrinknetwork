@@ -29,6 +29,7 @@ import {
   CircleDot,
   Check,
   Download,
+  MonitorPlay,
 } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 import thailandGeo from '@/app/data/thailand.json';
@@ -42,6 +43,7 @@ import { POLICY_LEVELS, POLICY_LABEL } from '@/app/lib/activityMeta';
 import { LEVEL_FILL, LEVEL_ON_FILL, LEVEL_STROKE } from '@/app/lib/policyLevelColors';
 import { pinTitle } from '@/app/lib/funeralPins';
 import FamilyPinPanel from './FamilyPinPanel';
+import ExpoMode from './ExpoMode';
 import PolicySummaryCard from './PolicySummaryCard';
 import { useCountUp } from '@/app/lib/useCountUp';
 import { drawSummaryPoster } from './summaryPoster';
@@ -249,6 +251,8 @@ function declutterSumNames(container: HTMLElement) {
 }
 /** ลำดับวนของจอบูธ (/map?mode=summary&booth=1): ภาพรวม → ทีละภาคที่มีนโยบาย */
 const BOOTH_STEP_MS = 9000;
+/** จอจัดแสดง (?expo=1) เน้นภาคไหนเมื่อไม่ระบุ &zones= */
+const EXPO_DEFAULT_ZONES: HealthZone[] = ['northeast-upper', 'northeast-lower'];
 const BOOTH_PAUSE_MS = 30000;
 const zoneShort = (z: HealthZone) => getRegionLabel(z).replace(/^ภาค/, '');
 
@@ -415,6 +419,44 @@ export default function MapView({ activities, categories, categoryLogos, subCate
     if (zs.length) setSummaryZones(zs);
     if (sp.get('booth') === '1') setBooth(true);
   }, []);
+  /** จอจัดแสดง (ExpoMode): ?expo=1 หรือปุ่มในแถบซ้าย · ซ่อน UI ปกติ + navbar · ดึงหมุดใหม่ถี่ขึ้น */
+  const [expo, setExpo] = useState(false);
+  // ภาคที่จอจัดแสดงเน้น: ค่าเริ่มต้น อีสานบน+อีสานล่าง (เวทีอุบล 27 พ.ย. 2026) · &zones=all = ทั้งประเทศ · &zones=north-upper,... = เลือกเอง
+  const [expoZones, setExpoZones] = useState<HealthZone[] | null>(EXPO_DEFAULT_ZONES);
+  useEffect(() => {
+    const sp = new URLSearchParams(window.location.search);
+    if (sp.get('expo') !== '1') return;
+    setExpo(true);
+    const raw = sp.get('zones');
+    if (raw === 'all') setExpoZones(null);
+    else if (raw) {
+      const zs = raw.split(',').filter((z): z is HealthZone => (ALL_ZONES as string[]).includes(z));
+      if (zs.length) setExpoZones(zs);
+    }
+  }, []);
+  useEffect(() => {
+    if (!expo) return;
+    setMapMode('markers');
+    setSelectedProvince('');
+    setSelectedPinId(null);
+    setSidebarOpen(false);
+    document.documentElement.classList.add('sdn-expo-on');
+    return () => document.documentElement.classList.remove('sdn-expo-on');
+  }, [expo]);
+  const enterExpo = () => {
+    const u = new URL(window.location.href);
+    u.searchParams.set('expo', '1');
+    window.history.replaceState(null, '', u);
+    setExpo(true);
+    document.documentElement.requestFullscreen?.().catch(() => {});
+  };
+  const exitExpo = () => {
+    const u = new URL(window.location.href);
+    u.searchParams.delete('expo');
+    window.history.replaceState(null, '', u);
+    setExpo(false);
+    if (document.fullscreenElement) document.exitFullscreen?.().catch(() => {});
+  };
   const [heatMetric, setHeatMetric] = useState<'activities' | 'people'>('activities');
   const [newOnly, setNewOnly] = useState(false);
   // null = ยังไม่รู้ (ก่อน mount อ่าน storage ไม่ได้) — ระหว่างนั้นไม่ไฮไลต์อะไร
@@ -984,9 +1026,9 @@ export default function MapView({ activities, categories, categoryLogos, subCate
 
   useEffect(() => {
     maxPinIdRef.current=Math.max(maxPinIdRef.current,...pins.map(p=>p.id)); let stopped=false;
-    const poll=async()=>{if(stopped||document.visibilityState!=='visible')return;try{const r=await fetch(`/api/pins?since=${maxPinIdRef.current}`,{cache:'no-store'});if(!r.ok)return;const data=await r.json() as {pins:PublicPin[]};if(data.pins.length){maxPinIdRef.current=Math.max(maxPinIdRef.current,...data.pins.map(p=>p.id));setPins(prev=>{const ids=new Set(prev.map(x=>x.id));return [...prev,...data.pins.filter(x=>!ids.has(x.id))]});for(const p of data.pins)toast(`${pinTitle(p)} · ต.${p.district} จ.${p.province} ปักหมุดแล้ว`);}}catch{/* retry next interval */}};
-    const timer=window.setInterval(poll,15000);return()=>{stopped=true;clearInterval(timer)};
-  },[pins]);
+    const poll=async()=>{if(stopped||document.visibilityState!=='visible')return;try{const r=await fetch(`/api/pins?since=${maxPinIdRef.current}`,{cache:'no-store'});if(!r.ok)return;const data=await r.json() as {pins:PublicPin[]};if(data.pins.length){maxPinIdRef.current=Math.max(maxPinIdRef.current,...data.pins.map(p=>p.id));setPins(prev=>{const ids=new Set(prev.map(x=>x.id));return [...prev,...data.pins.filter(x=>!ids.has(x.id))]});if(!expo)for(const p of data.pins)toast(`${pinTitle(p)} · ต.${p.district} จ.${p.province} ปักหมุดแล้ว`);}}catch{/* retry next interval */}};
+    const timer=window.setInterval(poll,expo?5000:15000);return()=>{stopped=true;clearInterval(timer)};
+  },[pins,expo]);
 
   // เปิด/ปิด sidebar ทำให้ container กว้างเปลี่ยน — ต้องบอก Leaflet ให้คำนวณขนาดใหม่
   useEffect(() => {
@@ -1402,8 +1444,9 @@ export default function MapView({ activities, categories, categoryLogos, subCate
     }`;
 
   return (
-    <div className="relative h-screen">
-      <div ref={mapElRef} className="absolute inset-0 z-0" />
+    <div className={`relative h-screen${expo ? ' sdn-expo' : ''}`}>
+      <div ref={mapElRef} className="sdn-expo-keep absolute inset-0 z-0" />
+      {expo && <ExpoMode mapRef={mapRef} mapReady={mapReady} activities={activities} pins={pins} zones={expoZones} onExit={exitExpo} />}
 
       {/* แถบไอคอนลอยด้านซ้าย (การ์ดเดี่ยว ไม่กินพื้นที่แผนที่) */}
       <nav className="absolute top-28 left-3 z-[1100] w-16 bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden divide-y divide-gray-100">
@@ -1458,6 +1501,11 @@ export default function MapView({ activities, categories, categoryLogos, subCate
           <span className="text-[9px] leading-tight text-center px-0.5">
             {capturing ? 'กำลังบันทึก' : 'ภาพแผนที่'}
           </span>
+        </button>
+
+        <button onClick={enterExpo} title="จอจัดแสดง: วนชมพื้นที่อัตโนมัติ + QR ใหญ่ สำหรับจอบูธ/นิทรรศการ" className={railBtnCls(false)}>
+          <MonitorPlay className="w-5 h-5" />
+          <span className="text-[9px] leading-tight text-center px-0.5">จอจัดแสดง</span>
         </button>
 
         {/* Excel ต้องล็อกอิน (API ตอบ 401) — สาธารณะไม่แสดงปุ่ม */}

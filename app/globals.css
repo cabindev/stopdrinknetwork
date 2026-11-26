@@ -230,3 +230,35 @@ svg.lucide[stroke-width="2"]:is(.w-5, .w-6, .w-7, .w-8, .w-10, .w-12) { stroke-w
   .sdn-anim img, .sdn-cluster.sdn-anim span, .sdn-sum-pin.sdn-anim-pop, .sdn-anim-fade, .sdn-pie-in, .sdn-nudge, .sdn-family-pulse, .sdn-sum-pin.sdn-sum-top::after { animation: none !important; }
   .leaflet-overlay-pane path { transition: none; }
 }
+
+/* ===== จอจัดแสดง /map?expo=1 (ExpoMode.tsx, 26 พ.ย. 2026) ===== */
+.sdn-expo > :not(.sdn-expo-keep) { display: none !important; }
+.sdn-expo .leaflet-control-zoom { display: none; }
+html.sdn-expo-on .sdn-nav { display: none; }
+/* วงกระเพื่อมส้มรอบหมุดที่กล้องกำลังดู (อยู่ shadowPane ใต้หมุด) */
+.sdn-spot { position: relative; width: 0; height: 0; }
+.sdn-spot i {
+  position: absolute; left: 0; top: 0; width: 120px; height: 120px; margin: -60px 0 0 -60px;
+  border: 3px solid #ea580c; border-radius: 9999px; opacity: 0;
+  animation: sdn-spot 2.4s cubic-bezier(.2,.6,.3,1) infinite;
+}
+.sdn-spot i:nth-child(2) { animation-delay: .8s; }
+.sdn-spot i:nth-child(3) { animation-delay: 1.6s; }
+.sdn-spot--burst i { width: 240px; height: 240px; margin: -120px 0 0 -120px; border-width: 4px; background: rgba(234, 88, 12, .08); animation-duration: 1.8s; }
+@keyframes sdn-spot { 0% { transform: scale(.15); opacity: 1; } 100% { transform: scale(1); opacity: 0; } }
+.sdn-live-dot { animation: sdn-live 1.4s ease-in-out infinite; }
+@keyframes sdn-live { 50% { opacity: .25; } }
+.sdn-expo-card { animation: sdn-expo-in .6s cubic-bezier(.2,.8,.2,1) both; animation-delay: .9s; }
+@keyframes sdn-expo-in { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+.sdn-expo-banner { transform: translateX(-50%); animation: sdn-expo-banner .7s cubic-bezier(.2,1.4,.4,1) both; }
+@keyframes sdn-expo-banner { from { transform: translate(-50%, -40px) scale(.8); opacity: 0; } to { transform: translateX(-50%); opacity: 1; } }
+.sdn-expo-progress { width: 100%; transform-origin: left; animation: sdn-expo-progress linear both; }
+@keyframes sdn-expo-progress { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.sdn-qr-glow { animation: sdn-qr-glow 2.6s ease-in-out infinite; }
+@keyframes sdn-qr-glow { 0%, 100% { box-shadow: 0 0 0 0 rgba(255,255,255,.0); } 50% { box-shadow: 0 0 0 6px rgba(255,255,255,.18); } }
+@media (prefers-reduced-motion: reduce) {
+  .sdn-spot i, .sdn-live-dot, .sdn-expo-card, .sdn-expo-banner, .sdn-qr-glow { animation: none !important; }
+  .sdn-spot i { opacity: .6; transform: scale(.5); }
+}
+/* จอใหญ่มองจากไกล: หมุด/วงตัวเลขใหญ่ขึ้น (ใช้ scale แยกจาก transform ของแอนิเมชัน) */
+.sdn-expo .sdn-logo-pin, .sdn-expo .sdn-cluster, .sdn-expo .sdn-family-pin { scale: 1.4; }

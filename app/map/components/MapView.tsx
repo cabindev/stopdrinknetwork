@@ -30,6 +30,7 @@ import {
   Check,
   Download,
   MonitorPlay,
+  MapPinPlus,
 } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 import thailandGeo from '@/app/data/thailand.json';
@@ -2106,6 +2107,9 @@ export default function MapView({ activities, categories, categoryLogos, subCate
                 <p className="mt-1.5 text-xs text-gray-600">
                   ปักหมุดแล้ว <span className="font-semibold tabular-nums text-gray-900">{pins.length}</span> แห่ง
                 </p>
+                <a href="/pin?from=qr" className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-gray-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-gray-700">
+                  <MapPinPlus className="w-3.5 h-3.5" /> ปักหมุดที่นี่
+                </a>
               </div>
               <button type="button" onClick={() => setPinCardOpen(false)} aria-label="ย่อการ์ด" className="self-start rounded-full p-2 text-gray-500 hover:bg-gray-50">
                 <X className="w-4 h-4" />

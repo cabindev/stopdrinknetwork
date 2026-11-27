@@ -8,7 +8,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { RefObject } from 'react';
 import type { Map as LeafletMap, Marker } from 'leaflet';
 import NextImage from 'next/image';
-import { Maximize, X } from 'lucide-react';
+import { MapPinPlus, Maximize, X } from 'lucide-react';
 import type { MapActivity } from './MapView';
 import type { PublicPin } from '@/app/lib/funeralPins';
 import { pinTitle, answerLabel, PIN_PRACTICES } from '@/app/lib/funeralPins';
@@ -379,6 +379,15 @@ export default function ExpoMode({ mapRef, shownPosRef, mapReady, activities: al
               <li><span className="font-semibold text-white">2</span> · ปักหมุดบ้านคุณ</li>
               <li><span className="font-semibold text-white">3</span> · <span className="font-semibold text-orange-400">หมุดขึ้นจอนี้ทันที</span></li>
             </ol>
+            {/* แตะบนจอสัมผัส/ทีมงานเปิดเองได้ — แท็บใหม่ จอจัดแสดงยังวนต่อ */}
+            <a
+              href="/pin?from=qr"
+              target="_blank"
+              rel="noopener"
+              className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-white px-3.5 py-1.5 text-sm font-semibold text-gray-900 hover:bg-gray-100"
+            >
+              <MapPinPlus className="h-4 w-4" /> ปักหมุดที่นี่
+            </a>
           </div>
         </div>
       </aside>

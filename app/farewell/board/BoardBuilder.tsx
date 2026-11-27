@@ -943,10 +943,18 @@ export default function BoardBuilder({
             // ระหว่างสาธิต: แถบเล็กด้านล่าง ไม่บังกระดาน ให้เห็นของเด้งลงและยอดวิ่ง
             // แถบเล็กกลางจอ (ผู้ใช้ขอ 22 พ.ย. 2026)
             // จอแคบ = สองบรรทัดกลาง (แต่ละท่อนไม่ตัดกลางคำ)
-            <span className="inline-flex flex-col items-center gap-0.5 rounded-3xl bg-gray-900 px-5 py-2.5 text-center text-white shadow-xl sm:flex-row sm:gap-3 sm:rounded-full">
-              <span className="whitespace-nowrap text-sm font-medium sm:text-base">ตัวอย่าง: จัดงานเรียบง่าย ใช้เงินเท่าไร?</span>
-              <span aria-hidden="true" className="hidden text-white/40 sm:inline">·</span>
-              <span className="whitespace-nowrap text-xs text-white/80 sm:text-base">แตะเพื่อลองจัดเอง</span>
+            // QR เล็กหน้าข้อความ (ผู้ใช้ขอ 27 พ.ย. 2026 ที่เวทีอุบล) — คนที่ไม่อยากแตะจอ สแกนไปลองในมือถือได้ระหว่างสาธิต
+            <span className="inline-flex items-center gap-3 rounded-3xl bg-gray-900 py-2 pl-2 pr-5 text-white shadow-xl sm:pr-6">
+              <span className="hidden shrink-0 rounded-xl bg-white p-1 sm:block">
+                {/* eslint-disable-next-line @next/next/no-img-element -- SVG QR คงที่ */}
+                <img src="/farewell/qr-home.svg" alt="QR ลองในมือถือ" className="h-16 w-16" />
+              </span>
+              <span className="inline-flex flex-col items-center gap-0.5 py-0.5 pl-3 text-center sm:items-start sm:pl-0 sm:text-left">
+                <span className="whitespace-nowrap text-sm font-medium sm:text-base">ตัวอย่าง: จัดงานเรียบง่าย ใช้เงินเท่าไร?</span>
+                <span className="whitespace-nowrap text-xs text-white/80 sm:text-sm">
+                  แตะเพื่อลองจัดเอง<span className="hidden sm:inline"> · หรือสแกนลองในมือถือ</span>
+                </span>
+              </span>
             </span>
           ) : (
             <motion.span
